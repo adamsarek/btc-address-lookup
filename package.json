@@ -1,0 +1,19 @@
+{
+	"name": "btc-address-lookup",
+	"version": "1.0.0",
+	"description": "A tool for crawling any selected website and gathering data about bitcoin addresses and pinpointing their respective owners.",
+	"engines": {
+		"node": "^18.x"
+	},
+	"scripts": {
+		"start": "node server.js"
+	},
+	"keywords": [],
+	"author": "Adam Šárek",
+	"license": "ISC",
+	"dependencies": {
+		"mysql2": "^2.x",
+		"node-html-parser": "^5.x",
+		"ws": "^8.x"
+	}
+}

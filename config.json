@@ -1,0 +1,15 @@
+{
+	"mysql": {
+		"host":     "db4free.net",
+		"port":     3306,
+		"user":     "btc_adr_lkp",
+		"password": "satoshi.nakamoto08",
+		"database": "btc_adr_lkp",
+		"multipleStatements": true,
+		"insecureAuth": true
+	},
+	"origin": {
+		"protocol": "https",
+		"hostname": "www.btc-address-lookup.cf"
+	}
+}
