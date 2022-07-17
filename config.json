@@ -17,6 +17,10 @@
 		},
 		{
 			"protocol": "https",
+			"hostname": "btc-address-lookup.herokuapp.com"
+		},
+		{
+			"protocol": "https",
 			"hostname": "www.btc-address-lookup.cf"
 		}
 	]
