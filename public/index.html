@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="mobile-web-app-capable" content="yes">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1">
+		<meta charset="UTF-8">
+		<meta name="theme-color" content="#FFF">
+		<link rel="icon" type="image/x-icon" href="favicon.ico">
+		<link rel="preload stylesheet" as="style" type="text/css" href="main.css" onload="this.onload=null;this.rel='stylesheet'" />
+		<noscript><link rel="stylesheet" type="text/css" href="main.css" /></noscript>
+		<script src="client.js" defer></script>
+	</head>
+	<body class="u-display--grid">
+		<div id="header" class="u-color--C33 u-display--grid u-line-height--32 u-padding--8 u-text-align--center">
+			<button id="server-connect-button" class="u-border-radius--4 u-font-size--12 u-outline--0 u-padding--0-12" onclick="WSC.open();">Connect</button>
+			<div id="server-connection" class="u-font-family--consolas u-padding--0-8">...</div>
+			<button id="server-disconnect-button" class="u-border-radius--4 u-font-size--12 u-outline--0 u-padding--0-12" onclick="WSC.close();">Disconnect</button>
+		</div>
+		<div class="u-display--inline-grid u-padding--8 u-padding-top--0">
+			<textarea id="server-error" class="u-border-radius--4 u-font-family--consolas u-font-size--12 u-outline--0 u-padding--8 u-resize--none" placeholder="Errors" rows="5" readonly></textarea>
+		</div>
+		<div class="u-display--inline-grid u-padding--8 u-padding-top--0">
+			<textarea id="server-data" class="u-border-radius--4 u-font-family--consolas u-font-size--12 u-outline--0 u-padding--8 u-resize--none" placeholder="Data" readonly></textarea>
+		</div>
+		<div class="u-display--inline-grid u-padding--8 u-padding-top--0">
+			<textarea id="server-message" class="u-border-radius--4 u-font-family--consolas u-font-size--12 u-outline--0 u-padding--8 u-resize--none" placeholder="Write a message..." rows="2" autofocus oninput="document.getElementById('server-message-length').innerHTML = this.value.length;"></textarea>
+		</div>
+		<div id="footer" class="u-display--grid u-line-height--32 u-padding--8 u-padding-top--0 u-text-align--center">
+			<div id="server-message-length" class="u-font-size--12 u-padding--0-8">0</div>
+			<button id="server-send-button" class="u-border-radius--4 u-font-size--12 u-outline--0 u-padding--0-12" onclick="WSC.send();">Send</textarea>
+		</div>
+	</body>
+</html>

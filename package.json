@@ -12,8 +12,13 @@
 	"author": "Adam Šárek",
 	"license": "ISC",
 	"dependencies": {
+		"express": "^4.x",
 		"mysql2": "^2.x",
 		"node-html-parser": "^5.x",
 		"ws": "^8.x"
+	},
+	"optionalDependencies": {
+		"bufferutil": "^4.x",
+		"utf-8-validate": "^5.x"
 	}
 }

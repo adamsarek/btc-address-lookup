@@ -7,9 +7,27 @@
 const CONFIG = Object.freeze(require('./config.json'));
 
 // Packages
+const EXPRESS = require('express');
+const FS = require('fs');
 const HTTP = require('http');
-const MySQL = require('mysql2');
+const MYSQL = require('mysql2');
+const PATH = require('path');
 const WS = require('ws').Server;
+
+// Functions
+const fn = {
+	addCrawlerURL: function(url) {
+		main.execDBQueries([
+			`INSERT INTO crawler_url(url) VALUES('${url}')`
+		], 'Insert [crawler_url]')
+		.then(() => {
+			// #TODO - Tell crawler worker to add it to its queue
+		})
+		.catch((error) => {
+			main.terminateClient(this.client, 1, 'database', 'Error', { data: error });
+		});
+	}
+};
 
 // Server
 class Main {
@@ -28,12 +46,33 @@ class Main {
 
 	constructor() {
 		// Start HTTP server
-		const server = HTTP.createServer();
-		server.listen(this.#port, () => {
-			this.log('server', 'Started', { address: `${this.#protocol}://${this.#host}:${this.#port}` });
+		const server = (CONFIG.localHTML ? EXPRESS().use((req, res) => {
+			const filePath = PATH.join(__dirname, 'public', req.url === '/' ? 'index.html' : req.url);
+			const extName = PATH.extname(filePath);
+			let contentType = 'text/html';
 			
-			// Create MySQL tables
-			this.#execDBQueries([
+			switch(extName) {
+				case '.css':
+					contentType = 'text/css';
+					break;
+				case '.ico':
+					contentType = 'image/x-icon';
+					break;
+				case '.js':
+					contentType = 'text/javascript';
+					break;
+			}
+			
+			res.writeHead(200, { 'Content-Type': contentType });
+			
+			const readStream = FS.createReadStream(filePath);
+			readStream.pipe(res);
+		}) : HTTP.createServer())
+		.listen(this.#port, () => {
+			this.log('server', 'Started', { address: `${this.#protocol}://${this.#host}:${this.#port}` });
+
+			// Create database tables
+			const queries = [
 				`CREATE TABLE IF NOT EXISTS crawler_url (
 					crawler_url_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 					crawler_parent_url_id BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
@@ -126,7 +165,30 @@ class Main {
 					PRIMARY KEY(scraper_user_id),
 					FOREIGN KEY(scraper_account_id) REFERENCES scraper_account(scraper_account_id)
 				) ENGINE=InnoDB CHARACTER SET utf8`
-			], 'Create table [crawler_url], Create table [crawler_html], Create table [scraper_account], Create table [scraper_account_occurrence], Create table [scraper_address], Create table [scraper_address_occurrence], Create table [scraper_user]')
+			];
+			let queryLogs = 'Create table [crawler_url], Create table [crawler_html], Create table [scraper_account], Create table [scraper_account_occurrence], Create table [scraper_address], Create table [scraper_address_occurrence], Create table [scraper_user]';
+			
+			// Delete database tables
+			if(CONFIG.deleteTables === true) {
+				queries.unshift(
+					`SET FOREIGN_KEY_CHECKS = 0;
+					SET GROUP_CONCAT_MAX_LEN=32768;
+					SET @tables = NULL;
+					SELECT GROUP_CONCAT('\`', table_name, '\`') INTO @tables
+						FROM information_schema.tables
+						WHERE table_schema = (SELECT DATABASE());
+					SELECT IFNULL(@tables,'dummy') INTO @tables;
+					SET @tables = CONCAT('DROP TABLE IF EXISTS ', @tables);
+					PREPARE stmt FROM @tables;
+					EXECUTE stmt;
+					DEALLOCATE PREPARE stmt;
+					SET FOREIGN_KEY_CHECKS = 1`
+				);
+				queryLogs = `Delete tables, ${queryLogs}`;
+			}
+			
+			// Create MySQL tables
+			this.#execDBQueries(queries, queryLogs)
 			.then(() => {
 				// Create WebSocket server
 				main.ws = new WS({ server });
@@ -135,16 +197,16 @@ class Main {
 
 					// Check request origin
 					const origin = new URL(req.headers.origin);
-					if(origin.protocol == CONFIG.origin.protocol + ':') {
-						if(origin.hostname == CONFIG.origin.hostname) {
+					let originAllowed = false;
+					for(let i = 0; i < CONFIG.allowedOrigins.length; i++) {
+						if(origin.protocol == `${CONFIG.allowedOrigins[i].protocol}:` && origin.hostname == CONFIG.allowedOrigins[i].hostname) {
+							originAllowed = true;
 							main.access(ws, req);
-						}
-						else {
-							main.terminateClient(ws, 0, 'client', 'Access denied', { reason: 'Invalid host!' });
+							break;
 						}
 					}
-					else {
-						main.terminateClient(ws, 0, 'client', 'Access denied', { reason: 'Disallowed protocol!' });
+					if(!originAllowed) {
+						main.terminateClient(ws, 0, 'client', 'Access denied', { reason: 'Disallowed origin!', protocol: origin.protocol.slice(0, -1), host: origin.hostname });
 					}
 				});
 			});
@@ -152,13 +214,13 @@ class Main {
 	}
 
 	log(type, message, args={}) {
-		console.log('[' + type.toUpperCase() + '] ' + message + (args && Object.keys(args).length === 0 && args.constructor === Object ? '' : ' ' + JSON.stringify(args)));
+		console.log(`[${type.toUpperCase()}] ${message}${(args && Object.keys(args).length === 0 && args.constructor === Object ? '' : ` ${JSON.stringify(args)}`)}`);
 	}
 
 	#execDBQueries(queries=[], message='') {
 		return new Promise((resolve) => {
 			if(queries.length >= 1) {
-				const connection = MySQL.createConnection(CONFIG.mysql);
+				const connection = MYSQL.createConnection(CONFIG.mysql);
 				connection.connect();
 				connection.query(queries.join(`; `), (error, results) => {
 					if(error) { throw error; }
@@ -183,7 +245,7 @@ class Main {
 		// WebSocket listeners
 		ws.on('close', () => {
 			main.clearKeepAliveInterval(ws);
-			main.deleteClient();
+			main.deleteClient(ws);
 
 			main.log('client', 'Disconnected', ws.data);
 		});

@@ -1,0 +1,172 @@
+body {
+	color: #000;
+	font: 16px Arial, Helvetica, sans-serif;
+	background: #FFF;
+	height: 100vh;
+	margin: 0px;
+	grid-template-rows: auto auto 1fr auto;
+}
+
+#header {
+	font-weight: bold;
+	grid-template-columns: auto 1fr auto;
+}
+
+#server-connect-button {
+	color: #F3FCF3;
+	background: #3C3;
+	border: 1px solid #E3ECE3;
+}
+
+#server-connect-button[disabled] {
+	color: #3C3;
+	background: #F3FCF3;
+	border: 1px solid #E3ECE3;
+}
+
+#server-disconnect-button {
+	color: #FCF3F3;
+	background: #C33;
+	border: 1px solid #ECE3E3;
+}
+
+#server-disconnect-button[disabled] {
+	color: #C33;
+	background: #FCF3F3;
+	border: 1px solid #ECE3E3;
+}
+
+#server-connection {
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+#server-error {
+	color: #C93;
+	background: #FCF9F3;
+	border: 1px solid #ECE9E3;
+}
+
+#server-data {
+	color: #39C;
+	background: #F3F9FC;
+	border: 1px solid #E3E9EC;
+}
+
+#server-message {
+	color: #888;
+	background: #F8F8F8;
+	border: 1px solid #E8E8E8;
+}
+
+#server-message[disabled] {
+	color: #888;
+	background: #D8D8D8;
+	border: 1px solid #E8E8E8;
+}
+
+#footer {
+	grid-template-columns: auto 1fr auto;
+}
+
+#server-message-length {
+	grid-column: 1 / 2;
+}
+
+#server-send-button {
+	color: #F3F9FC;
+	background: #39C;
+	border: 1px solid #E3E9EC;
+	grid-column: 3 / 4;
+}
+
+#server-send-button[disabled] {
+	color: #39C;
+	background: #F3F9FC;
+	border: 1px solid #E3E9EC;
+}
+
+/* Utilities */
+.u-border-radius--4 { border-radius: 4px; }
+.u-color--3C3 { color: #3C3; }
+.u-color--C33 { color: #C33; }
+.u-display--grid { display: grid; }
+.u-display--inline-grid { display: inline-grid; }
+.u-font-family--consolas { font-family: Consolas, monospace; }
+.u-font-size--12 { font-size: 12px; }
+.u-line-height--32 { line-height: 32px; }
+.u-outline--0 { outline: 0px; }
+.u-padding--8 { padding: 8px; }
+.u-padding--0-8 { padding: 0px 8px; }
+.u-padding--0-12 { padding: 0px 12px; }
+.u-padding-top--0 { padding-top: 0px; }
+.u-resize--none { resize: none; }
+.u-text-align--center { text-align: center; }
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+	body {
+		color: #CCC;
+		background: #333;
+	}
+	
+	#server-connect-button {
+		color: #333C33;
+		background: #3C3;
+		border-color: #232C23;
+	}
+	
+	#server-connect-button[disabled] {
+		color: #3C3;
+		background: #333C33;
+		border-color: #232C23;
+	}
+	
+	#server-disconnect-button {
+		color: #3C3333;
+		background: #C33;
+		border-color: #2C2323;
+	}
+	
+	#server-disconnect-button[disabled] {
+		color: #C33;
+		background: #3C3333;
+		border-color: #2C2323;
+	}
+	
+	#server-error {
+		color: #C93;
+		background: #3C3933;
+		border-color: #2C2923;
+	}
+	
+	#server-data {
+		color: #39C;
+		background: #33393C;
+		border-color: #23292C;
+	}
+	
+	#server-message {
+		color: #888;
+		background: #383838;
+		border-color: #282828;
+	}
+	
+	#server-message[disabled] {
+		color: #888;
+		background: #181818;
+		border-color: #282828;
+	}
+	
+	#server-send-button {
+		color: #33393C;
+		background: #39C;
+		border-color: #23292C;
+	}
+	
+	#server-send-button[disabled] {
+		color: #39C;
+		background: #33393C;
+		border-color: #23292C;
+	}
+}

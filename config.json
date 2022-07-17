@@ -1,4 +1,6 @@
 {
+	"localHTML": true,
+	"deleteTables": false,
 	"mysql": {
 		"host":     "db4free.net",
 		"port":     3306,
@@ -8,8 +10,14 @@
 		"multipleStatements": true,
 		"insecureAuth": true
 	},
-	"origin": {
-		"protocol": "https",
-		"hostname": "www.btc-address-lookup.cf"
-	}
+	"allowedOrigins": [
+		{
+			"protocol": "http",
+			"hostname": "localhost"
+		},
+		{
+			"protocol": "https",
+			"hostname": "www.btc-address-lookup.cf"
+		}
+	]
 }
