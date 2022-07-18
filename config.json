@@ -8,7 +8,9 @@
 		"password": "satoshi.nakamoto08",
 		"database": "btc_adr_lkp",
 		"multipleStatements": true,
-		"insecureAuth": true
+		"trace": false,
+		"supportBigNumbers": true,
+		"bigNumberStrings": true
 	},
 	"allowedOrigins": [
 		{

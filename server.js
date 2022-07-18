@@ -12,7 +12,7 @@ const FS = require('fs');
 const HTTP = require('http');
 const MYSQL = require('mysql2');
 const PATH = require('path');
-const WS = require('ws').Server;
+const WS = require('ws');
 
 // Functions
 const fn = {
@@ -43,6 +43,9 @@ class Main {
 	#data = {
 		clients: []
 	};
+
+	// MySQL connection pool
+	#mysqlConnectionPool = MYSQL.createPool(CONFIG.mysql);
 
 	constructor() {
 		// Start HTTP server
@@ -191,9 +194,8 @@ class Main {
 			this.#execDBQueries(queries, queryLogs)
 			.then(() => {
 				// Create WebSocket server
-				main.ws = new WS({ server });
-				main.ws.on('connection', (ws, req) => {
-					main.log('client', 'Connected', ws.data);
+				this.ws = new WS.Server({ server }).on('connection', (ws, req) => {
+					this.log('client', 'Connected', ws.data);
 
 					// Check request origin
 					const origin = new URL(req.headers.origin);
@@ -201,12 +203,12 @@ class Main {
 					for(let i = 0; i < CONFIG.allowedOrigins.length; i++) {
 						if(origin.protocol == `${CONFIG.allowedOrigins[i].protocol}:` && origin.hostname == CONFIG.allowedOrigins[i].hostname) {
 							originAllowed = true;
-							main.access(ws, req);
+							this.access(ws, req);
 							break;
 						}
 					}
 					if(!originAllowed) {
-						main.terminateClient(ws, 0, 'client', 'Access denied', { reason: 'Disallowed origin!', protocol: origin.protocol.slice(0, -1), host: origin.hostname });
+						this.terminateClient(ws, 0, 'client', 'Access denied', { reason: 'Disallowed origin!', protocol: origin.protocol.slice(0, -1), host: origin.hostname });
 					}
 				});
 			});
@@ -220,14 +222,16 @@ class Main {
 	#execDBQueries(queries=[], message='') {
 		return new Promise((resolve) => {
 			if(queries.length >= 1) {
-				const connection = MYSQL.createConnection(CONFIG.mysql);
-				connection.connect();
-				connection.query(queries.join(`; `), (error, results) => {
+				this.#mysqlConnectionPool.getConnection((error, connection) => {
 					if(error) { throw error; }
-					this.log('database', (message ? message : `Queries(${queries.length}) executed`), results);
-					resolve(results);
+					connection.query(queries.join(`; `), (error, results) => {
+						if(error) { throw error; }
+						this.log('database', (message ? message : `Queries(${queries.length}) executed`), results);
+						connection.release();
+						if(error) { throw error; }
+						resolve(results);
+					});
 				});
-				connection.end();
 			}
 		});
 	}
@@ -244,16 +248,16 @@ class Main {
 
 		// WebSocket listeners
 		ws.on('close', () => {
-			main.clearKeepAliveInterval(ws);
-			main.deleteClient(ws);
+			this.clearKeepAliveInterval(ws);
+			this.deleteClient(ws);
 
-			main.log('client', 'Disconnected', ws.data);
+			this.log('client', 'Disconnected', ws.data);
 		});
 		ws.on('pong', () => {
 			// Set alive state
 			ws.isAlive = true;
 
-			main.log('client', 'Pong', ws.data);
+			this.log('client', 'Pong', ws.data);
 		});
 		ws.on('message', (msg) => {
 			if(ws.readyState == WS.OPEN) {
@@ -268,7 +272,7 @@ class Main {
 						msgJSONValid = true;
 					}
 				} catch(err) {
-					main.log('client', 'Message is not valid JSON', { error: err });
+					this.log('client', 'Message is not valid JSON', { error: err });
 				}
 
 				if(msgJSONValid) {
@@ -279,26 +283,26 @@ class Main {
 								const iArgs = msgJSON[1];
 								if(iArgs) {
 									if(iArgs.length == fn[iFn].length) {
-										main.resetKeepAliveInterval(ws);
+										this.resetKeepAliveInterval(ws);
 
-										main.log('client', 'Message', { message: msg, client: ws.data });
+										this.log('client', 'Message', { message: msg, client: ws.data });
 
 										// Apply function
 										fn[iFn].apply({ client: ws, msg: msg }, iArgs);
 									}
-									else { main.terminateClient(ws, 0, 'websocket', 'Message denied', { reason: 'The requested function does not exist!' }); }
+									else { this.terminateClient(ws, 0, 'websocket', 'Message denied', { reason: 'The requested function does not exist!' }); }
 								}
-								else { main.terminateClient(ws, 0, 'websocket', 'Message denied', { reason: 'The request does not contain the required arguments!' }); }
+								else { this.terminateClient(ws, 0, 'websocket', 'Message denied', { reason: 'The request does not contain the required arguments!' }); }
 							}
-							else { main.terminateClient(ws, 0, 'websocket', 'Message denied', { reason: 'The requested function does not exist!' }); }
+							else { this.terminateClient(ws, 0, 'websocket', 'Message denied', { reason: 'The requested function does not exist!' }); }
 						}
-						else { main.terminateClient(ws, 0, 'websocket', 'Message denied', { reason: 'The request does not contain the required function!' }); }
+						else { this.terminateClient(ws, 0, 'websocket', 'Message denied', { reason: 'The request does not contain the required function!' }); }
 					}
-					else { main.terminateClient(ws, 0, 'websocket', 'Message denied', { reason: 'The request does not meet the required format!' }); }
+					else { this.terminateClient(ws, 0, 'websocket', 'Message denied', { reason: 'The request does not meet the required format!' }); }
 				}
-				else { main.terminateClient(ws, 0, 'websocket', 'Message denied', { reason: 'The request does not come in valid JSON format!' }); }
+				else { this.terminateClient(ws, 0, 'websocket', 'Message denied', { reason: 'The request does not come in valid JSON format!' }); }
 			}
-			else { main.terminateClient(ws, 0, 'websocket', 'Message denied', { reason: 'The request has been received under unexpected condition!' }); }
+			else { this.terminateClient(ws, 0, 'websocket', 'Message denied', { reason: 'The request has been received under unexpected condition!' }); }
 		});
 
 		// Initialize client messaging
@@ -364,7 +368,7 @@ class Main {
 		if(ws.keepAliveInterval) { clearInterval(ws.keepAliveInterval); }
 		ws.isAlive = true;
 		ws.keepAliveInterval = setInterval(() => {
-			main.keepAlive(ws);
+			this.keepAlive(ws);
 		}, 45000);
 	}
 
@@ -380,7 +384,7 @@ class Main {
 			// Pong response latency timeout (max. 10s)
 			setTimeout(() => {
 				if(ws.isAlive === false) {
-					main.terminateClient(ws, 1, 'server', 'Pong did not reach server within given timeout limit (10s)', ws.data);
+					this.terminateClient(ws, 1, 'server', 'Pong did not reach server within given timeout limit (10s)', ws.data);
 				}
 			}, 10000);
 		}
