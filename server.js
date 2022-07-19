@@ -16,12 +16,41 @@ const WS = require('ws');
 
 // Functions
 const fn = {
-	addCrawlerURL: function(url) {
+	addCrawlerURL: function(url, levelLimit, serialLimit) {
 		main.execDBQueries([
-			`INSERT INTO crawler_url(url) VALUES('${url}')`
-		], 'Insert [crawler_url]')
-		.then(() => {
-			// #TODO - Tell crawler worker to add it to its queue
+			`INSERT IGNORE INTO crawler_url(url) VALUES('${url}')`,
+			`SELECT crawler_url_id FROM crawler_url WHERE url='${url}' LIMIT 1`
+		], 'Insert [crawler_url], Select [crawler_url]')
+		.then((results) => {
+			main.execDBQueries([
+				`INSERT INTO crawler_url_settings(crawler_url_id, level_limit, serial_limit) VALUES('${results[1][0].crawler_url_id}', '${levelLimit}', '${serialLimit}')
+				ON DUPLICATE KEY UPDATE crawler_url_id='${results[1][0].crawler_url_id}', level_limit='${levelLimit}', serial_limit='${serialLimit}'`
+			], 'Insert or Update [crawler_url_settings]')
+			.then(() => {
+				// #TODO - Tell crawler worker to add it to its queue
+			})
+			.catch((error) => {
+				main.terminateClient(this.client, 1, 'database', 'Error', { data: error });
+			});
+		})
+		.catch((error) => {
+			main.terminateClient(this.client, 1, 'database', 'Error', { data: error });
+		});
+	},
+	editCrawlerURLSettings: function(url, levelLimit, serialLimit) {
+		main.execDBQueries([
+			`SELECT crawler_url_id FROM crawler_url WHERE url='${url}' LIMIT 1`
+		], 'Select [crawler_url]')
+		.then((results) => {
+			main.execDBQueries([
+				`UPDATE crawler_url_id='${results[0][0].crawler_url_id}', level_limit='${levelLimit}', serial_limit='${serialLimit}'`
+			], 'Update [crawler_url_settings]')
+			.then(() => {
+				// #TODO - Tell crawler worker to add it to its queue
+			})
+			.catch((error) => {
+				main.terminateClient(this.client, 1, 'database', 'Error', { data: error });
+			});
 		})
 		.catch((error) => {
 			main.terminateClient(this.client, 1, 'database', 'Error', { data: error });
@@ -80,9 +109,21 @@ class Main {
 					crawler_url_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 					crawler_parent_url_id BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
 					url VARCHAR(1024) NOT NULL,
+					level SMALLINT(4) UNSIGNED NOT NULL DEFAULT 0,
+					serial SMALLINT UNSIGNED NOT NULL DEFAULT 0,
 					added_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 					PRIMARY KEY(crawler_url_id),
 					UNIQUE(url)
+				) ENGINE=InnoDB CHARACTER SET utf8`,
+				`CREATE TABLE IF NOT EXISTS crawler_url_settings (
+					crawler_url_settings_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+					crawler_url_id BIGINT(20) UNSIGNED NOT NULL,
+					level_limit SMALLINT(4) UNSIGNED NOT NULL DEFAULT 0,
+					serial_limit SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+					updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+					PRIMARY KEY(crawler_url_settings_id),
+					FOREIGN KEY(crawler_url_id) REFERENCES crawler_url(crawler_url_id),
+					UNIQUE(crawler_url_id)
 				) ENGINE=InnoDB CHARACTER SET utf8`,
 				`CREATE TABLE IF NOT EXISTS crawler_html (
 					crawler_html_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -169,7 +210,7 @@ class Main {
 					FOREIGN KEY(scraper_account_id) REFERENCES scraper_account(scraper_account_id)
 				) ENGINE=InnoDB CHARACTER SET utf8`
 			];
-			let queryLogs = 'Create table [crawler_url], Create table [crawler_html], Create table [scraper_account], Create table [scraper_account_occurrence], Create table [scraper_address], Create table [scraper_address_occurrence], Create table [scraper_user]';
+			let queryLogs = 'Create [crawler_url], Create [crawler_url_settings], Create [crawler_html], Create [scraper_account], Create [scraper_account_occurrence], Create [scraper_address], Create [scraper_address_occurrence], Create [scraper_user]';
 			
 			// Delete database tables
 			if(CONFIG.deleteTables === true) {
@@ -191,7 +232,7 @@ class Main {
 			}
 			
 			// Create MySQL tables
-			this.#execDBQueries(queries, queryLogs)
+			this.execDBQueries(queries, queryLogs)
 			.then(() => {
 				// Create WebSocket server
 				this.ws = new WS.Server({ server }).on('connection', (ws, req) => {
@@ -219,7 +260,7 @@ class Main {
 		console.log(`[${type.toUpperCase()}] ${message}${(args && Object.keys(args).length === 0 && args.constructor === Object ? '' : ` ${JSON.stringify(args)}`)}`);
 	}
 
-	#execDBQueries(queries=[], message='') {
+	execDBQueries(queries=[], message='') {
 		return new Promise((resolve) => {
 			if(queries.length >= 1) {
 				this.#mysqlConnectionPool.getConnection((error, connection) => {
