@@ -294,7 +294,7 @@ class Main {
 							});
 						}
 						else {
-							preparedExecutions.updateCrawlerURL(results);
+							preparedExecutions.updateCrawlerURL(results[0]);
 						}
 					})
 					.catch((error) => {
@@ -303,7 +303,7 @@ class Main {
 				}
 				else {
 					database.execute([
-						`INSERT INTO crawler_url_settings(crawler_url_id, level_limit, serial_limit, delay_ms) VALUES('${results.crawler_url_id}', '${levelLimit}', '${serialLimit}', '${delayMS}')
+						`INSERT INTO crawler_url_settings(crawler_url_id, level_limit, serial_limit, delay_ms) VALUES('${results[0].crawler_url_id}', '${levelLimit}', '${serialLimit}', '${delayMS}')
 						ON DUPLICATE KEY UPDATE level_limit='${levelLimit}', serial_limit='${serialLimit}', delay_ms='${delayMS}'`
 					], 'Insert or Update [crawler_url_settings]')
 					.then(() => {
@@ -325,7 +325,7 @@ class Main {
 			.then((results) => {
 				if(results.length > 0) {
 					database.execute([
-						`INSERT INTO crawler_url_settings(crawler_url_id, level_limit, serial_limit, delay_ms) VALUES('${results.crawler_url_id}', '${levelLimit}', '${serialLimit}', '${delayMS}')
+						`INSERT INTO crawler_url_settings(crawler_url_id, level_limit, serial_limit, delay_ms) VALUES('${results[0].crawler_url_id}', '${levelLimit}', '${serialLimit}', '${delayMS}')
 						ON DUPLICATE KEY UPDATE level_limit='${levelLimit}', serial_limit='${serialLimit}', delay_ms='${delayMS}'`
 					], 'Insert or Update [crawler_url_settings]')
 					.then(() => {
