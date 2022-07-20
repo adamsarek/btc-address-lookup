@@ -1,6 +1,6 @@
 'use strict';
 
-// Crawling - finding URLs
+/*// Crawling - finding URLs
 // Scraping - extracting data
 
 // Configuration details
@@ -184,4 +184,11 @@ class Crawler {
 }
 
 // Execute
-const crawler = new Crawler();
+const crawler = new Crawler();*/
+
+const WORKER = require('worker_threads');
+
+WORKER.parentPort.on('message', (msg) => {
+	console.log(msg);
+});
+WORKER.parentPort.postMessage(JSON.stringify(['init', []]));

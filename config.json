@@ -25,5 +25,15 @@
 			"protocol": "https",
 			"hostname": "www.btc-address-lookup.cf"
 		}
-	]
+	],
+	"worker": {
+		"crawler": {
+			"file": "./crawler.js",
+			"type": "crawler"
+		},
+		"scraper": {
+			"file": "./scraper.js",
+			"type": "scraper"
+		}
+	}
 }

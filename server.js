@@ -12,69 +12,290 @@ const FS = require('fs');
 const HTTP = require('http');
 const MYSQL = require('mysql2');
 const PATH = require('path');
+const WORKER = require('worker_threads');
 const WS = require('ws');
 
-// Functions
-const fn = {
-	addCrawlerURL: function(url, levelLimit, serialLimit) {
-		main.execDBQueries([
-			`INSERT IGNORE INTO crawler_url(url) VALUES('${url}')`,
-			`SELECT crawler_url_id FROM crawler_url WHERE url='${url}' LIMIT 1`
-		], 'Insert [crawler_url], Select [crawler_url]')
-		.then((results) => {
-			main.execDBQueries([
-				`INSERT INTO crawler_url_settings(crawler_url_id, level_limit, serial_limit) VALUES('${results[1][0].crawler_url_id}', '${levelLimit}', '${serialLimit}')
-				ON DUPLICATE KEY UPDATE crawler_url_id='${results[1][0].crawler_url_id}', level_limit='${levelLimit}', serial_limit='${serialLimit}'`
-			], 'Insert or Update [crawler_url_settings]')
-			.then(() => {
-				// #TODO - Tell crawler worker to add it to its queue
-			})
-			.catch((error) => {
-				main.terminateClient(this.client, 1, 'database', 'Error', { data: error });
-			});
-		})
-		.catch((error) => {
-			main.terminateClient(this.client, 1, 'database', 'Error', { data: error });
-		});
-	},
-	editCrawlerURLSettings: function(url, levelLimit, serialLimit) {
-		main.execDBQueries([
-			`SELECT crawler_url_id FROM crawler_url WHERE url='${url}' LIMIT 1`
-		], 'Select [crawler_url]')
-		.then((results) => {
-			main.execDBQueries([
-				`UPDATE crawler_url_id='${results[0][0].crawler_url_id}', level_limit='${levelLimit}', serial_limit='${serialLimit}'`
-			], 'Update [crawler_url_settings]')
-			.then(() => {
-				// #TODO - Tell crawler worker to add it to its queue
-			})
-			.catch((error) => {
-				main.terminateClient(this.client, 1, 'database', 'Error', { data: error });
-			});
-		})
-		.catch((error) => {
-			main.terminateClient(this.client, 1, 'database', 'Error', { data: error });
+// Global functions
+function log(type, msg, args={}) {
+	console.log(`[${type.toUpperCase()}] ${msg}${(args && Object.keys(args).length === 0 && args.constructor === Object ? '' : ` ${JSON.stringify(args)}`)}`);
+}
+
+// Messenger class
+class Messenger {
+	// Messenger configuration
+	config = null;
+	
+	constructor(config) {
+		this.config = config;
+		this.config.node.on('message', (msg) => {
+			if(this.config.onMessageInitCondition()) {
+				let msgJSON = null;
+				let msgJSONValid = false;
+
+				// Check for valid JSON
+				try {
+					msgJSON = JSON.parse(msg);
+
+					if(msgJSON && typeof msgJSON === 'object' && msgJSON !== null) {
+						msgJSONValid = true;
+					}
+				} catch(err) {}
+
+				if(msgJSONValid) {
+					if(msgJSON.length == 2 && Array.isArray(msgJSON[1])) {
+						const iFn = msgJSON[0];
+						if(iFn) {
+							if(this.config.fn[iFn]) {
+								const iArgs = msgJSON[1];
+								if(iArgs) {
+									if(iArgs.length == this.config.fn[iFn].length) {
+										this.config.onMessageSuccess(msg);
+
+										// Apply function
+										this.config.fn[iFn].apply(this.config.fnData(msg), iArgs);
+									}
+									else { this.config.onMessageError('Message denied', { reason: 'The requested function does not exist!' }); }
+								}
+								else { this.config.onMessageError('Message denied', { reason: 'The request does not contain the required arguments!' }); }
+							}
+							else { this.config.onMessageError('Message denied', { reason: 'The requested function does not exist!' }); }
+						}
+						else { this.config.onMessageError('Message denied', { reason: 'The request does not contain the required function!' }); }
+					}
+					else { this.config.onMessageError('Message denied', { reason: 'The request does not meet the required format!' }); }
+				}
+				else { this.config.onMessageError('Message denied', { reason: 'The request does not come in valid JSON format!' }); }
+			}
+			else { this.config.onMessageError('Message denied', { reason: 'The request has been received under unexpected condition!' }); }
 		});
 	}
-};
 
-// Server
+	sendJSON(msg) {
+		this.config.send(msg);
+	}
+
+	send(msg) {
+		this.sendJSON(JSON.stringify(msg));
+	}
+
+	sendFn(fn, args=[]) {
+		this.send([fn, args]);
+	}
+}
+
+// Database class
+class Database {
+	// Database connection pool
+	#connectionPool = MYSQL.createPool(CONFIG.mysql);
+
+	execute(queries=[], msg='') {
+		return new Promise((resolve, reject) => {
+			if(queries.length >= 1) {
+				this.#connectionPool.getConnection((error, connection) => {
+					if(error) { reject(error); }
+					connection.query(queries.join(`; `), (error, results) => {
+						if(error) { reject(error); }
+						log('database', (msg ? msg : `Queries(${queries.length}) executed`), results);
+						connection.release();
+						if(error) { reject(error); }
+						resolve(results);
+					});
+				});
+			}
+		});
+	}
+
+	createTables() {
+		// Create database tables
+		const queries = [
+			`CREATE TABLE IF NOT EXISTS crawler_url (
+				crawler_url_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+				crawler_root_url_id BIGINT(20) UNSIGNED NOT NULL,
+				crawler_parent_url_id BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
+				url VARCHAR(1024) NOT NULL,
+				level SMALLINT(4) UNSIGNED NOT NULL DEFAULT 0,
+				serial SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+				added_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				PRIMARY KEY(crawler_url_id),
+				UNIQUE(url)
+			) ENGINE=InnoDB CHARACTER SET utf8`,
+			`CREATE TABLE IF NOT EXISTS crawler_url_settings (
+				crawler_url_settings_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+				crawler_url_id BIGINT(20) UNSIGNED NOT NULL,
+				level_limit SMALLINT(4) UNSIGNED NOT NULL DEFAULT 0,
+				serial_limit SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+				delay_ms MEDIUMINT UNSIGNED NOT NULL DEFAULT 1000,
+				updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				PRIMARY KEY(crawler_url_settings_id),
+				FOREIGN KEY(crawler_url_id) REFERENCES crawler_url(crawler_url_id),
+				UNIQUE(crawler_url_id)
+			) ENGINE=InnoDB CHARACTER SET utf8`,
+			`CREATE TABLE IF NOT EXISTS crawler_html (
+				crawler_html_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+				crawler_url_id BIGINT(20) UNSIGNED NOT NULL,
+				html LONGTEXT NOT NULL,
+				crawled_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				PRIMARY KEY(crawler_html_id),
+				FOREIGN KEY(crawler_url_id) REFERENCES crawler_url(crawler_url_id)
+			) ENGINE=InnoDB CHARACTER SET utf8`,
+			`CREATE TABLE IF NOT EXISTS scraper_account (
+				scraper_account_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+				id CHAR,
+				alias CHAR,
+				nickname CHAR,
+				name_tag CHAR,
+				name_prefix CHAR,
+				name_suffix CHAR,
+				first_name CHAR,
+				middle_name CHAR,
+				last_name CHAR,
+				display_name CHAR,
+				email VARCHAR(320),
+				phone_number CHAR(32),
+				birthday DATE,
+				city CHAR(58),
+				country CHAR(3),
+				fiat_currency CHAR(3),
+				job CHAR,
+				religion CHAR(32),
+				race CHAR(32),
+				sex CHAR(1),
+				gender CHAR,
+				picture VARCHAR(1024),
+				website VARCHAR(1024),
+				blog VARCHAR(1024),
+				discord VARCHAR(1024),
+				facebook VARCHAR(1024),
+				instagram VARCHAR(1024),
+				linkedin VARCHAR(1024),
+				reddit VARCHAR(1024),
+				snapchat VARCHAR(1024),
+				telegram VARCHAR(1024),
+				tiktok VARCHAR(1024),
+				tumblr VARCHAR(1024),
+				twitch VARCHAR(1024),
+				twitter VARCHAR(1024),
+				whatsapp VARCHAR(1024),
+				youtube VARCHAR(1024),
+				PRIMARY KEY(scraper_account_id)
+			) ENGINE=InnoDB CHARACTER SET utf8`,
+			`CREATE TABLE IF NOT EXISTS scraper_account_occurrence (
+				scraper_account_occurrence_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+				scraper_account_id BIGINT(20) UNSIGNED NOT NULL,
+				crawler_html_id BIGINT(20) UNSIGNED NOT NULL,
+				scraped_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				PRIMARY KEY(scraper_account_occurrence_id),
+				FOREIGN KEY(scraper_account_id) REFERENCES scraper_account(scraper_account_id),
+				FOREIGN KEY(crawler_html_id) REFERENCES crawler_html(crawler_html_id)
+			) ENGINE=InnoDB CHARACTER SET utf8`,
+			`CREATE TABLE IF NOT EXISTS scraper_address (
+				scraper_address_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+				address CHAR NOT NULL,
+				type CHAR(32),
+				currency CHAR(8),
+				valid BIT(1),
+				validity_checked_at TIMESTAMP,
+				PRIMARY KEY(scraper_address_id)
+			) ENGINE=InnoDB CHARACTER SET utf8`,
+			`CREATE TABLE IF NOT EXISTS scraper_address_occurrence (
+				scraper_address_occurrence_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+				scraper_address_id BIGINT(20) UNSIGNED NOT NULL,
+				scraper_account_occurrence_id BIGINT(20) UNSIGNED NOT NULL,
+				crawler_html_id BIGINT(20) UNSIGNED NOT NULL,
+				scraped_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				PRIMARY KEY(scraper_address_occurrence_id),
+				FOREIGN KEY(scraper_address_id) REFERENCES scraper_address(scraper_address_id),
+				FOREIGN KEY(scraper_account_occurrence_id) REFERENCES scraper_account_occurrence(scraper_account_occurrence_id),
+				FOREIGN KEY(crawler_html_id) REFERENCES crawler_html(crawler_html_id)
+			) ENGINE=InnoDB CHARACTER SET utf8`,
+			`CREATE TABLE IF NOT EXISTS scraper_user (
+				scraper_user_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+				scraper_account_id BIGINT(20) UNSIGNED NOT NULL,
+				PRIMARY KEY(scraper_user_id),
+				FOREIGN KEY(scraper_account_id) REFERENCES scraper_account(scraper_account_id)
+			) ENGINE=InnoDB CHARACTER SET utf8`
+		];
+		let queryLogs = 'Create [crawler_url], Create [crawler_url_settings], Create [crawler_html], Create [scraper_account], Create [scraper_account_occurrence], Create [scraper_address], Create [scraper_address_occurrence], Create [scraper_user]';
+		
+		// Delete database tables
+		if(CONFIG.deleteTables === true) {
+			queries.unshift(
+				`SET FOREIGN_KEY_CHECKS = 0;
+				SET GROUP_CONCAT_MAX_LEN=32768;
+				SET @tables = NULL;
+				SELECT GROUP_CONCAT('\`', table_name, '\`') INTO @tables
+					FROM information_schema.tables
+					WHERE table_schema = (SELECT DATABASE());
+				SELECT IFNULL(@tables,'dummy') INTO @tables;
+				SET @tables = CONCAT('DROP TABLE IF EXISTS ', @tables);
+				PREPARE stmt FROM @tables;
+				EXECUTE stmt;
+				DEALLOCATE PREPARE stmt;
+				SET FOREIGN_KEY_CHECKS = 1`
+			);
+			queryLogs = `Delete tables, ${queryLogs}`;
+		}
+
+		return this.execute(queries, queryLogs);
+	}
+}
+
+// Main class
 class Main {
 	// Server configuration
 	#protocol = process.env.PROTOCOL || 'wss';
 	#host = process.env.HOST || process.env.HOSTNAME || 'localhost';
 	#port = process.env.PORT || 3000;
 
-	// WebSockets
-	ws = null;
-
 	// Data
 	#data = {
 		clients: []
 	};
 
-	// MySQL connection pool
-	#mysqlConnectionPool = MYSQL.createPool(CONFIG.mysql);
+	// Functions
+	#fn = {
+		// Functions (Client -> Server)
+		addCrawlerURL: function(url, levelLimit, serialLimit) {
+			database.execute([
+				`INSERT IGNORE INTO crawler_url(url) VALUES('${url}')`,
+				`SELECT crawler_url_id FROM crawler_url WHERE url='${url}' LIMIT 1`
+			], 'Insert [crawler_url], Select [crawler_url]')
+			.then((results) => {
+				database.execute([
+					`INSERT INTO crawler_url_settings(crawler_url_id, level_limit, serial_limit) VALUES('${results[1][0].crawler_url_id}', '${levelLimit}', '${serialLimit}')
+					ON DUPLICATE KEY UPDATE crawler_url_id='${results[1][0].crawler_url_id}', level_limit='${levelLimit}', serial_limit='${serialLimit}'`
+				], 'Insert or Update [crawler_url_settings]')
+				.then(() => {
+					// #TODO - Tell crawler worker to add it to its queue
+				})
+				.catch((error) => {
+					main.terminateClient(this.client, 1, 'database', 'Error', { data: error });
+				});
+			})
+			.catch((error) => {
+				main.terminateClient(this.client, 1, 'database', 'Error', { data: error });
+			});
+		},
+		editCrawlerURLSettings: function(url, levelLimit, serialLimit) {
+			database.execute([
+				`SELECT crawler_url_id FROM crawler_url WHERE url='${url}' LIMIT 1`
+			], 'Select [crawler_url]')
+			.then((results) => {
+				database.execute([
+					`UPDATE crawler_url_id='${results[0][0].crawler_url_id}', level_limit='${levelLimit}', serial_limit='${serialLimit}'`
+				], 'Update [crawler_url_settings]')
+				.then(() => {
+					// #TODO - Tell crawler worker to add it to its queue
+				})
+				.catch((error) => {
+					main.terminateClient(this.client, 1, 'database', 'Error', { data: error });
+				});
+			})
+			.catch((error) => {
+				main.terminateClient(this.client, 1, 'database', 'Error', { data: error });
+			});
+		}
+	};
 
 	constructor() {
 		// Start HTTP server
@@ -101,142 +322,13 @@ class Main {
 			readStream.pipe(res);
 		}) : HTTP.createServer())
 		.listen(this.#port, () => {
-			this.log('server', 'Started', { address: `${this.#protocol}://${this.#host}:${this.#port}` });
+			log('server', 'Started', { address: `${this.#protocol}://${this.#host}:${this.#port}` });
 
-			// Create database tables
-			const queries = [
-				`CREATE TABLE IF NOT EXISTS crawler_url (
-					crawler_url_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-					crawler_parent_url_id BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
-					url VARCHAR(1024) NOT NULL,
-					level SMALLINT(4) UNSIGNED NOT NULL DEFAULT 0,
-					serial SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-					added_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-					PRIMARY KEY(crawler_url_id),
-					UNIQUE(url)
-				) ENGINE=InnoDB CHARACTER SET utf8`,
-				`CREATE TABLE IF NOT EXISTS crawler_url_settings (
-					crawler_url_settings_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-					crawler_url_id BIGINT(20) UNSIGNED NOT NULL,
-					level_limit SMALLINT(4) UNSIGNED NOT NULL DEFAULT 0,
-					serial_limit SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-					updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-					PRIMARY KEY(crawler_url_settings_id),
-					FOREIGN KEY(crawler_url_id) REFERENCES crawler_url(crawler_url_id),
-					UNIQUE(crawler_url_id)
-				) ENGINE=InnoDB CHARACTER SET utf8`,
-				`CREATE TABLE IF NOT EXISTS crawler_html (
-					crawler_html_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-					crawler_url_id BIGINT(20) UNSIGNED NOT NULL,
-					html LONGTEXT NOT NULL,
-					crawled_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-					PRIMARY KEY(crawler_html_id),
-					FOREIGN KEY(crawler_url_id) REFERENCES crawler_url(crawler_url_id)
-				) ENGINE=InnoDB CHARACTER SET utf8`,
-				`CREATE TABLE IF NOT EXISTS scraper_account (
-					scraper_account_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-					id CHAR,
-					alias CHAR,
-					nickname CHAR,
-					name_tag CHAR,
-					name_prefix CHAR,
-					name_suffix CHAR,
-					first_name CHAR,
-					middle_name CHAR,
-					last_name CHAR,
-					display_name CHAR,
-					email VARCHAR(320),
-					phone_number CHAR(32),
-					birthday DATE,
-					city CHAR(58),
-					country CHAR(3),
-					fiat_currency CHAR(3),
-					job CHAR,
-					religion CHAR(32),
-					race CHAR(32),
-					sex CHAR(1),
-					gender CHAR,
-					picture VARCHAR(1024),
-					website VARCHAR(1024),
-					blog VARCHAR(1024),
-					discord VARCHAR(1024),
-					facebook VARCHAR(1024),
-					instagram VARCHAR(1024),
-					linkedin VARCHAR(1024),
-					reddit VARCHAR(1024),
-					snapchat VARCHAR(1024),
-					telegram VARCHAR(1024),
-					tiktok VARCHAR(1024),
-					tumblr VARCHAR(1024),
-					twitch VARCHAR(1024),
-					twitter VARCHAR(1024),
-					whatsapp VARCHAR(1024),
-					youtube VARCHAR(1024),
-					PRIMARY KEY(scraper_account_id)
-				) ENGINE=InnoDB CHARACTER SET utf8`,
-				`CREATE TABLE IF NOT EXISTS scraper_account_occurrence (
-					scraper_account_occurrence_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-					scraper_account_id BIGINT(20) UNSIGNED NOT NULL,
-					crawler_html_id BIGINT(20) UNSIGNED NOT NULL,
-					scraped_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-					PRIMARY KEY(scraper_account_occurrence_id),
-					FOREIGN KEY(scraper_account_id) REFERENCES scraper_account(scraper_account_id),
-					FOREIGN KEY(crawler_html_id) REFERENCES crawler_html(crawler_html_id)
-				) ENGINE=InnoDB CHARACTER SET utf8`,
-				`CREATE TABLE IF NOT EXISTS scraper_address (
-					scraper_address_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-					address CHAR NOT NULL,
-					type CHAR(32),
-					currency CHAR(8),
-					valid BIT(1),
-					validity_checked_at TIMESTAMP,
-					PRIMARY KEY(scraper_address_id)
-				) ENGINE=InnoDB CHARACTER SET utf8`,
-				`CREATE TABLE IF NOT EXISTS scraper_address_occurrence (
-					scraper_address_occurrence_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-					scraper_address_id BIGINT(20) UNSIGNED NOT NULL,
-					scraper_account_occurrence_id BIGINT(20) UNSIGNED NOT NULL,
-					crawler_html_id BIGINT(20) UNSIGNED NOT NULL,
-					scraped_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-					PRIMARY KEY(scraper_address_occurrence_id),
-					FOREIGN KEY(scraper_address_id) REFERENCES scraper_address(scraper_address_id),
-					FOREIGN KEY(scraper_account_occurrence_id) REFERENCES scraper_account_occurrence(scraper_account_occurrence_id),
-					FOREIGN KEY(crawler_html_id) REFERENCES crawler_html(crawler_html_id)
-				) ENGINE=InnoDB CHARACTER SET utf8`,
-				`CREATE TABLE IF NOT EXISTS scraper_user (
-					scraper_user_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-					scraper_account_id BIGINT(20) UNSIGNED NOT NULL,
-					PRIMARY KEY(scraper_user_id),
-					FOREIGN KEY(scraper_account_id) REFERENCES scraper_account(scraper_account_id)
-				) ENGINE=InnoDB CHARACTER SET utf8`
-			];
-			let queryLogs = 'Create [crawler_url], Create [crawler_url_settings], Create [crawler_html], Create [scraper_account], Create [scraper_account_occurrence], Create [scraper_address], Create [scraper_address_occurrence], Create [scraper_user]';
-			
-			// Delete database tables
-			if(CONFIG.deleteTables === true) {
-				queries.unshift(
-					`SET FOREIGN_KEY_CHECKS = 0;
-					SET GROUP_CONCAT_MAX_LEN=32768;
-					SET @tables = NULL;
-					SELECT GROUP_CONCAT('\`', table_name, '\`') INTO @tables
-						FROM information_schema.tables
-						WHERE table_schema = (SELECT DATABASE());
-					SELECT IFNULL(@tables,'dummy') INTO @tables;
-					SET @tables = CONCAT('DROP TABLE IF EXISTS ', @tables);
-					PREPARE stmt FROM @tables;
-					EXECUTE stmt;
-					DEALLOCATE PREPARE stmt;
-					SET FOREIGN_KEY_CHECKS = 1`
-				);
-				queryLogs = `Delete tables, ${queryLogs}`;
-			}
-			
-			// Create MySQL tables
-			this.execDBQueries(queries, queryLogs)
+			database.createTables()
 			.then(() => {
 				// Create WebSocket server
-				this.ws = new WS.Server({ server }).on('connection', (ws, req) => {
-					this.log('client', 'Connected', ws.data);
+				const wss = new WS.Server({ server }).on('connection', (ws, req) => {
+					log('client', 'Connected', ws.data);
 
 					// Check request origin
 					const origin = new URL(req.headers.origin);
@@ -256,27 +348,6 @@ class Main {
 		});
 	}
 
-	log(type, message, args={}) {
-		console.log(`[${type.toUpperCase()}] ${message}${(args && Object.keys(args).length === 0 && args.constructor === Object ? '' : ` ${JSON.stringify(args)}`)}`);
-	}
-
-	execDBQueries(queries=[], message='') {
-		return new Promise((resolve) => {
-			if(queries.length >= 1) {
-				this.#mysqlConnectionPool.getConnection((error, connection) => {
-					if(error) { throw error; }
-					connection.query(queries.join(`; `), (error, results) => {
-						if(error) { throw error; }
-						this.log('database', (message ? message : `Queries(${queries.length}) executed`), results);
-						connection.release();
-						if(error) { throw error; }
-						resolve(results);
-					});
-				});
-			}
-		});
-	}
-
 	access(ws, req) {
 		// Set alive state
 		ws.isAlive = true;
@@ -292,70 +363,29 @@ class Main {
 			this.clearKeepAliveInterval(ws);
 			this.deleteClient(ws);
 
-			this.log('client', 'Disconnected', ws.data);
+			log('client', 'Disconnected', ws.data);
 		});
 		ws.on('pong', () => {
 			// Set alive state
 			ws.isAlive = true;
 
-			this.log('client', 'Pong', ws.data);
+			log('client', 'Pong', ws.data);
 		});
-		ws.on('message', (msg) => {
-			if(ws.readyState == WS.OPEN) {
-				let msgJSON = null;
-				let msgJSONValid = false;
-
-				// Check for valid JSON
-				try {
-					msgJSON = JSON.parse(msg);
-
-					if(msgJSON && typeof msgJSON === 'object' && msgJSON !== null) {
-						msgJSONValid = true;
-					}
-				} catch(err) {
-					this.log('client', 'Message is not valid JSON', { error: err });
-				}
-
-				if(msgJSONValid) {
-					if(msgJSON.length == 2 && Array.isArray(msgJSON[1])) {
-						const iFn = msgJSON[0];
-						if(iFn) {
-							if(fn[iFn]) {
-								const iArgs = msgJSON[1];
-								if(iArgs) {
-									if(iArgs.length == fn[iFn].length) {
-										this.resetKeepAliveInterval(ws);
-
-										this.log('client', 'Message', { message: msg, client: ws.data });
-
-										// Apply function
-										fn[iFn].apply({ client: ws, msg: msg }, iArgs);
-									}
-									else { this.terminateClient(ws, 0, 'websocket', 'Message denied', { reason: 'The requested function does not exist!' }); }
-								}
-								else { this.terminateClient(ws, 0, 'websocket', 'Message denied', { reason: 'The request does not contain the required arguments!' }); }
-							}
-							else { this.terminateClient(ws, 0, 'websocket', 'Message denied', { reason: 'The requested function does not exist!' }); }
-						}
-						else { this.terminateClient(ws, 0, 'websocket', 'Message denied', { reason: 'The request does not contain the required function!' }); }
-					}
-					else { this.terminateClient(ws, 0, 'websocket', 'Message denied', { reason: 'The request does not meet the required format!' }); }
-				}
-				else { this.terminateClient(ws, 0, 'websocket', 'Message denied', { reason: 'The request does not come in valid JSON format!' }); }
-			}
-			else { this.terminateClient(ws, 0, 'websocket', 'Message denied', { reason: 'The request has been received under unexpected condition!' }); }
+		ws.messenger = new Messenger({
+			node: ws,
+			send: (msg) => { ws.send(msg); },
+			fn: this.#fn,
+			fnData: (msg) => { return { client: ws, msg: msg }; },
+			onMessageInitCondition: () => { return (ws.readyState == WS.OPEN); },
+			onMessageSuccess: (msg) => {
+				this.resetKeepAliveInterval(ws);
+				log('websocket', 'Message', { message: msg, client: ws.data });
+			},
+			onMessageError: (msg, args={}) => { this.terminateClient(ws, 0, 'websocket', msg, args); }
 		});
 
 		// Initialize client messaging
 		this.#init(ws);
-	}
-
-	#init(ws) {
-		this.#addClient(ws);
-
-		this.log('client', 'Joined', ws.data);
-
-		this.#sendFn(ws, 'init', []);
 	}
 
 	#addClient(ws) {
@@ -373,11 +403,11 @@ class Main {
 		}
 	}
 
-	terminateClient(ws, closeOption, type, message, args={}) {
+	terminateClient(ws, closeOption, type, msg, args={}) {
 		this.clearKeepAliveInterval(ws);
 
-		this.log(type, message, args);
-		this.log('client', 'Terminated', ws.data);
+		log(type, msg, args);
+		log('client', 'Terminated', ws.data);
 
 		switch(closeOption) {
 			case 1: {
@@ -387,13 +417,13 @@ class Main {
 			}
 			case 2: {
 				// Close client (allow reconnect)
-				this.#sendFn(ws, 'reconnect', []);
+				ws.messenger.sendFn('reconnect', []);
 				ws.close();
 				break;
 			}
 			default: {
 				// Close client (disallow reconnect)
-				this.#sendFn(ws, 'noReconnect', []);
+				ws.messenger.sendFn('noReconnect', []);
 				ws.close();
 				break;
 			}
@@ -420,7 +450,7 @@ class Main {
 
 			// Send ping request
 			ws.ping();
-			this.log('server', 'Ping', ws.data);
+			log('server', 'Ping', ws.data);
 
 			// Pong response latency timeout (max. 10s)
 			setTimeout(() => {
@@ -431,17 +461,63 @@ class Main {
 		}
 	}
 
-	#sendJSON(ws, msg) {
-		ws.send(msg);
-	}
+	// Functions (Server)
+	#init(ws) {
+		this.#addClient(ws);
 
-	#send(ws, msg) {
-		this.#sendJSON(ws, JSON.stringify(msg));
-	}
+		log('client', 'Joined', ws.data);
 
-	#sendFn(ws, fn, args=[]) {
-		this.#send(ws, [fn, args]);
+		ws.messenger.sendFn('init', []);
 	}
 }
 
+// Worker class
+class Worker {
+	// Worker configuration
+	config = null;
+	
+	// Messenger
+	messenger = null;
+
+	constructor(config, fn) {
+		this.config = config;
+
+		const workerThread = new WORKER.Worker(this.config.file);
+		workerThread.on('error', (error) => {
+			log(this.config.type, 'Error', { data: error });
+		});
+		workerThread.on('exit', (code) => {
+			if(code !== 0) {
+				log(this.config.type, 'Exit', { code: code });
+			}
+		});
+
+		const messenger = new Messenger({
+			node: workerThread,
+			send: (msg) => { workerThread.postMessage(msg); },
+			fn: fn,
+			fnData: (msg) => { return { msg: msg }; },
+			onMessageInitCondition: () => { return true; },
+			onMessageSuccess: (msg) => { log(this.config.type, 'Message', { message: msg }); },
+			onMessageError: (msg, args={}) => { log(this.config.type, msg, args); }
+		});
+	}
+}
+
+// Crawler class
+class Crawler extends Worker {
+	constructor() {
+		super(CONFIG.worker.crawler, {
+			// Functions (Crawler -> Server)
+			init: function() {
+				log(crawler.config.type, 'Started', { file: crawler.config.file });
+			}
+		});
+	}
+
+	// Functions (Server -> Crawler)
+}
+
+const database = new Database();
 const main = new Main();
+const crawler = new Crawler();
