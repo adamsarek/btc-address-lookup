@@ -245,7 +245,7 @@ class Main {
 	// Server configuration
 	#protocol = process.env.PROTOCOL || 'wss';
 	#host = process.env.HOST || process.env.HOSTNAME || 'localhost';
-	#port = process.env.PORT || 3000;
+	#port = 3000;
 
 	// Data
 	#data = {
