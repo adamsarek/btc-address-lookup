@@ -243,8 +243,11 @@ class Messenger {
 // Main class
 class Main {
 	// Server configuration
-	#protocol = process.env.PROTOCOL || 'wss';
+	/*#protocol = process.env.PROTOCOL || 'wss';
 	#host = process.env.HOST || process.env.HOSTNAME || 'localhost';
+	#port = process.env.PORT || 3000;*/
+	#protocol = 'wss';
+	#host = 'btc-address-lookup.herokuapp.com';
 	#port = 3000;
 
 	// Data
