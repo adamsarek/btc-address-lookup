@@ -22,8 +22,8 @@
 			"hostname": "btc-address-lookup.herokuapp.com"
 		},
 		{
-			"protocol": "https",
-			"hostname": "www.btc-address-lookup.cf"
+			"protocol": "http",
+			"hostname": "btc-address-lookup.cf"
 		}
 	],
 	"worker": {
