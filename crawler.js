@@ -129,6 +129,9 @@ class Main {
 		this.#messenger.sendFn('init', []);
 
 		// #TODO - start crawling here
+		// 1. Get all crawler_url_settings
+		// 2. Find crawler_url which are below limits (level_limit, serial_limit, delay_ms)
+		// 3. Start crawling
 	}
 
 	#crawl(url) {

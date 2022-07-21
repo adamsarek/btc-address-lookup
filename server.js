@@ -128,7 +128,7 @@ class Database {
 			`CREATE TABLE IF NOT EXISTS scraper_address (
 				scraper_address_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 				address CHAR NOT NULL,
-				type CHAR(32),
+				format CHAR(32),
 				currency CHAR(8),
 				valid BIT(1),
 				validity_checked_at TIMESTAMP,
