@@ -360,7 +360,6 @@ class Scraper extends Worker {
 }
 
 // Start
-const database = new Database();
 const main = new Main();
 const crawler = new Crawler();
 const scraper = new Scraper();

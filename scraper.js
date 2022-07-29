@@ -46,5 +46,4 @@ class Main {
 }
 
 // Start
-const database = new Database();
 const main = new Main();
