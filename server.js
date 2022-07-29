@@ -7,6 +7,7 @@
 const CONFIG = Object.freeze(require('./config.json'));
 
 // Global classes
+const { log } = require('./logger.js');
 const Database = require('./database.js');
 const Messenger = require('./messenger.js');
 
@@ -17,11 +18,6 @@ const HTTP = require('http');
 const PATH = require('path');
 const WORKER = require('worker_threads');
 const WS = require('ws');
-
-// Global functions
-function log(type, msg, args={}) {
-	console.log(`[${type.toUpperCase()}] ${msg}${(args && Object.keys(args).length === 0 && args.constructor === Object ? '' : ` ${JSON.stringify(args)}`)}`);
-}
 
 // Main class
 class Main {

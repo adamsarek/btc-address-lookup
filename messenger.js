@@ -63,4 +63,5 @@ class Messenger {
 	}
 }
 
-module.exports = Messenger
+// Exports
+module.exports = Messenger;

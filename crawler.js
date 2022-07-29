@@ -4,17 +4,13 @@
 const CONFIG = Object.freeze(require('./config.json'));
 
 // Global classes
+const { log } = require('./logger.js');
 const Database = require('./database.js');
 const Messenger = require('./messenger.js');
 
 // Packages
 const DOMParser = require('node-html-parser').parse;
 const WORKER = require('worker_threads');
-
-// Global functions
-function log(type, msg, args={}) {
-	console.log(`[${type.toUpperCase()}] ${msg}${(args && Object.keys(args).length === 0 && args.constructor === Object ? '' : ` ${JSON.stringify(args)}`)}`);
-}
 
 // Main class
 class Main {

@@ -3,6 +3,9 @@
 // Global configuration
 const CONFIG = Object.freeze(require('./config.json'));
 
+// Global classes
+const { log } = require('./logger.js');
+
 // Packages
 const MYSQL = require('mysql2');
 
@@ -21,12 +24,20 @@ class Database {
 					if(error) {
 						if(connection) { connection.release(); }
 						
+						setTimeout(() => {
+							this.execute(queries, msg);
+						}, CONFIG.mysql.connectTimeout);
+
 						reject(error);
 					}
 
 					if(connection) {
 						connection.on('error', (error) => {
 							connection.release();
+
+							setTimeout(() => {
+								this.execute(queries, msg);
+							}, CONFIG.mysql.connectTimeout);
 
 							reject(error);
 						});
@@ -35,6 +46,10 @@ class Database {
 							connection.release();
 
 							if(error) {
+								setTimeout(() => {
+									this.execute(queries, msg);
+								}, CONFIG.mysql.connectTimeout);
+
 								return reject(error);
 							}
 
@@ -67,18 +82,19 @@ class Database {
 
 	createTables() {
 		// Create database tables
+		const tableOptions = `ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE ${CONFIG.mysql.charset}`;
 		const queries = [
 			`CREATE TABLE IF NOT EXISTS crawler_url (
 				crawler_url_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 				crawler_root_url_id BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
 				crawler_parent_url_id BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
-				url VARCHAR(1024) NOT NULL,
+				url VARCHAR(768) NOT NULL,
 				level SMALLINT(4) UNSIGNED NOT NULL DEFAULT 0,
 				serial SMALLINT UNSIGNED NOT NULL DEFAULT 0,
 				added_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 				PRIMARY KEY(crawler_url_id),
 				UNIQUE(url)
-			) ENGINE=InnoDB CHARACTER SET utf8`,
+			) ${tableOptions}`,
 			`CREATE TABLE IF NOT EXISTS crawler_url_settings (
 				crawler_url_settings_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 				crawler_url_id BIGINT(20) UNSIGNED NOT NULL,
@@ -89,7 +105,7 @@ class Database {
 				PRIMARY KEY(crawler_url_settings_id),
 				FOREIGN KEY(crawler_url_id) REFERENCES crawler_url(crawler_url_id),
 				UNIQUE(crawler_url_id)
-			) ENGINE=InnoDB CHARACTER SET utf8`,
+			) ${tableOptions}`,
 			`CREATE TABLE IF NOT EXISTS crawler_html (
 				crawler_html_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 				crawler_url_id BIGINT(20) UNSIGNED NOT NULL,
@@ -97,7 +113,7 @@ class Database {
 				crawled_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 				PRIMARY KEY(crawler_html_id),
 				FOREIGN KEY(crawler_url_id) REFERENCES crawler_url(crawler_url_id)
-			) ENGINE=InnoDB CHARACTER SET utf8`,
+			) ${tableOptions}`,
 			`CREATE TABLE IF NOT EXISTS scraper_account (
 				scraper_account_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 				id CHAR,
@@ -121,24 +137,24 @@ class Database {
 				race CHAR(32),
 				sex CHAR(1),
 				gender CHAR,
-				picture VARCHAR(1024),
-				website VARCHAR(1024),
-				blog VARCHAR(1024),
-				discord VARCHAR(1024),
-				facebook VARCHAR(1024),
-				instagram VARCHAR(1024),
-				linkedin VARCHAR(1024),
-				reddit VARCHAR(1024),
-				snapchat VARCHAR(1024),
-				telegram VARCHAR(1024),
-				tiktok VARCHAR(1024),
-				tumblr VARCHAR(1024),
-				twitch VARCHAR(1024),
-				twitter VARCHAR(1024),
-				whatsapp VARCHAR(1024),
-				youtube VARCHAR(1024),
+				picture VARCHAR(768),
+				website VARCHAR(768),
+				blog VARCHAR(768),
+				discord VARCHAR(768),
+				facebook VARCHAR(768),
+				instagram VARCHAR(768),
+				linkedin VARCHAR(768),
+				reddit VARCHAR(768),
+				snapchat VARCHAR(768),
+				telegram VARCHAR(768),
+				tiktok VARCHAR(768),
+				tumblr VARCHAR(768),
+				twitch VARCHAR(768),
+				twitter VARCHAR(768),
+				whatsapp VARCHAR(768),
+				youtube VARCHAR(768),
 				PRIMARY KEY(scraper_account_id)
-			) ENGINE=InnoDB CHARACTER SET utf8`,
+			) ${tableOptions}`,
 			`CREATE TABLE IF NOT EXISTS scraper_account_occurrence (
 				scraper_account_occurrence_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 				scraper_account_id BIGINT(20) UNSIGNED NOT NULL,
@@ -147,7 +163,7 @@ class Database {
 				PRIMARY KEY(scraper_account_occurrence_id),
 				FOREIGN KEY(scraper_account_id) REFERENCES scraper_account(scraper_account_id),
 				FOREIGN KEY(crawler_html_id) REFERENCES crawler_html(crawler_html_id)
-			) ENGINE=InnoDB CHARACTER SET utf8`,
+			) ${tableOptions}`,
 			`CREATE TABLE IF NOT EXISTS scraper_address (
 				scraper_address_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 				address CHAR NOT NULL,
@@ -156,7 +172,7 @@ class Database {
 				valid BIT(1),
 				validity_checked_at TIMESTAMP,
 				PRIMARY KEY(scraper_address_id)
-			) ENGINE=InnoDB CHARACTER SET utf8`,
+			) ${tableOptions}`,
 			`CREATE TABLE IF NOT EXISTS scraper_address_occurrence (
 				scraper_address_occurrence_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 				scraper_address_id BIGINT(20) UNSIGNED NOT NULL,
@@ -167,13 +183,13 @@ class Database {
 				FOREIGN KEY(scraper_address_id) REFERENCES scraper_address(scraper_address_id),
 				FOREIGN KEY(scraper_account_occurrence_id) REFERENCES scraper_account_occurrence(scraper_account_occurrence_id),
 				FOREIGN KEY(crawler_html_id) REFERENCES crawler_html(crawler_html_id)
-			) ENGINE=InnoDB CHARACTER SET utf8`,
+			) ${tableOptions}`,
 			`CREATE TABLE IF NOT EXISTS scraper_user (
 				scraper_user_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 				scraper_account_id BIGINT(20) UNSIGNED NOT NULL,
 				PRIMARY KEY(scraper_user_id),
 				FOREIGN KEY(scraper_account_id) REFERENCES scraper_account(scraper_account_id)
-			) ENGINE=InnoDB CHARACTER SET utf8`
+			) ${tableOptions}`
 		];
 		let queryLogs = 'Create [crawler_url], Create [crawler_url_settings], Create [crawler_html], Create [scraper_account], Create [scraper_account_occurrence], Create [scraper_address], Create [scraper_address_occurrence], Create [scraper_user]';
 		
@@ -200,4 +216,5 @@ class Database {
 	}
 }
 
-module.exports = Database
+// Exports
+module.exports = Database;

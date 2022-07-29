@@ -7,10 +7,13 @@
 		"user":     "btc_adr_lkp",
 		"password": "satoshi.nakamoto08",
 		"database": "btc_adr_lkp",
-		"multipleStatements": true,
-		"trace": false,
+		"charset": "utf8mb4_0900_ai_ci",
+		"connectTimeout": 30000,
 		"supportBigNumbers": true,
-		"bigNumberStrings": true
+		"bigNumberStrings": true,
+		"trace": false,
+		"multipleStatements": true,
+		"connectionLimit": 3
 	},
 	"allowedOrigins": [
 		{
