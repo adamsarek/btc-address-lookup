@@ -1,6 +1,21 @@
 {
 	"localHTML": true,
-	"deleteTables": false,
+	"currencies": [
+		{
+			"name": "Bitcoin",
+			"unit": "bitcoin",
+			"code": "BTC",
+			"symbol": "₿",
+			"logo": "https://btc-address-lookup.herokuapp.com/img/BTC.svg"
+		}
+	],
+	"addressFormats": [
+		"P2PKH",
+		"P2SH",
+		"P2WPKH",
+		"P2TR"
+	],
+	"deleteTables": true,
 	"mysql": {
 		"host":     "db4free.net",
 		"port":     3306,
@@ -8,9 +23,9 @@
 		"password": "satoshi.nakamoto08",
 		"database": "btc_adr_lkp",
 		"charset": "utf8mb4_0900_ai_ci",
-		"connectTimeout": 30000,
+		"connectTimeout": 10000,
 		"supportBigNumbers": true,
-		"bigNumberStrings": true,
+		"bigNumberStrings": false,
 		"trace": false,
 		"multipleStatements": true,
 		"connectionLimit": 3
@@ -38,5 +53,9 @@
 			"file": "./scraper.js",
 			"type": "scraper"
 		}
+	},
+	"crawler": {
+		"noURLRetryTimeout": 10000,
+		"expirationTimeout": 604800000
 	}
 }

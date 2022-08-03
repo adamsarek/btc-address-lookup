@@ -2,6 +2,7 @@
 
 // Crawling - finding URLs
 // Scraping - extracting data
+//["addURLAddress",["http://adamsarek.eu",16,256,1000]]
 
 // Global configuration
 const CONFIG = Object.freeze(require('./config.json'));
@@ -34,14 +35,13 @@ class Main {
 	// Functions
 	#fn = {
 		// Functions (Client -> Server)
-		addCrawlerURL: function(url, levelLimit, serialLimit, delayMS) {
+		addURLAddress: function(address, levelLimit, serialLimit, delay) {
 			const preparedExecutions = {
-				updateCrawlerURL: (results) => {
+				editURLSettings: (results) => {
 					database.execute([
-						`UPDATE crawler_url SET crawler_root_url_id='${results[0].crawler_url_id}' WHERE crawler_url_id='${results[0].crawler_url_id}'`,
-						`INSERT INTO crawler_url_settings(crawler_url_id, level_limit, serial_limit, delay_ms) VALUES('${results[0].crawler_url_id}', '${levelLimit}', '${serialLimit}', '${delayMS}')
-						ON DUPLICATE KEY UPDATE level_limit='${levelLimit}', serial_limit='${serialLimit}', delay_ms='${delayMS}'`
-					], 'Update [crawler_url], Insert or Update [crawler_url_settings]')
+						`INSERT INTO url_settings(url_id, level_limit, serial_limit, delay) VALUES('${results[0].url_id}', '${levelLimit}', '${serialLimit}', '${delay}')
+						ON DUPLICATE KEY UPDATE level_limit='${levelLimit}', serial_limit='${serialLimit}', delay='${delay}', updated_at=(FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000))`
+					], 'Insert or Update [url_settings]')
 					.then(() => {
 						// #TODO - Tell crawler worker to add it to its queue
 					})
@@ -52,61 +52,39 @@ class Main {
 			};
 			
 			database.execute([
-				`SELECT crawler_url_id FROM crawler_url WHERE crawler_url_id=crawler_root_url_id AND url='${url}' LIMIT 1`
-			], 'Select [crawler_url]')
+				`SELECT url_id FROM url WHERE address='${address}' LIMIT 1`
+			], 'Select [url]')
 			.then((results) => {
 				if(results.length == 0) {
 					database.execute([
-						`SELECT crawler_url_id FROM crawler_url WHERE url='${url}' LIMIT 1`
-					], 'Select [crawler_url]')
+						`INSERT IGNORE INTO url(address) VALUES('${address}')`,
+						`SELECT url_id FROM url WHERE address='${address}' LIMIT 1`
+					], 'Insert [url], Select [url]')
 					.then((results) => {
-						if(results.length == 0) {
-							database.execute([
-								`INSERT INTO crawler_url(url) VALUES('${url}')`,
-								`SELECT crawler_url_id FROM crawler_url WHERE url='${url}' LIMIT 1`
-							], 'Insert [crawler_url], Select [crawler_url]')
-							.then((results) => {
-								preparedExecutions.updateCrawlerURL(results[1]);
-							})
-							.catch((error) => {
-								main.terminateClient(this.client, 1, 'database', 'Error', { data: error });
-							});
-						}
-						else {
-							preparedExecutions.updateCrawlerURL(results[0]);
-						}
+						preparedExecutions.editURLSettings(results[1]);
 					})
 					.catch((error) => {
 						main.terminateClient(this.client, 1, 'database', 'Error', { data: error });
 					});
 				}
 				else {
-					database.execute([
-						`INSERT INTO crawler_url_settings(crawler_url_id, level_limit, serial_limit, delay_ms) VALUES('${results[0].crawler_url_id}', '${levelLimit}', '${serialLimit}', '${delayMS}')
-						ON DUPLICATE KEY UPDATE level_limit='${levelLimit}', serial_limit='${serialLimit}', delay_ms='${delayMS}'`
-					], 'Insert or Update [crawler_url_settings]')
-					.then(() => {
-						// #TODO - Tell crawler worker to add it to its queue
-					})
-					.catch((error) => {
-						main.terminateClient(this.client, 1, 'database', 'Error', { data: error });
-					});
+					preparedExecutions.editURLSettings(results[0]);
 				}
 			})
 			.catch((error) => {
 				main.terminateClient(this.client, 1, 'database', 'Error', { data: error });
 			});
 		},
-		editCrawlerURLSettings: function(url, levelLimit, serialLimit, delayMS) {
+		editURLSettings: function(address, levelLimit, serialLimit, delay) {
 			database.execute([
-				`SELECT crawler_url_id FROM crawler_url WHERE url='${url}' LIMIT 1`
-			], 'Select [crawler_url]')
+				`SELECT url_id FROM url WHERE address='${address}' LIMIT 1`
+			], 'Select [url]')
 			.then((results) => {
 				if(results.length > 0) {
 					database.execute([
-						`INSERT INTO crawler_url_settings(crawler_url_id, level_limit, serial_limit, delay_ms) VALUES('${results[0].crawler_url_id}', '${levelLimit}', '${serialLimit}', '${delayMS}')
-						ON DUPLICATE KEY UPDATE level_limit='${levelLimit}', serial_limit='${serialLimit}', delay_ms='${delayMS}'`
-					], 'Insert or Update [crawler_url_settings]')
+						`INSERT INTO url_settings(url_id, level_limit, serial_limit, delay) VALUES('${results[0].url_id}', '${levelLimit}', '${serialLimit}', '${delay}')
+						ON DUPLICATE KEY UPDATE level_limit='${levelLimit}', serial_limit='${serialLimit}', delay='${delay}', updated_at=(FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000))`
+					], 'Insert or Update [url_settings]')
 					.then(() => {
 						// #TODO - Tell crawler worker to add it to its queue
 					})
@@ -153,6 +131,10 @@ class Main {
 
 			database.createTables()
 			.then(() => {
+				// Run workers
+				crawler.run();
+				scraper.run();
+
 				// Create WebSocket server
 				const wss = new WS.Server({ server }).on('connection', (ws, req) => {
 					log('client', 'Connected', ws.data);
@@ -328,6 +310,10 @@ class Worker {
 			onMessageSuccess: (msg) => { log(this.config.type, 'Message', { message: msg }); },
 			onMessageError: (msg, args={}) => { log(this.config.type, msg, args); }
 		});
+	}
+
+	run() {
+		this.messenger.sendFn('run', []);
 	}
 }
 

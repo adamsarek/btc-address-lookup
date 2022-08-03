@@ -19,7 +19,11 @@ class Main {
 	// Functions
 	#fn = {
 		// Functions (Server -> Scraper)
-		
+		run: function() {
+			log('scraper', 'Running');
+
+			// #TODO - start scraping here
+		}
 	};
 
 	constructor() {
@@ -40,8 +44,6 @@ class Main {
 	// Functions (Scraper -> Server)
 	#init() {
 		this.#messenger.sendFn('init', []);
-
-		// #TODO - start scraping here
 	}
 }
 
