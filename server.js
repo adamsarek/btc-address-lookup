@@ -2,15 +2,7 @@
 
 // Crawling - finding URLs
 // Scraping - extracting data
-//["addURLAddress",["http://adamsarek.eu",16,256,1000]]
-
-// Global configuration
-const CONFIG = Object.freeze(require('./config.json'));
-
-// Global classes
-const { log } = require('./logger.js');
-const Database = require('./database.js');
-const Messenger = require('./messenger.js');
+//["addURLSettings",["http://adamsarek.eu",16,256,1000]]
 
 // Packages
 const EXPRESS = require('express');
@@ -19,6 +11,14 @@ const HTTP = require('http');
 const PATH = require('path');
 const WORKER = require('worker_threads');
 const WS = require('ws');
+
+// Global configuration
+const CONFIG = Object.freeze(require('./config.js'));
+
+// Global classes
+const { log } = require('./logger.js');
+const Database = require('./database.js');
+const Messenger = require('./messenger.js');
 
 // Main class
 class Main {
@@ -35,76 +35,23 @@ class Main {
 	// Functions
 	#fn = {
 		// Functions (Client -> Server)
-		addURLAddress: function(address, levelLimit, serialLimit, delay) {
-			const preparedExecutions = {
-				editURLSettings: (results) => {
-					database.execute([
-						`INSERT INTO url_settings(url_id, level_limit, serial_limit, delay) VALUES('${results[0].url_id}', '${levelLimit}', '${serialLimit}', '${delay}')
-						ON DUPLICATE KEY UPDATE level_limit='${levelLimit}', serial_limit='${serialLimit}', delay='${delay}', updated_at=(FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000))`
-					], 'Insert or Update [url_settings]')
-					.then(() => {
-						// #TODO - Tell crawler worker to add it to its queue
-					})
-					.catch((error) => {
-						main.terminateClient(this.client, 1, 'database', 'Error', { data: error });
-					});
-				}
-			};
-			
-			database.execute([
-				`SELECT url_id FROM url WHERE address='${address}' LIMIT 1`
-			], 'Select [url]')
-			.then((results) => {
-				if(results.length == 0) {
-					database.execute([
-						`INSERT IGNORE INTO url(address) VALUES('${address}')`,
-						`SELECT url_id FROM url WHERE address='${address}' LIMIT 1`
-					], 'Insert [url], Select [url]')
-					.then((results) => {
-						preparedExecutions.editURLSettings(results[1]);
-					})
-					.catch((error) => {
-						main.terminateClient(this.client, 1, 'database', 'Error', { data: error });
-					});
-				}
-				else {
-					preparedExecutions.editURLSettings(results[0]);
-				}
+		addURLSettings: function(address, levelLimit, serialLimit, delay) {
+			database.addURLSettings(address, levelLimit, serialLimit, delay)
+			.then(() => {
+				// #TODO - Tell crawler worker to add it to its queue
 			})
 			.catch((error) => {
 				main.terminateClient(this.client, 1, 'database', 'Error', { data: error });
 			});
 		},
 		editURLSettings: function(address, levelLimit, serialLimit, delay) {
-			database.execute([
-				`SELECT url_id FROM url WHERE address='${address}' LIMIT 1`
-			], 'Select [url]')
-			.then((results) => {
-				if(results.length > 0) {
-					database.execute([
-						`INSERT INTO url_settings(url_id, level_limit, serial_limit, delay) VALUES('${results[0].url_id}', '${levelLimit}', '${serialLimit}', '${delay}')
-						ON DUPLICATE KEY UPDATE level_limit='${levelLimit}', serial_limit='${serialLimit}', delay='${delay}', updated_at=(FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000))`
-					], 'Insert or Update [url_settings]')
-					.then(() => {
-						// #TODO - Tell crawler worker to add it to its queue
-					})
-					.catch((error) => {
-						main.terminateClient(this.client, 1, 'database', 'Error', { data: error });
-					});
-				}
-				else {
-					main.terminateClient(this.client, 0, 'database', 'Query denied', { reason: 'The query has been executed under unexpected condition!' });
-				}
-			})
-			.catch((error) => {
-				main.terminateClient(this.client, 1, 'database', 'Error', { data: error });
-			});
+			this.#fn.addURLSettings(address, levelLimit, serialLimit, delay);
 		}
 	};
 
 	constructor() {
 		// Start HTTP server
-		const server = (CONFIG.localHTML ? EXPRESS().use((req, res) => {
+		const server = (CONFIG.server.localHTML ? EXPRESS().use((req, res) => {
 			const filePath = PATH.join(__dirname, 'public', req.url === '/' ? 'index.html' : req.url);
 			const extName = PATH.extname(filePath);
 			let contentType = 'text/html';
@@ -142,8 +89,8 @@ class Main {
 					// Check request origin
 					const origin = new URL(req.headers.origin);
 					let originAllowed = false;
-					for(let i = 0; i < CONFIG.allowedOrigins.length; i++) {
-						if(origin.protocol == `${CONFIG.allowedOrigins[i].protocol}:` && origin.hostname == CONFIG.allowedOrigins[i].hostname) {
+					for(let i = 0; i < CONFIG.websocket.allowedOrigins.length; i++) {
+						if(origin.protocol == `${CONFIG.websocket.allowedOrigins[i].protocol}:` && origin.hostname == CONFIG.websocket.allowedOrigins[i].hostname) {
 							originAllowed = true;
 							this.access(ws, req);
 							break;

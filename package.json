@@ -13,6 +13,7 @@
 	"license": "ISC",
 	"dependencies": {
 		"express": "^4.x",
+		"@minify-html/node": "^0.x",
 		"mysql2": "^2.x",
 		"node-html-parser": "^5.x",
 		"ws": "^8.x"

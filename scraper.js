@@ -1,16 +1,16 @@
 'use strict';
 
+// Packages
+const DOMParser = require('node-html-parser').parse;
+const WORKER = require('worker_threads');
+
 // Global configuration
-const CONFIG = Object.freeze(require('./config.json'));
+const CONFIG = Object.freeze(require('./config.js'));
 
 // Global classes
 const { log } = require('./logger.js');
 const Database = require('./database.js');
 const Messenger = require('./messenger.js');
-
-// Packages
-const DOMParser = require('node-html-parser').parse;
-const WORKER = require('worker_threads');
 
 // Main class
 class Main {

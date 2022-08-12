@@ -1,16 +1,18 @@
 'use strict';
 
+// Packages
+const DOMParser = require('node-html-parser').parse;
+const { Buffer } = require('node:buffer');
+const MINIFY_HTML = require('@minify-html/node');
+const WORKER = require('worker_threads');
+
 // Global configuration
-const CONFIG = Object.freeze(require('./config.json'));
+const CONFIG = Object.freeze(require('./config.js'));
 
 // Global classes
 const { log } = require('./logger.js');
 const Database = require('./database.js');
 const Messenger = require('./messenger.js');
-
-// Packages
-const DOMParser = require('node-html-parser').parse;
-const WORKER = require('worker_threads');
 
 // Main class
 class Main {
@@ -18,8 +20,8 @@ class Main {
 	#messenger = null;
 
 	// Crawling
+	htmlToCrawl;
 	urlToCrawl;
-	urlToCrawlCount = 0;
 
 	// Functions
 	#fn = {
@@ -31,37 +33,6 @@ class Main {
 			// 1. Get all crawler_url_settings
 			// 2. Find crawler_url which are below limits (level_limit, serial_limit, delay_ms)
 			// 3. Start crawling
-			
-			// Get URL which does not have HTML
-			// Below is better solution including expiration
-			//SELECT crawler_url_id, crawler_root_url_id, url, level, serial FROM crawler_url WHERE NOT EXISTS (SELECT 1 FROM crawler_html WHERE crawler_html.crawler_url_id = crawler_url.crawler_url_id) LIMIT 1
-
-			// If all URLs have HTML, then find those who are expired
-			// Detects both not having HTML and expired HTML
-			//SELECT crawler_url_id, crawler_root_url_id, url, level, serial FROM crawler_url WHERE NOT EXISTS (SELECT 1 FROM crawler_html WHERE crawler_html.crawler_url_id = crawler_url.crawler_url_id AND FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000) - crawler_html.crawled_at < ${CONFIG.crawler.expirationTimeout}) LIMIT 1
-
-			// Get URL settings
-			// Code above + gets also settings and only if limit for level and serial is met
-			/*
-			SELECT crawler_url_expired.crawler_url_id, crawler_root_url_id, url, level, serial, level_limit, serial_limit, delay_ms FROM (
-		SELECT crawler_url_id, crawler_root_url_id, url, level, serial
-		FROM crawler_url
-		WHERE NOT EXISTS (
-			SELECT 1
-			FROM crawler_html
-			WHERE crawler_html.crawler_url_id = crawler_url.crawler_url_id AND FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000) - crawler_html.crawled_at < ${CONFIG.crawler.expirationTimeout}
-		)
-	) crawler_url_expired
-	INNER JOIN crawler_url_settings ON crawler_url_settings.crawler_url_id = crawler_url_expired.crawler_root_url_id AND crawler_url_settings.level_limit >= crawler_url_expired.level AND crawler_url_settings.serial_limit >= crawler_url_expired.serial
-	LIMIT 1
-			*/
-			/*
-			crawler_url_id	crawler_root_url_id	url					level	serial	level_limit	serial_limit	delay_ms
-			1				1					http://adamsarek.eu	16		256		16			256				1000
-			*/
-			// #TODO - change limit 1 to whatever concurrent crawls can happen
-			// #TODO - delay_ms will be setTimeout and when it fires it should perform above code but without limit and with WHERE crawler_root_url_id
-			// #TODO - SQL multiline
 			
 			main.crawl();
 		}
@@ -88,98 +59,141 @@ class Main {
 	}
 
 	crawl() {
+		// #TODO - Allow only HTTP and HTTPS links
+		// #TODO - Merge URL link queries
+		// #TODO - encrypt CONFIG with private key
+		// #TODO - HTML finished_at
+		// #TODO - Do not save URL that already exists in branch
+		// #TODO - SQL injection - prepared statements (no multiple statements)
+		// #TODO - all SQL only in Database class
+		// #TODO - Add tryExecute(), with loop trying to connect to database
+		// #TODO - HTML url filter - general filter (all), twitter filter (remove faq, contact, etc.)
+		// #TODO - insert into select ---- získat serial ze stromu v insertu (neomezovat počet URL v JS)
+
 		// #TODO - Check HTMLs that doesn't have finished_at column set (saving links was interrupted)
 		// #TODO - Before executing this:
-		database.execute([
-			/*
-			`SELECT crawler_url_expired.crawler_url_id, crawler_root_url_id, url, level, serial, level_limit, serial_limit, delay_ms FROM (
-				SELECT crawler_url_id, crawler_root_url_id, url, level, serial
-				FROM crawler_url
-				WHERE NOT EXISTS (
-					SELECT 1
-					FROM crawler_html
-					WHERE crawler_html.crawler_url_id = crawler_url.crawler_url_id AND FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000) - crawler_html.crawled_at < ${CONFIG.crawler.expirationTimeout}
-				)
-			) crawler_url_expired
-			INNER JOIN crawler_url_settings ON crawler_url_settings.crawler_url_id = crawler_url_expired.crawler_root_url_id AND crawler_url_settings.level_limit >= crawler_url_expired.level AND crawler_url_settings.serial_limit >= crawler_url_expired.serial
-			LIMIT 1`
-			*/
-			`DROP TABLE IF EXISTS url_expired`,
-			`CREATE TABLE IF NOT EXISTS url_expired
-			SELECT url_id, address
-			FROM url
-			WHERE NOT EXISTS (
-				SELECT 1
-				FROM html
-				WHERE html.url_id = url.url_id AND FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000) - html.added_at < ${CONFIG.crawler.expirationTimeout}
-			)`,
-			`SELECT url_to_crawl.url_id, address, url_root_id, level, serial, level_limit, serial_limit
-			FROM (
-				SELECT url_expired.url_id, address, url_expired.url_id AS url_root_id, 0 AS level, 0 AS serial, level_limit, serial_limit, delay
-				FROM url_expired
-				INNER JOIN url_settings ON url_settings.url_id = url_expired.url_id AND url_settings.level_limit >= 0 AND url_settings.serial_limit >= 0
-				UNION ALL
-				SELECT url_expired.url_id, address, url_root_id, level, serial, level_limit, serial_limit, delay
-				FROM url_expired
-				INNER JOIN url_link ON url_link.url_id = url_expired.url_id
-				INNER JOIN url_settings ON url_settings.url_id = url_link.url_root_id AND url_settings.level_limit >= url_link.level AND url_settings.serial_limit >= url_link.serial
-			) url_to_crawl
-			WHERE NOT EXISTS (
-				SELECT 1
-				FROM html
-				WHERE html.url_id = url_root_id AND FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000) - html.added_at < delay
-			)`,
-			`DROP TABLE IF EXISTS url_expired`
-		], 'Select [url_expired_settings]')
+		/*database.getHTMLToCrawl()
 		.then((results) => {
-			if(results[2].length == 0) {
-				setTimeout(() => {
-					main.crawl();
-				}, CONFIG.crawler.noURLRetryTimeout);
-			}
-			else {
-				// Get highest limit for crawling (makes sure to get links for the highest limit)
-				main.urlToCrawl = {};
-				main.urlToCrawlCount = 0;
-				for(let i = 0; i < results[2].length; i++) {
-					if(main.urlToCrawl[results[2][i].address] !== undefined) {
-						if(results[2][i].level_limit >= main.urlToCrawl[results[2][i].address].highestLimit.level_limit
-						&& results[2][i].serial_limit >= main.urlToCrawl[results[2][i].address].highestLimit.serial_limit) {
-							main.urlToCrawl[results[2][i].address].highestLimit = results[2][i];
+			if(results.length > 0) {
+				main.htmlToCrawl = {};
+
+				for(let i = 0; i < results.length; i++) {
+					if(main.htmlToCrawl[results[i].html_id] !== undefined) {
+						main.htmlToCrawl[results[i].html_id].branches.push({
+							url_root_id: results[i].url_root_id,
+							level: results[i].level,
+							serial: results[i].serial,
+							level_limit: results[i].level_limit,
+							serial_limit: results[i].serial_limit,
+							urlToSave: {}
+						});
+						if(!main.htmlToCrawl[results[i].html_id].canSaveURLs) {
+							main.htmlToCrawl[results[i].html_id].canSaveURLs = (results[i].level < results[i].level_limit && results[i].serial < results[i].serial_limit);
 						}
-						main.urlToCrawl[results[2][i].address].list.push(results[2][i]);
-						main.urlToCrawlCount++;
+						if((results[i].serial_limit - results[i].serial) > main.htmlToCrawl[results[i].html_id].highest_serial_range) {
+							main.htmlToCrawl[results[i].html_id].highest_serial_range = (results[i].serial_limit - results[i].serial);
+						}
 					}
 					else {
-						main.urlToCrawl[results[2][i].address] = {
-							highestLimit: results[2][i],
-							list: [
-								results[2][i]
-							],
-							urlsToSave: [],
-							urlsToSaveCount: 0,
-							urlLinksToSave: [],
-							urlLinksSavedCount: 0
+						main.htmlToCrawl[results[i].html_id] = {
+							html_id: results[i].html_id,
+							url_id: results[i].url_id,
+							content: results[i].content,
+							branches: [{
+								url_root_id: results[i].url_root_id,
+								level: results[i].level,
+								serial: results[i].serial,
+								level_limit: results[i].level_limit,
+								serial_limit: results[i].serial_limit,
+								urlToSave: {}
+							}],
+							highest_serial_range: (results[i].serial_limit - results[i].serial),
+							canSaveURLs: (results[i].level < results[i].level_limit && results[i].serial < results[i].serial_limit),
+							urlToSave: {}
 						};
-						main.urlToCrawlCount = 1;
 					}
 				}
 				
-				// Crawl
-				const urlToCrawlAddresses = Object.keys(main.urlToCrawl);
-				for(let i = 0; i < urlToCrawlAddresses.length; i++) {
-					this.#crawlURL(main.urlToCrawl[urlToCrawlAddresses[i]]);
+				// Crawl all HTMLs
+				const htmlToCrawlIDs = Object.keys(main.htmlToCrawl);
+				for(let i = 0; i < htmlToCrawlIDs.length; i++) {
+					this.#crawlHTML(main.htmlToCrawl[htmlToCrawlIDs[i]]);
 				}
 			}
+			else {*/
+				// Get all URLs that:
+				// - does not have HTML or only the expired one
+				// - does not exceed set delay since last fetch request on the current crawling branch
+				database.getURLToCrawl()
+				.then((results) => {
+					if(results.length == 0) {
+						setTimeout(() => {
+							main.crawl();
+						}, CONFIG.crawler.noURLRetryTimeout);
+					}
+					else {
+						main.urlToCrawl = {};
+
+						for(let i = 0; i < results.length; i++) {
+							if(main.urlToCrawl[results[i].address] !== undefined) {
+								main.urlToCrawl[results[i].address].branches.push({
+									url_root_id: results[i].url_root_id,
+									level: results[i].level,
+									serial: results[i].serial,
+									level_limit: results[i].level_limit,
+									serial_limit: results[i].serial_limit,
+									urlToSave: {}
+								});
+								if(!main.urlToCrawl[results[i].address].canSaveURLs) {
+									main.urlToCrawl[results[i].address].canSaveURLs = (results[i].level < results[i].level_limit && results[i].serial < results[i].serial_limit);
+								}
+								if((results[i].serial_limit - results[i].serial) > main.urlToCrawl[results[i].address].highest_serial_range) {
+									main.urlToCrawl[results[i].address].highest_serial_range = (results[i].serial_limit - results[i].serial);
+								}
+							}
+							else {
+								main.urlToCrawl[results[i].address] = {
+									url_id: results[i].url_id,
+									address: results[i].address,
+									branches: [{
+										url_root_id: results[i].url_root_id,
+										level: results[i].level,
+										serial: results[i].serial,
+										level_limit: results[i].level_limit,
+										serial_limit: results[i].serial_limit,
+										urlToSave: {}
+									}],
+									highest_serial_range: (results[i].serial_limit - results[i].serial),
+									canSaveURLs: (results[i].level < results[i].level_limit && results[i].serial < results[i].serial_limit),
+									urlToSave: {}
+								};
+							}
+						}
+						
+						// Crawl all URLs
+						const urlToCrawlAddresses = Object.keys(main.urlToCrawl);
+						for(let i = 0; i < urlToCrawlAddresses.length; i++) {
+							this.#crawlURL(main.urlToCrawl[urlToCrawlAddresses[i]]);
+						}
+					}
+				})
+				.catch((error) => {
+					log('database', 'Error', { data: error });
+				});
+			/*}
 		})
 		.catch((error) => {
 			log('database', 'Error', { data: error });
-		});
+		});*/
 	}
 
-	// #TODO - Test it
+	#crawlHTML(htmlToCrawl) {
+		console.log(htmlToCrawl);
+	}
+
+	// #TODO - Missing IDs
 	#crawlURL(urlToCrawl) {
-		fetch(urlToCrawl.highestLimit.address, {
+		fetch(urlToCrawl.address, {
 			cache: 'no-cache'
 		})
 		.then(response => {
@@ -189,109 +203,146 @@ class Main {
 			});
 		})
 		.then(response => {
-			const encodedHTML = (encodeURIComponent(response.body).replace(/'/g, '%27')).toString('base64');
+			const html = response.body;
+			const minifiedHTML = MINIFY_HTML.minify(Buffer.from(html), {
+				do_not_minify_doctype: true,
+				ensure_spec_compliant_unquoted_attribute_values: true,
+				keep_closing_tags: true,
+				keep_html_and_head_opening_tags: true,
+				keep_spaces_between_attributes: true,
+				keep_comments: true,
+				minify_css: true,
+				minify_js: true,
+				remove_bangs: false,
+				remove_processing_instructions: false
+			}).toString();
 
 			// Save HTML
-			database.execute([
-				`INSERT IGNORE INTO html(url_id, content) VALUES('${urlToCrawl.highestLimit.url_id}', '${encodedHTML}')`,
-				`SELECT html_id FROM html WHERE url_id = '${urlToCrawl.highestLimit.url_id}' AND content = '${encodedHTML}' ORDER BY added_at DESC LIMIT 1`
-			], 'Insert [html], Select [html]')
+			database.addHTML(urlToCrawl.url_id, minifiedHTML)
 			.then((htmlResults) => {
-				const decrementURLToCrawlCount = () => {
-					main.urlToCrawlCount--;
+				const urlToCrawlFinish = (urlToCrawlAddress, htmlID='') => {
+					// #TODO - Send MySQL update with finished_at
+					database.finishHTML(htmlID)
+					.catch((error) => {
+						log('database', 'Error', { data: error });
+					})
+					.finally(() => {
+						delete main.urlToCrawl[urlToCrawlAddress];
 
-					console.log('urlToCrawlCount: ' + main.urlToCrawlCount);
-
-					// All HTML URLs saved
-					if(main.urlToCrawlCount == 0) {
-						main.crawl();
-					}
-				};
-				const decrementURLsToSaveCount = (urlToCrawl) => {
-					main.urlToCrawl[urlToCrawl.highestLimit.address].urlsToSaveCount--;
-
-					console.log('urlsToSaveCount: ' + main.urlToCrawl[urlToCrawl.highestLimit.address].urlsToSaveCount);
-
-					// Current HTML URLs saved
-					if(main.urlToCrawl[urlToCrawl.highestLimit.address].urlsToSaveCount == 0) {
-						decrementURLToCrawlCount();
-					}
-				};
-
-				// Check if current URL is still below limits and links can be added
-				if(urlToCrawl.highestLimit.level < urlToCrawl.highestLimit.level_limit
-				&& urlToCrawl.highestLimit.serial < urlToCrawl.highestLimit.serial_limit) {
-					const linkSet = new Set();
-					const document = new DOMParser(response.body);
-					const linkElements = document.querySelectorAll('a');
-					linkElements.forEach(linkElement => {
-						if(linkElement.hasAttribute('href') && linkElement.getAttribute('href').length > 0) {
-							const absoluteURL = new URL(linkElement.getAttribute('href'), response.url).href;
-							linkSet.add(absoluteURL);
+						console.log('urlToCrawlFinish() -> ' + Object.keys(main.urlToCrawl).length);
+						
+						// No URLs to crawl left
+						if(Object.keys(main.urlToCrawl).length === 0) {
+							main.crawl();
 						}
 					});
-					main.urlToCrawl[urlToCrawl.highestLimit.address].urlsToSave = Array.from(linkSet).slice(0, urlToCrawl.highestLimit.serial_limit - urlToCrawl.highestLimit.serial);
-					main.urlToCrawl[urlToCrawl.highestLimit.address].urlsToSaveCount = main.urlToCrawl[urlToCrawl.highestLimit.address].list.length;
+				};
+				const urlToSaveFinish = (urlToCrawlAddress, htmlID, urlToSaveAddress) => {
+					delete urlToCrawl.urlToSave[urlToSaveAddress];
+
+					console.log('urlToSaveFinish() -> ' + Object.keys(urlToCrawl.urlToSave).length);
+
+					// No URLs to save left (all branches)
+					if(Object.keys(urlToCrawl.urlToSave).length === 0) {
+						urlToCrawlFinish(urlToCrawlAddress, htmlID);
+					}
+				};
+				const branchUrlToSaveFinish = (urlToCrawlAddress, htmlID, urlToSaveAddress, branchUrlToSave) => {
+					delete branchUrlToSave[urlToSaveAddress];
+					urlToCrawl.urlToSave[urlToSaveAddress]--;
+
+					console.log('branchUrlToSaveFinish() -> ' + urlToCrawl.urlToSave[urlToSaveAddress]);
+
+					if(urlToCrawl.urlToSave[urlToSaveAddress] == 0) {
+						urlToSaveFinish(urlToCrawlAddress, htmlID, urlToSaveAddress);
+					}
+				};
+
+				if(urlToCrawl.canSaveURLs) {
+					const linkSet = new Set();
+					const document = new DOMParser(minifiedHTML);
+					const linkElements = document.querySelectorAll('a[href]');
 					
-					// Current HTML doesn't contain URLs
-					if(main.urlToCrawl[urlToCrawl.highestLimit.address].urlsToSave.length == 0) {
-						decrementURLToCrawlCount();
+					// HTML has at least 1 <a href> element
+					if(linkElements.length > 0) {
+						linkElements.forEach(linkElement => {
+							if(linkElement.getAttribute('href').length > 0) {
+								const absoluteURL = new URL(linkElement.getAttribute('href'), response.url).href;
+								linkSet.add(absoluteURL);
+							}
+						});
+
+						// HTML has at least 1 URL link
+						if(linkSet.size > 0) {
+							// Set URLs to save for all branches and their highest serial range
+							const urlsToSave = Array.from(linkSet).slice(0, (urlToCrawl.highest_serial_range < linkSet.size ? urlToCrawl.highest_serial_range : linkSet.size));
+							for(let i = 0; i < urlsToSave.length; i++) {
+								urlToCrawl.urlToSave[urlsToSave[i]] = 0;
+							}
+
+							// Set URLs to save for every branch and its serial limit
+							for(let i = 0; i < urlToCrawl.branches.length; i++) {
+								for(let j = 0; j < (urlToCrawl.branches[i].serial_limit - urlToCrawl.branches[i].serial < urlsToSave.length ? urlToCrawl.branches[i].serial_limit - urlToCrawl.branches[i].serial : urlsToSave.length); j++) {
+									urlToCrawl.branches[i].urlToSave[urlsToSave[j]] = 1;
+									urlToCrawl.urlToSave[urlsToSave[j]]++;
+								}
+							}
+
+							// Save URLs
+							const htmlUrlsToSave = Object.keys(urlToCrawl.urlToSave);
+							for(let i = 0; i < htmlUrlsToSave.length; i++) {
+								database.addURL(htmlUrlsToSave[i])
+								.then((urlResults) => {
+									// Save URL links for every branch
+									for(let j = 0; j < urlToCrawl.branches.length; j++) {
+										// Check if branch can save this URL link
+										if(urlToCrawl.branches[j].urlToSave[htmlUrlsToSave[i]] !== undefined) {
+											// Save branch URL links
+											database.addURLLink(
+												htmlResults[1][0].html_id,
+												urlResults[1][0].url_id,
+												urlToCrawl.url_id,
+												urlToCrawl.branches[j].url_root_id,
+												urlToCrawl.branches[j].level + 1,
+												urlToCrawl.branches[j].serial + 1 + i
+											)
+											.then(() => {
+												branchUrlToSaveFinish(urlToCrawl.address, htmlResults[1][0].html_id, htmlUrlsToSave[i], urlToCrawl.branches[j].urlToSave);
+											})
+											.catch((error) => {
+												log('database', 'Error', { data: error });
+												branchUrlToSaveFinish(urlToCrawl.address, htmlResults[1][0].html_id, htmlUrlsToSave[i], urlToCrawl.branches[j].urlToSave);
+											});
+										}
+									}
+								})
+								.catch((error) => {
+									log('database', 'Error', { data: error });
+									urlToSaveFinish(urlToCrawl.address, htmlResults[1][0].html_id, htmlUrlsToSave[i]);
+								});
+							}
+						}
+						else {
+							urlToCrawlFinish(urlToCrawl.address, htmlResults[1][0].html_id);
+						}
 					}
 					else {
-						// Save URLs
-						for(let i = 0; i < main.urlToCrawl[urlToCrawl.highestLimit.address].urlsToSave.length; i++) {
-							database.execute([
-								`INSERT IGNORE INTO url(address) VALUES('${main.urlToCrawl[urlToCrawl.highestLimit.address].urlsToSave[i]}')`,
-								`SELECT url_id FROM url WHERE address = '${main.urlToCrawl[urlToCrawl.highestLimit.address].urlsToSave[i]}'`
-							], 'Insert [url], Select [url]')
-							.then((urlResults) => {
-								// #TODO - problem with saving url_link
-								
-								for(let j = 0; j < urlToCrawl.list.length; j++) {
-									// Check if current URL is still below limits and links can be added
-									if(urlToCrawl.list[j].level < urlToCrawl.list[j].level_limit
-									&& urlToCrawl.list[j].serial + i < urlToCrawl.list[j].serial_limit) {
-										main.urlToCrawl[urlToCrawl.highestLimit.address].urlLinksToSave.push(false);
-										
-										// Save links
-										database.execute([
-											`INSERT IGNORE INTO url_link(html_id, url_id, url_parent_id, url_root_id, level, serial) VALUES('${htmlResults[1][0].html_id}', '${urlResults[1][0].url_id}', '${urlToCrawl.highestLimit.url_id}', '${urlToCrawl.list[j].url_root_id}', '${urlToCrawl.list[j].level + 1}', '${urlToCrawl.list[j].serial + 1 + i}')`
-										], 'Insert [url_link]')
-										.then(() => {
-											main.urlToCrawl[urlToCrawl.highestLimit.address].urlLinksToSave[main.urlToCrawl[urlToCrawl.highestLimit.address].urlLinksSavedCount] = true;
-											main.urlToCrawl[urlToCrawl.highestLimit.address].urlLinksSavedCount++;
-
-											console.log(main.urlToCrawl[urlToCrawl.highestLimit.address].urlLinksToSave);
-
-											// Current HTML URL links saved
-											if(!main.urlToCrawl[urlToCrawl.highestLimit.address].urlLinksToSave.includes(false)) {
-												decrementURLsToSaveCount(urlToCrawl);
-											}
-										})
-										.catch((error) => {
-											log('database', 'Error', { data: error });
-										});
-									}
-									else {
-										decrementURLsToSaveCount(urlToCrawl);
-									}
-								}
-							})
-							.catch((error) => {
-								log('database', 'Error', { data: error });
-							});
-						}
+						urlToCrawlFinish(urlToCrawl.address, htmlResults[1][0].html_id);
 					}
 				}
 				else {
-					decrementURLToCrawlCount();
+					urlToCrawlFinish(urlToCrawl.address, htmlResults[1][0].html_id);
 				}
 			})
 			.catch((error) => {
 				log('database', 'Error', { data: error });
+				urlToCrawlFinish(urlToCrawl.address);
 			});
 		})
-		.catch(error => console.error(error));
+		.catch((error) => {
+			console.error(error);
+			urlToCrawlFinish(urlToCrawl.address);
+		});
 	}
 }
 
