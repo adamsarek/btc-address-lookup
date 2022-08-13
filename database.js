@@ -299,6 +299,7 @@ class Database {
 				FOREIGN KEY(url_parent_id) REFERENCES url(url_id),
 				FOREIGN KEY(url_root_id) REFERENCES url(url_id),
 				UNIQUE (url_id, url_root_id),
+				UNIQUE (url_root_id, serial),
 				CHECK(level <= serial)
 			) ${tableOptions}`,
 			`CREATE TABLE IF NOT EXISTS user (
@@ -514,19 +515,19 @@ class Database {
 	// Get HTML to crawl
 	getHTMLToCrawl() {
 		return this.#query(
-			`SELECT html_id, html_to_crawl.url_id, content, url_root_id, (
+			`SELECT html_id, html_to_crawl.url_id, address, content, url_root_id, level, serial, (
 				SELECT COALESCE(MAX(level), 0)
 				FROM url_link
 				WHERE url_link.url_root_id = html_to_crawl.url_root_id
-			) AS level, (
+			) AS level_max, (
 				SELECT COALESCE(MAX(serial), 0)
 				FROM url_link
 				WHERE url_link.url_root_id = html_to_crawl.url_root_id
-			) AS serial, level_limit, serial_limit, delay
+			) AS serial_max, level_limit, serial_limit
 			FROM (
-				SELECT url_unfinished.url_id, url_unfinished.url_id AS url_root_id, level_limit, serial_limit
+				SELECT url_unfinished.url_id, address, url_unfinished.url_id AS url_root_id, 0 AS level, 0 AS serial, level_limit, serial_limit
 				FROM (
-					SELECT url_id
+					SELECT url_id, address
 					FROM url
 					WHERE EXISTS (
 						SELECT 1
@@ -534,11 +535,11 @@ class Database {
 						WHERE html.url_id = url.url_id AND finished_at IS NULL
 					)
 				) url_unfinished
-				JOIN url_settings ON url_settings.url_id = url_unfinished.url_id
+				JOIN url_settings ON url_settings.url_id = url_unfinished.url_id AND url_settings.level_limit >= 0 AND url_settings.serial_limit >= 0
 				UNION ALL
-				SELECT url_unfinished.url_id, url_root_id, level_limit, serial_limit
+				SELECT url_unfinished.url_id, address, url_root_id, level, serial, level_limit, serial_limit
 				FROM (
-					SELECT url_id
+					SELECT url_id, address
 					FROM url
 					WHERE EXISTS (
 						SELECT 1
@@ -549,20 +550,7 @@ class Database {
 				JOIN url_link ON url_link.url_id = url_unfinished.url_id
 				JOIN url_settings ON url_settings.url_id = url_link.url_root_id AND url_settings.level_limit >= url_link.level AND url_settings.serial_limit >= url_link.serial
 			) html_to_crawl
-			JOIN html ON html.url_id = html_to_crawl.url_id
-			WHERE EXISTS (
-				SELECT 1
-				FROM (
-					SELECT html.url_id
-					FROM html
-					UNION ALL
-					SELECT url_link.url_id
-					FROM url_link
-					JOIN url_link AS branch_url_link ON branch_url_link.url_root_id = url_link.url_root_id
-					JOIN html ON html.url_id = branch_url_link.url_id OR html.url_id = branch_url_link.url_root_id
-				) branch_html
-				WHERE branch_html.url_id = html_to_crawl.url_id
-			)`,
+			JOIN html ON html.url_id = html_to_crawl.url_id`,
 			'Select [html_to_crawl]'
 		);
 	}
@@ -570,17 +558,17 @@ class Database {
 	// Get URL to crawl
 	getURLToCrawl() {
 		return this.#query(
-			`SELECT url_id, address, url_root_id, (
+			`SELECT url_id, address, url_root_id, level, serial, (
 				SELECT COALESCE(MAX(level), 0)
 				FROM url_link
 				WHERE url_link.url_root_id = url_to_crawl.url_root_id
-			) AS level, (
+			) AS level_max, (
 				SELECT COALESCE(MAX(serial), 0)
 				FROM url_link
 				WHERE url_link.url_root_id = url_to_crawl.url_root_id
-			) AS serial, level_limit, serial_limit, delay
+			) AS serial_max, level_limit, serial_limit, delay
 			FROM (
-				SELECT url_expired.url_id, address, url_expired.url_id AS url_root_id, level_limit, serial_limit, delay
+				SELECT url_expired.url_id, address, url_expired.url_id AS url_root_id, 0 AS level, 0 AS serial, level_limit, serial_limit, delay
 				FROM (
 					SELECT url_id, address
 					FROM url
@@ -590,9 +578,9 @@ class Database {
 						WHERE html.url_id = url.url_id AND FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000) - html.added_at < ${CONFIG.crawler.expirationTimeout}
 					)
 				) url_expired
-				JOIN url_settings ON url_settings.url_id = url_expired.url_id
+				JOIN url_settings ON url_settings.url_id = url_expired.url_id AND url_settings.level_limit >= 0 AND url_settings.serial_limit >= 0
 				UNION ALL
-				SELECT url_expired.url_id, address, url_root_id, level_limit, serial_limit, delay
+				SELECT url_expired.url_id, address, url_root_id, level, serial, level_limit, serial_limit, delay
 				FROM (
 					SELECT url_id, address
 					FROM url
@@ -651,44 +639,42 @@ class Database {
 	}
 
 	// Save URL
-	addURL(address) {
-		return this.#executeAll(
-			[
-				false,
-				false
-			],
-			[
-				`INSERT IGNORE INTO url(address) VALUES(?)`,
-				`SELECT url_id FROM url WHERE address = ?`
-			],
-			[
-				[
-					address
-				],
-				[
-					address
-				]
-			],
-			[
-				'Insert [url]',
-				'Select [url]'
-			]
-		);
-	}
+	addURL(address, htmlID, urlParentID, branches) {
+		const once = [false];
+		const queries = [`INSERT IGNORE INTO url(address) VALUES(?)`];
+		const params = [[address]];
+		const msg = ['Insert [url]'];
 
-	// Save branch URL link
-	addURLLink(htmlID, urlID, urlParentID, urlRootID, level, serial) {
-		return this.#execute(
-			`INSERT IGNORE INTO url_link(html_id, url_id, url_parent_id, url_root_id, level, serial) VALUES(?, ?, ?, ?, ?, ?)`,
-			[
+		// Save URL links
+		for(let i = 0; i < branches.length; i++) {
+			once.push(false);
+			queries.push(
+				`INSERT INTO url_link(html_id, url_id, url_parent_id, url_root_id, level, serial)
+				SELECT ? AS html_id, (SELECT url_id FROM url WHERE address = ? LIMIT 1) AS url_id, ? AS url_parent_id, ? AS url_root_id, ? AS level, (COALESCE(MAX(serial), 0) + 1) AS serial_max
+				FROM url_settings
+				LEFT JOIN url_link ON url_link.url_root_id = url_settings.url_id
+				WHERE (
+					url_settings.url_id = (SELECT url_id FROM url WHERE address = ? LIMIT 1)
+					OR url_settings.url_id = ?
+				) AND (COALESCE(serial, 0) < serial_limit)
+				LIMIT 1`);
+			params.push([
 				htmlID,
-				urlID,
+				address,
 				urlParentID,
-				urlRootID,
-				level,
-				serial
-			],
-			'Insert [url_link]'
+				branches[i].url_root_id,
+				branches[i].level + 1,
+				address,
+				branches[i].url_root_id
+			]);
+			msg.push('Insert [url_link]');
+		}
+		
+		return this.#transact(
+			once,
+			queries,
+			params,
+			msg
 		);
 	}
 

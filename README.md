@@ -10,10 +10,14 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
 #### Currently supports:
 - communication with the server (main thread) using a JSON formatted text
 - read/write operations with the MySQL database
+- setting crawling tree limitation - max level (depth), max serial number (count), max delay (crawling frequency)
+- fetching a content of the provided URLs, parsing the HTML and obtaining additional links for further crawling
 #### In progress:
-- fetching a content of the provided URLs, parsing the HTML and obtaining additional links for further crawling (buggy)
+- crawler URL filter (for specific websites)
 
 ## Scraper
 #### Currently supports:
 - communication with the server (main thread) using a JSON formatted text
 - read/write operations with the MySQL database
+#### In progress:
+- searching occurrences of the BTC addresses and the accounts posting them from the crawled HTML (general-purpose & for specific websites)
