@@ -230,98 +230,82 @@ class Main {
 		return urlsToSave;
 	}
 
-	#crawlHTML(htmlToCrawl) {
-		const htmlToCrawlFinish = (htmlID) => {
-			database.finishHTML(htmlID)
-			.catch((error) => {
-				log('database', 'Error', { data: error });
-			})
-			.finally(() => {
-				delete main.htmlToCrawl[htmlID];
+	htmlToCrawlFinish(htmlToCrawlProperty, htmlToCrawlKey, htmlID='') {
+		database.finishHTMLToCrawl(htmlID)
+		.catch((error) => {
+			log('database', 'Error', { data: error });
+		})
+		.finally(() => {
+			delete htmlToCrawlProperty[htmlToCrawlKey];
 
-				console.log('htmlToCrawlFinish() -> ' + Object.keys(main.htmlToCrawl).length);
-				
-				// No HTML to crawl left
-				if(Object.keys(main.htmlToCrawl).length === 0) {
-					main.crawl();
-				}
-			});
-		};
+			// No HTML to crawl left
+			if(Object.keys(htmlToCrawlProperty).length === 0) {
+				main.crawl();
+			}
+		});
+	}
 
-		if(htmlToCrawl.canSaveURLs) {
+	urlToSaveFinish(htmlToCrawlProperty, htmlToCrawlKey, htmlID, urlToSaveAddress) {
+		delete htmlToCrawlProperty[htmlToCrawlKey].urlToSave[urlToSaveAddress];
+
+		// No URL to save left (all branches)
+		if(Object.keys(htmlToCrawlProperty[htmlToCrawlKey].urlToSave).length === 0) {
+			main.htmlToCrawlFinish(htmlToCrawlProperty, htmlToCrawlKey, htmlID);
+		}
+	}
+
+	crawlHTMLContent(htmlToCrawlProperty, htmlToCrawlKey, htmlContent, htmlAddress, htmlID) {
+		if(htmlToCrawlProperty[htmlToCrawlKey].canSaveURLs) {
 			const linkSet = new Set();
-			const document = new DOMParser(htmlToCrawl.content);
+			const document = new DOMParser(htmlContent);
 			const linkElements = document.querySelectorAll('a[href]');
 			
 			// HTML has at least 1 <a href> element
 			if(linkElements.length > 0) {
 				linkElements.forEach(linkElement => {
 					if(linkElement.getAttribute('href').length > 0) {
-						const absoluteURL = new URL(linkElement.getAttribute('href'), htmlToCrawl.address).href;
+						const absoluteURL = new URL(linkElement.getAttribute('href'), htmlAddress).href;
 						linkSet.add(absoluteURL);
 					}
 				});
 
 				// HTML has at least 1 URL link
 				if(linkSet.size > 0) {
-					const urlToSaveFinish = (htmlID, urlToSaveAddress) => {
-						delete htmlToCrawl.urlToSave[urlToSaveAddress];
-	
-						console.log('urlToSaveFinish() -> ' + Object.keys(htmlToCrawl.urlToSave).length);
-	
-						// No URL to save left (all branches)
-						if(Object.keys(htmlToCrawl.urlToSave).length === 0) {
-							htmlToCrawlFinish(htmlID);
-						}
-					};
-					
 					// Set URLs to save for all branches
 					const urlsToSave = this.#filterURLsToSave(Array.from(linkSet));
 					for(let i = 0; i < urlsToSave.length; i++) {
-						htmlToCrawl.urlToSave[urlsToSave[i]] = true; // True is just a placeholder, no other meaning
+						htmlToCrawlProperty[htmlToCrawlKey].urlToSave[urlsToSave[i]] = true; // True is just a placeholder, no other meaning
 
 						// Save URLs
-						database.addURL(urlsToSave[i], htmlToCrawl.html_id, htmlToCrawl.url_id, htmlToCrawl.branches)
+						database.addURL(urlsToSave[i], htmlID, htmlToCrawlProperty[htmlToCrawlKey].url_id, htmlToCrawlProperty[htmlToCrawlKey].branches)
 						.then(() => {
-							urlToSaveFinish(htmlToCrawl.html_id, urlsToSave[i]);
+							main.urlToSaveFinish(htmlToCrawlProperty, htmlToCrawlKey, htmlID, urlsToSave[i]);
 						})
 						.catch((error) => {
 							log('database', 'Error', { data: error });
-							urlToSaveFinish(htmlToCrawl.html_id, urlsToSave[i]);
+							main.urlToSaveFinish(htmlToCrawlProperty, htmlToCrawlKey, htmlID, urlsToSave[i]);
 						});
 					}
 				}
 				else {
-					htmlToCrawlFinish(htmlToCrawl.html_id);
+					main.htmlToCrawlFinish(htmlToCrawlProperty, htmlToCrawlKey, htmlID);
 				}
 			}
 			else {
-				htmlToCrawlFinish(htmlToCrawl.html_id);
+				main.htmlToCrawlFinish(htmlToCrawlProperty, htmlToCrawlKey, htmlID);
 			}
 		}
 		else {
-			htmlToCrawlFinish(htmlToCrawl.html_id);
+			main.htmlToCrawlFinish(htmlToCrawlProperty, htmlToCrawlKey, htmlID);
 		}
 	}
 
+	#crawlHTML(htmlToCrawl) {
+		// Crawl HTML content
+		main.crawlHTMLContent(main.htmlToCrawl, htmlToCrawl.html_id, htmlToCrawl.content, htmlToCrawl.address, htmlToCrawl.html_id);
+	}
+
 	#crawlURL(urlToCrawl) {
-		const urlToCrawlFinish = (urlToCrawlAddress, htmlID='') => {
-			database.finishHTML(htmlID)
-			.catch((error) => {
-				log('database', 'Error', { data: error });
-			})
-			.finally(() => {
-				delete main.urlToCrawl[urlToCrawlAddress];
-
-				console.log('urlToCrawlFinish() -> ' + Object.keys(main.urlToCrawl).length);
-				
-				// No URL to crawl left
-				if(Object.keys(main.urlToCrawl).length === 0) {
-					main.crawl();
-				}
-			});
-		};
-
 		fetch(urlToCrawl.address, {
 			cache: 'no-cache'
 		})
@@ -349,69 +333,17 @@ class Main {
 			// Save HTML
 			database.addHTML(urlToCrawl.url_id, minifiedHTML)
 			.then((htmlResults) => {
-				if(urlToCrawl.canSaveURLs) {
-					const linkSet = new Set();
-					const document = new DOMParser(minifiedHTML);
-					const linkElements = document.querySelectorAll('a[href]');
-					
-					// HTML has at least 1 <a href> element
-					if(linkElements.length > 0) {
-						linkElements.forEach(linkElement => {
-							if(linkElement.getAttribute('href').length > 0) {
-								const absoluteURL = new URL(linkElement.getAttribute('href'), response.url).href;
-								linkSet.add(absoluteURL);
-							}
-						});
-
-						// HTML has at least 1 URL link
-						if(linkSet.size > 0) {
-							const urlToSaveFinish = (urlToCrawlAddress, htmlID, urlToSaveAddress) => {
-								delete urlToCrawl.urlToSave[urlToSaveAddress];
-			
-								console.log('urlToSaveFinish() -> ' + Object.keys(urlToCrawl.urlToSave).length);
-			
-								// No URL to save left (all branches)
-								if(Object.keys(urlToCrawl.urlToSave).length === 0) {
-									urlToCrawlFinish(urlToCrawlAddress, htmlID);
-								}
-							};
-							
-							// Set URLs to save for all branches
-							const urlsToSave = this.#filterURLsToSave(Array.from(linkSet));
-							for(let i = 0; i < urlsToSave.length; i++) {
-								urlToCrawl.urlToSave[urlsToSave[i]] = true; // True is just a placeholder, no other meaning
-
-								// Save URLs
-								database.addURL(urlsToSave[i], htmlResults[1][0].html_id, urlToCrawl.url_id, urlToCrawl.branches)
-								.then(() => {
-									urlToSaveFinish(urlToCrawl.address, htmlResults[1][0].html_id, urlsToSave[i]);
-								})
-								.catch((error) => {
-									log('database', 'Error', { data: error });
-									urlToSaveFinish(urlToCrawl.address, htmlResults[1][0].html_id, urlsToSave[i]);
-								});
-							}
-						}
-						else {
-							urlToCrawlFinish(urlToCrawl.address, htmlResults[1][0].html_id);
-						}
-					}
-					else {
-						urlToCrawlFinish(urlToCrawl.address, htmlResults[1][0].html_id);
-					}
-				}
-				else {
-					urlToCrawlFinish(urlToCrawl.address, htmlResults[1][0].html_id);
-				}
+				// Crawl HTML content
+				main.crawlHTMLContent(main.urlToCrawl, urlToCrawl.address, minifiedHTML, response.url, htmlResults[1][0].html_id);
 			})
 			.catch((error) => {
 				log('database', 'Error', { data: error });
-				urlToCrawlFinish(urlToCrawl.address);
+				main.htmlToCrawlFinish(main.urlToCrawl, urlToCrawl.address);
 			});
 		})
 		.catch((error) => {
 			console.error(error);
-			urlToCrawlFinish(urlToCrawl.address);
+			main.htmlToCrawlFinish(main.urlToCrawl, urlToCrawl.address);
 		});
 	}
 }

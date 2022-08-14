@@ -279,10 +279,12 @@ class Database {
 				url_id BIGINT(20) UNSIGNED NOT NULL,
 				content LONGTEXT NOT NULL,
 				added_at BIGINT(13) UNSIGNED NOT NULL DEFAULT (FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000)),
-				finished_at BIGINT(13) UNSIGNED,
+				crawled_at BIGINT(13) UNSIGNED,
+				scraped_at BIGINT(13) UNSIGNED,
 				PRIMARY KEY(html_id),
 				FOREIGN KEY(url_id) REFERENCES url(url_id),
-				CHECK(added_at <= finished_at)
+				CHECK(added_at <= crawled_at),
+				CHECK(crawled_at <= scraped_at)
 			) ${tableOptions}`,
 			`CREATE TABLE IF NOT EXISTS url_link (
 				url_link_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -305,7 +307,9 @@ class Database {
 			`CREATE TABLE IF NOT EXISTS user (
 				user_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 				added_at BIGINT(13) UNSIGNED NOT NULL DEFAULT (FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000)),
-				PRIMARY KEY(user_id)
+				updated_at BIGINT(13) UNSIGNED,
+				PRIMARY KEY(user_id),
+				CHECK(added_at <= updated_at)
 			) ${tableOptions}`,
 			`CREATE TABLE IF NOT EXISTS account (
 				account_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -532,7 +536,7 @@ class Database {
 					WHERE EXISTS (
 						SELECT 1
 						FROM html
-						WHERE html.url_id = url.url_id AND finished_at IS NULL
+						WHERE html.url_id = url.url_id AND crawled_at IS NULL
 					)
 				) url_unfinished
 				JOIN url_settings ON url_settings.url_id = url_unfinished.url_id AND url_settings.level_limit >= 0 AND url_settings.serial_limit >= 0
@@ -544,7 +548,7 @@ class Database {
 					WHERE EXISTS (
 						SELECT 1
 						FROM html
-						WHERE html.url_id = url.url_id AND finished_at IS NULL
+						WHERE html.url_id = url.url_id AND crawled_at IS NULL
 					)
 				) url_unfinished
 				JOIN url_link ON url_link.url_id = url_unfinished.url_id
@@ -678,10 +682,31 @@ class Database {
 		);
 	}
 
-	// Finish HTML
-	finishHTML(htmlID) {
+	// Finish HTML to crawl
+	finishHTMLToCrawl(htmlID) {
 		return this.#execute(
-			`UPDATE html SET finished_at = FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000) WHERE html_id = ?`,
+			`UPDATE html SET crawled_at = FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000) WHERE html_id = ?`,
+			[
+				htmlID
+			],
+			'Update [html]'
+		);
+	}
+
+	// Get HTML to scrape
+	getHTMLToScrape() {
+		return this.#query(
+			`SELECT html_id, content
+			FROM html
+			WHERE crawled_at IS NOT NULL AND scraped_at IS NULL`,
+			'Select [html_to_scrape]'
+		);
+	}
+
+	// Finish HTML to scrape
+	finishHTMLToScrape(htmlID) {
+		return this.#execute(
+			`UPDATE html SET scraped_at = FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000) WHERE html_id = ?`,
 			[
 				htmlID
 			],

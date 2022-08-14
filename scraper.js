@@ -14,7 +14,11 @@ const Messenger = require('./messenger.js');
 
 // Main class
 class Main {
+	// Messenger
 	#messenger = null;
+
+	// Scraping
+	htmlToScrape;
 
 	// Functions
 	#fn = {
@@ -22,7 +26,7 @@ class Main {
 		run: function() {
 			log('scraper', 'Running');
 
-			// #TODO - start scraping here
+			main.scrape();
 		}
 	};
 
@@ -44,6 +48,74 @@ class Main {
 	// Functions (Scraper -> Server)
 	#init() {
 		this.#messenger.sendFn('init', []);
+	}
+
+	scrape() {
+		database.getHTMLToScrape()
+		.then((results) => {
+			if(results.length == 0) {
+				setTimeout(() => {
+					main.scrape();
+				}, CONFIG.scraper.noHTMLRetryTimeout);
+			}
+			else {
+				main.htmlToScrape = {};
+
+				for(let i = 0; i < results.length; i++) {
+					main.htmlToScrape[results[i].html_id] = {
+						html_id: results[i].html_id,
+						content: results[i].content,
+						address: {}
+					};
+				}
+				
+				// Scrape all HTMLs
+				const htmlToScrapeIDs = Object.keys(main.htmlToScrape);
+				for(let i = 0; i < htmlToScrapeIDs.length; i++) {
+					this.#scrapeHTML(main.htmlToScrape[htmlToScrapeIDs[i]]);
+				}
+			}
+		});
+	}
+
+	htmlToScrapeFinish(htmlToScrapeProperty, htmlToScrapeKey, htmlID='') {
+		database.finishHTMLToScrape(htmlID)
+		.catch((error) => {
+			log('database', 'Error', { data: error });
+		})
+		.finally(() => {
+			delete htmlToScrapeProperty[htmlToScrapeKey];
+
+			// No HTML to scrape left
+			if(Object.keys(htmlToScrapeProperty).length === 0) {
+				main.scrape();
+			}
+		});
+	}
+
+	#scrapeHTML(htmlToScrape) {
+		const document = new DOMParser(htmlToScrape.content);
+
+		// Search addresses
+		const regExp = new RegExp(CONFIG.scraper.regularExpressions.BTC, 'g');
+		const matches = [...htmlToScrape.content.matchAll(regExp)];
+		for(let i = 0; i < matches.length; i++) {
+			if(htmlToScrape.address[matches[i][0]] !== undefined) {
+				htmlToScrape.address[matches[i][0]].count++;
+			}
+			else {
+				htmlToScrape.address[matches[i][0]] = {
+					address: matches[i][0],
+					count: 1
+				};
+			}
+		}
+		console.log(htmlToScrape.address);
+		console.log(Object.keys(htmlToScrape.address).length);
+
+		// #TODO - Problem
+		// bc1qd4ysezhmypwty5dnw7c8nqy5h5nxg0xqsvaefd0qn5kq32vwnwqqgv4rzr
+		// 1qd4ysezhmypwty5dnw7c8nqy5h5 (doesn't exist but is found because the above is splitted by HTML tags)
 	}
 }
 
