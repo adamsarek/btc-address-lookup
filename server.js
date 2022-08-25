@@ -36,8 +36,8 @@ class Main {
 	// Functions
 	#fn = {
 		// Functions (Client -> Server)
-		addURLSettings: function(address, levelLimit, serialLimit, delay) {
-			database.addURLSettings(address, levelLimit, serialLimit, delay)
+		addURLSettings: function(address, depthLimit, queueLimit, delay) {
+			database.addURLSettings(address, depthLimit, queueLimit, delay)
 			.then(() => {
 				// #TODO - Tell crawler worker to add it to its queue
 			})
@@ -45,8 +45,8 @@ class Main {
 				main.terminateClient(this.client, 1, 'database', 'Error', { data: error });
 			});
 		},
-		editURLSettings: function(address, levelLimit, serialLimit, delay) {
-			this.#fn.addURLSettings(address, levelLimit, serialLimit, delay);
+		editURLSettings: function(address, depthLimit, queueLimit, delay) {
+			this.#fn.addURLSettings(address, depthLimit, queueLimit, delay);
 		}
 	};
 

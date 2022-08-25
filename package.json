@@ -12,6 +12,7 @@
 	"author": "Adam Šárek",
 	"license": "ISC",
 	"dependencies": {
+		"bitcoin-address-validation": "^2.x",
 		"express": "^4.x",
 		"@minify-html/node": "^0.x",
 		"mysql2": "^2.x",

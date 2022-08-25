@@ -1,6 +1,7 @@
 'use strict';
 
 // Packages
+const BTCAddressValidation = require('bitcoin-address-validation');
 const DOMParser = require('node-html-parser').parse;
 const WORKER = require('worker_threads');
 
@@ -65,6 +66,7 @@ class Main {
 					main.htmlToScrape[results[i].html_id] = {
 						html_id: results[i].html_id,
 						content: results[i].content,
+						account: {},
 						address: {}
 					};
 				}
@@ -96,6 +98,11 @@ class Main {
 	#scrapeHTML(htmlToScrape) {
 		const document = new DOMParser(htmlToScrape.content);
 
+		// #TODO - Search again using all HTML tags from body to the deepest layer
+		// https://github.com/steven2358/BitcoinSneakPeek/blob/master/src/content_script.js
+		// #TODO - Search accounts: htmlToScrape.account
+		// #TODO - Search addresses: htmlToScrape.address
+
 		// Search addresses
 		const regExp = new RegExp(CONFIG.scraper.regularExpressions.BTC, 'g');
 		const matches = [...htmlToScrape.content.matchAll(regExp)];
@@ -106,16 +113,37 @@ class Main {
 			else {
 				htmlToScrape.address[matches[i][0]] = {
 					address: matches[i][0],
+					currency: null,
+					format: null,
+					valid: BTCAddressValidation.validate(matches[i][0], BTCAddressValidation.Network.mainnet),
+					account: null,
 					count: 1
 				};
+
+				if(htmlToScrape.address[matches[i][0]].valid) {
+					htmlToScrape.address[matches[i][0]].currency = 'BTC';
+					htmlToScrape.address[matches[i][0]].format = BTCAddressValidation.getAddressInfo(matches[i][0]).type.toUpperCase();
+				}
 			}
 		}
 		console.log(htmlToScrape.address);
 		console.log(Object.keys(htmlToScrape.address).length);
 
 		// #TODO - Problem
-		// bc1qd4ysezhmypwty5dnw7c8nqy5h5nxg0xqsvaefd0qn5kq32vwnwqqgv4rzr
-		// 1qd4ysezhmypwty5dnw7c8nqy5h5 (doesn't exist but is found because the above is splitted by HTML tags)
+		// Found incomplete BTC addresses that match the regular expression.
+		// The complete address is in the code separated by HTML tags).
+		// E.g. the address "bc1qd4ysezhmypwty5dnw7c8nqy5h5nxg0xqsvaefd0qn5kq32vwnwqqgv4rzr"
+		// was found as       "1qd4ysezhmypwty5dnw7c8nqy5h5"
+		// on the website "https://bitinfocharts.com/top-100-richest-bitcoin-addresses.html" in the code:
+		// <span style="white-space:nowrap">
+		//     bc1qd4ysezhmypwty5dnw7c8nqy5h5
+		//     <span class="hidden-phone">nxg0xqsvaefd0qn5kq32vwnwqqgv</span>
+		//     <span class="hidden-desktop">..</span>
+		//     4rzr
+		// </span>
+
+		// #TODO - Get all transactions (of the selected address)
+		// https://blockchain.info/rawaddr/34xp4vRoCGJym3xR7yCVPFHoCNxv4Twseo
 	}
 }
 

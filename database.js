@@ -251,6 +251,16 @@ class Database {
 
 	// (Delete +) Create tables
 	createTables() {
+		// #TODO - remove keywords from table & column names
+		// level   -> *depth
+		// serial  -> *queue / sequence / item / count
+		// user    -> *person
+		// account -> *user_account
+		// name    -> *currency_name / concept / network / blockchain
+		// code    -> *currency_code (unit -> *currency_unit, symbol -> *currency_symbol)
+		// format  -> *address_format_name
+		// https://dev.mysql.com/doc/refman/8.0/en/keywords.html
+
 		// Create database tables
 		const tableOptions = `ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE ${CONFIG.database.mysql.charset}`;
 		let queries = [
@@ -264,8 +274,8 @@ class Database {
 			`CREATE TABLE IF NOT EXISTS url_settings (
 				url_settings_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 				url_id BIGINT(20) UNSIGNED NOT NULL,
-				level_limit SMALLINT(4) UNSIGNED NOT NULL DEFAULT 0,
-				serial_limit SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+				depth_limit SMALLINT(4) UNSIGNED NOT NULL DEFAULT 0,
+				queue_limit SMALLINT UNSIGNED NOT NULL DEFAULT 0,
 				delay MEDIUMINT UNSIGNED NOT NULL DEFAULT 1000,
 				added_at BIGINT(13) UNSIGNED NOT NULL DEFAULT (FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000)),
 				updated_at BIGINT(13) UNSIGNED,
@@ -292,8 +302,8 @@ class Database {
 				url_id BIGINT(20) UNSIGNED NOT NULL,
 				url_parent_id BIGINT(20) UNSIGNED NOT NULL,
 				url_root_id BIGINT(20) UNSIGNED NOT NULL,
-				level SMALLINT(4) UNSIGNED NOT NULL DEFAULT 0,
-				serial SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+				depth SMALLINT(4) UNSIGNED NOT NULL DEFAULT 0,
+				queue SMALLINT UNSIGNED NOT NULL DEFAULT 0,
 				added_at BIGINT(13) UNSIGNED NOT NULL DEFAULT (FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000)),
 				PRIMARY KEY(url_link_id),
 				FOREIGN KEY(html_id) REFERENCES html(html_id),
@@ -301,19 +311,19 @@ class Database {
 				FOREIGN KEY(url_parent_id) REFERENCES url(url_id),
 				FOREIGN KEY(url_root_id) REFERENCES url(url_id),
 				UNIQUE (url_id, url_root_id),
-				UNIQUE (url_root_id, serial),
-				CHECK(level <= serial)
+				UNIQUE (url_root_id, queue),
+				CHECK(depth <= queue)
 			) ${tableOptions}`,
-			`CREATE TABLE IF NOT EXISTS user (
-				user_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			`CREATE TABLE IF NOT EXISTS person (
+				person_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 				added_at BIGINT(13) UNSIGNED NOT NULL DEFAULT (FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000)),
 				updated_at BIGINT(13) UNSIGNED,
-				PRIMARY KEY(user_id),
+				PRIMARY KEY(person_id),
 				CHECK(added_at <= updated_at)
 			) ${tableOptions}`,
-			`CREATE TABLE IF NOT EXISTS account (
-				account_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-				user_id BIGINT(20) UNSIGNED,
+			`CREATE TABLE IF NOT EXISTS user_account (
+				user_account_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+				person_id BIGINT(20) UNSIGNED,
 				id CHAR,
 				alias CHAR,
 				nickname CHAR,
@@ -326,18 +336,12 @@ class Database {
 				display_name CHAR,
 				email VARCHAR(320),
 				phone_number CHAR(32),
-				birthday DATE,
+				birthdate DATE,
 				city CHAR(58),
 				country CHAR(3),
-				fiat_currency CHAR(3),
-				job CHAR,
-				religion CHAR(32),
-				race CHAR(32),
 				sex CHAR(1),
-				gender CHAR,
 				picture VARCHAR(768),
 				website VARCHAR(768),
-				blog VARCHAR(768),
 				discord VARCHAR(768),
 				facebook VARCHAR(768),
 				instagram VARCHAR(768),
@@ -346,48 +350,49 @@ class Database {
 				snapchat VARCHAR(768),
 				telegram VARCHAR(768),
 				tiktok VARCHAR(768),
-				tumblr VARCHAR(768),
 				twitch VARCHAR(768),
 				twitter VARCHAR(768),
-				whatsapp VARCHAR(768),
 				youtube VARCHAR(768),
 				added_at BIGINT(13) UNSIGNED NOT NULL DEFAULT (FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000)),
 				updated_at BIGINT(13) UNSIGNED,
-				PRIMARY KEY(account_id),
-				FOREIGN KEY(user_id) REFERENCES user(user_id),
+				PRIMARY KEY(user_account_id),
+				FOREIGN KEY(person_id) REFERENCES person(person_id),
 				CHECK(added_at <= updated_at)
 			) ${tableOptions}`,
-			`CREATE TABLE IF NOT EXISTS account_occurrence (
-				account_occurrence_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-				account_id BIGINT(20) UNSIGNED NOT NULL,
+			`CREATE TABLE IF NOT EXISTS user_account_occurrence (
+				user_account_occurrence_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+				user_account_id BIGINT(20) UNSIGNED NOT NULL,
 				html_id BIGINT(20) UNSIGNED NOT NULL,
+				occurrence_count SMALLINT UNSIGNED NOT NULL DEFAULT 1,
 				added_at BIGINT(13) UNSIGNED NOT NULL DEFAULT (FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000)),
-				PRIMARY KEY(account_occurrence_id),
-				FOREIGN KEY(account_id) REFERENCES account(account_id),
-				FOREIGN KEY(html_id) REFERENCES html(html_id)
+				PRIMARY KEY(user_account_occurrence_id),
+				FOREIGN KEY(user_account_id) REFERENCES user_account(user_account_id),
+				FOREIGN KEY(html_id) REFERENCES html(html_id),
+				UNIQUE(user_account_id, html_id),
+				CHECK(occurrence_count > 0)
 			) ${tableOptions}`,
 			`CREATE TABLE IF NOT EXISTS currency (
 				currency_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-				name CHAR(32) NOT NULL,
-				unit CHAR(32) NOT NULL,
-				code CHAR(8) NOT NULL,
-				symbol CHAR(8) NOT NULL,
-				logo VARCHAR(768),
+				currency_name CHAR(32) NOT NULL,
+				currency_unit CHAR(32) NOT NULL,
+				currency_code CHAR(8) NOT NULL,
+				currency_symbol CHAR(8) NOT NULL,
+				currency_logo VARCHAR(768),
 				added_at BIGINT(13) UNSIGNED NOT NULL DEFAULT (FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000)),
 				updated_at BIGINT(13) UNSIGNED,
 				PRIMARY KEY(currency_id),
-				UNIQUE(name),
-				UNIQUE(code),
-				UNIQUE(symbol),
+				UNIQUE(currency_name),
+				UNIQUE(currency_code),
+				UNIQUE(currency_symbol),
 				CHECK(added_at <= updated_at)
 			) ${tableOptions}`,
 			`CREATE TABLE IF NOT EXISTS address_format (
 				address_format_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-				format CHAR(32) NOT NULL,
+				address_format_name CHAR(32) NOT NULL,
 				added_at BIGINT(13) UNSIGNED NOT NULL DEFAULT (FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000)),
 				updated_at BIGINT(13) UNSIGNED,
 				PRIMARY KEY(address_format_id),
-				UNIQUE(format),
+				UNIQUE(address_format_name),
 				CHECK(added_at <= updated_at)
 			) ${tableOptions}`,
 			`CREATE TABLE IF NOT EXISTS address (
@@ -395,27 +400,26 @@ class Database {
 				currency_id BIGINT(20) UNSIGNED,
 				address_format_id BIGINT(20) UNSIGNED,
 				address CHAR NOT NULL,
-				valid TINYINT(1) UNSIGNED NOT NULL DEFAULT 2,
-				validity_checked_at BIGINT(13) UNSIGNED,
+				valid BIT(1) NOT NULL DEFAULT 0,
 				added_at BIGINT(13) UNSIGNED NOT NULL DEFAULT (FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000)),
-				updated_at BIGINT(13) UNSIGNED,
 				PRIMARY KEY(address_id),
 				FOREIGN KEY(currency_id) REFERENCES currency(currency_id),
 				FOREIGN KEY(address_format_id) REFERENCES address_format(address_format_id),
-				UNIQUE(address),
-				CHECK(added_at <= updated_at)
+				UNIQUE(address)
 			) ${tableOptions}`,
 			`CREATE TABLE IF NOT EXISTS address_occurrence (
 				address_occurrence_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 				address_id BIGINT(20) UNSIGNED NOT NULL,
-				account_occurrence_id BIGINT(20) UNSIGNED,
+				user_account_occurrence_id BIGINT(20) UNSIGNED,
 				html_id BIGINT(20) UNSIGNED NOT NULL,
+				occurrence_count SMALLINT UNSIGNED NOT NULL DEFAULT 1,
 				added_at BIGINT(13) UNSIGNED NOT NULL DEFAULT (FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000)),
 				PRIMARY KEY(address_occurrence_id),
 				FOREIGN KEY(address_id) REFERENCES address(address_id),
-				FOREIGN KEY(account_occurrence_id) REFERENCES account_occurrence(account_occurrence_id),
+				FOREIGN KEY(user_account_occurrence_id) REFERENCES user_account_occurrence(user_account_occurrence_id),
 				FOREIGN KEY(html_id) REFERENCES html(html_id),
-				UNIQUE(account_occurrence_id, html_id)
+				UNIQUE(address_id, user_account_occurrence_id, html_id),
+				CHECK(occurrence_count > 0)
 			) ${tableOptions}`
 		];
 		let once = Array(queries.length).fill(true);
@@ -425,9 +429,9 @@ class Database {
 			'Create table [url_settings]',
 			'Create table [html]',
 			'Create table [url_link]',
-			'Create table [user]',
-			'Create table [account]',
-			'Create table [account_occurrence]',
+			'Create table [person]',
+			'Create table [user_account]',
+			'Create table [user_account_occurrence]',
 			'Create table [currency]',
 			'Create table [address_format]',
 			'Create table [address]',
@@ -465,13 +469,13 @@ class Database {
 					url_settings,
 					html,
 					url_link,
-					account,
-					account_occurrence,
+					person,
+					user_account,
+					user_account_occurrence,
 					currency,
 					address_format,
 					address,
-					address_occurrence,
-					user`,
+					address_occurrence`,
 				`SET FOREIGN_KEY_CHECKS = 1`
 			];
 			once = Array(deleteQueries.length).fill(true).concat(once);
@@ -484,7 +488,7 @@ class Database {
 	}
 
 	// Add / Edit URL + URL settings
-	addURLSettings(address, levelLimit, serialLimit, delay) {
+	addURLSettings(address, depthLimit, queueLimit, delay) {
 		return this.#transact([
 			false,
 			false,
@@ -492,8 +496,8 @@ class Database {
 		], [
 			`INSERT IGNORE INTO url(address) VALUES(?)`,
 			`SELECT url_id INTO @url_id FROM url WHERE address = ? LIMIT 1`,
-			`INSERT INTO url_settings(url_id, level_limit, serial_limit, delay) VALUES(@url_id, ?, ?, ?)
-			ON DUPLICATE KEY UPDATE level_limit = ?, serial_limit = ?, delay = ?, updated_at = (FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000))`
+			`INSERT INTO url_settings(url_id, depth_limit, queue_limit, delay) VALUES(@url_id, ?, ?, ?)
+			ON DUPLICATE KEY UPDATE depth_limit = ?, queue_limit = ?, delay = ?, updated_at = (FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000))`
 		], [
 			[
 				address
@@ -502,11 +506,11 @@ class Database {
 				address
 			],
 			[
-				levelLimit,
-				serialLimit,
+				depthLimit,
+				queueLimit,
 				delay,
-				levelLimit,
-				serialLimit,
+				depthLimit,
+				queueLimit,
 				delay
 			]
 		], [
@@ -519,17 +523,17 @@ class Database {
 	// Get HTML to crawl
 	getHTMLToCrawl() {
 		return this.#query(
-			`SELECT html_id, html_to_crawl.url_id, address, content, url_root_id, level, serial, (
-				SELECT COALESCE(MAX(level), 0)
+			`SELECT html_id, html_to_crawl.url_id, address, content, url_root_id, depth, queue, (
+				SELECT COALESCE(MAX(depth), 0)
 				FROM url_link
 				WHERE url_link.url_root_id = html_to_crawl.url_root_id
-			) AS level_max, (
-				SELECT COALESCE(MAX(serial), 0)
+			) AS depth_max, (
+				SELECT COALESCE(MAX(queue), 0)
 				FROM url_link
 				WHERE url_link.url_root_id = html_to_crawl.url_root_id
-			) AS serial_max, level_limit, serial_limit
+			) AS queue_max, depth_limit, queue_limit
 			FROM (
-				SELECT url_unfinished.url_id, address, url_unfinished.url_id AS url_root_id, 0 AS level, 0 AS serial, level_limit, serial_limit
+				SELECT url_unfinished.url_id, address, url_unfinished.url_id AS url_root_id, 0 AS depth, 0 AS queue, depth_limit, queue_limit
 				FROM (
 					SELECT url_id, address
 					FROM url
@@ -539,9 +543,9 @@ class Database {
 						WHERE html.url_id = url.url_id AND crawled_at IS NULL
 					)
 				) url_unfinished
-				JOIN url_settings ON url_settings.url_id = url_unfinished.url_id AND url_settings.level_limit >= 0 AND url_settings.serial_limit >= 0
+				JOIN url_settings ON url_settings.url_id = url_unfinished.url_id AND url_settings.depth_limit >= 0 AND url_settings.queue_limit >= 0
 				UNION ALL
-				SELECT url_unfinished.url_id, address, url_root_id, level, serial, level_limit, serial_limit
+				SELECT url_unfinished.url_id, address, url_root_id, depth, queue, depth_limit, queue_limit
 				FROM (
 					SELECT url_id, address
 					FROM url
@@ -552,7 +556,7 @@ class Database {
 					)
 				) url_unfinished
 				JOIN url_link ON url_link.url_id = url_unfinished.url_id
-				JOIN url_settings ON url_settings.url_id = url_link.url_root_id AND url_settings.level_limit >= url_link.level AND url_settings.serial_limit >= url_link.serial
+				JOIN url_settings ON url_settings.url_id = url_link.url_root_id AND url_settings.depth_limit >= url_link.depth AND url_settings.queue_limit >= url_link.queue
 			) html_to_crawl
 			JOIN html ON html.url_id = html_to_crawl.url_id`,
 			'Select [html_to_crawl]'
@@ -562,17 +566,17 @@ class Database {
 	// Get URL to crawl
 	getURLToCrawl() {
 		return this.#query(
-			`SELECT url_id, address, url_root_id, level, serial, (
-				SELECT COALESCE(MAX(level), 0)
+			`SELECT url_id, address, url_root_id, depth, queue, (
+				SELECT COALESCE(MAX(depth), 0)
 				FROM url_link
 				WHERE url_link.url_root_id = url_to_crawl.url_root_id
-			) AS level_max, (
-				SELECT COALESCE(MAX(serial), 0)
+			) AS depth_max, (
+				SELECT COALESCE(MAX(queue), 0)
 				FROM url_link
 				WHERE url_link.url_root_id = url_to_crawl.url_root_id
-			) AS serial_max, level_limit, serial_limit, delay
+			) AS queue_max, depth_limit, queue_limit, delay
 			FROM (
-				SELECT url_expired.url_id, address, url_expired.url_id AS url_root_id, 0 AS level, 0 AS serial, level_limit, serial_limit, delay
+				SELECT url_expired.url_id, address, url_expired.url_id AS url_root_id, 0 AS depth, 0 AS queue, depth_limit, queue_limit, delay
 				FROM (
 					SELECT url_id, address
 					FROM url
@@ -582,9 +586,9 @@ class Database {
 						WHERE html.url_id = url.url_id AND FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000) - html.added_at < ${CONFIG.crawler.expirationTimeout}
 					)
 				) url_expired
-				JOIN url_settings ON url_settings.url_id = url_expired.url_id AND url_settings.level_limit >= 0 AND url_settings.serial_limit >= 0
+				JOIN url_settings ON url_settings.url_id = url_expired.url_id AND url_settings.depth_limit >= 0 AND url_settings.queue_limit >= 0
 				UNION ALL
-				SELECT url_expired.url_id, address, url_root_id, level, serial, level_limit, serial_limit, delay
+				SELECT url_expired.url_id, address, url_root_id, depth, queue, depth_limit, queue_limit, delay
 				FROM (
 					SELECT url_id, address
 					FROM url
@@ -595,7 +599,7 @@ class Database {
 					)
 				) url_expired
 				JOIN url_link ON url_link.url_id = url_expired.url_id
-				JOIN url_settings ON url_settings.url_id = url_link.url_root_id AND url_settings.level_limit >= url_link.level AND url_settings.serial_limit >= url_link.serial
+				JOIN url_settings ON url_settings.url_id = url_link.url_root_id AND url_settings.depth_limit >= url_link.depth AND url_settings.queue_limit >= url_link.queue
 			) url_to_crawl
 			WHERE NOT EXISTS (
 				SELECT 1
@@ -653,21 +657,21 @@ class Database {
 		for(let i = 0; i < branches.length; i++) {
 			once.push(false);
 			queries.push(
-				`INSERT INTO url_link(html_id, url_id, url_parent_id, url_root_id, level, serial)
-				SELECT ? AS html_id, (SELECT url_id FROM url WHERE address = ? LIMIT 1) AS url_id, ? AS url_parent_id, ? AS url_root_id, ? AS level, (COALESCE(MAX(serial), 0) + 1) AS serial_max
+				`INSERT INTO url_link(html_id, url_id, url_parent_id, url_root_id, depth, queue)
+				SELECT ? AS html_id, (SELECT url_id FROM url WHERE address = ? LIMIT 1) AS url_id, ? AS url_parent_id, ? AS url_root_id, ? AS depth, (COALESCE(MAX(queue), 0) + 1) AS queue_max
 				FROM url_settings
 				LEFT JOIN url_link ON url_link.url_root_id = url_settings.url_id
 				WHERE (
 					url_settings.url_id = (SELECT url_id FROM url WHERE address = ? LIMIT 1)
 					OR url_settings.url_id = ?
-				) AND (COALESCE(serial, 0) < serial_limit)
+				) AND (COALESCE(queue, 0) < queue_limit)
 				LIMIT 1`);
 			params.push([
 				htmlID,
 				address,
 				urlParentID,
 				branches[i].url_root_id,
-				branches[i].level + 1,
+				branches[i].depth + 1,
 				address,
 				branches[i].url_root_id
 			]);

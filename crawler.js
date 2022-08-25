@@ -65,18 +65,18 @@ class Main {
 				main.htmlToCrawl = {};
 
 				for(let i = 0; i < results.length; i++) {
-					let canSaveURLs = results[i].level_max < results[i].level_limit && results[i].serial_max < results[i].serial_limit;
+					let canSaveURLs = results[i].depth_max < results[i].depth_limit && results[i].queue_max < results[i].queue_limit;
 					
 					if(main.htmlToCrawl[results[i].html_id] !== undefined) {
 						if(canSaveURLs) {
 							main.htmlToCrawl[results[i].html_id].branches.push({
 								url_root_id: results[i].url_root_id,
-								level: results[i].level,
-								serial: results[i].serial,
-								level_max: results[i].level_max,
-								serial_max: results[i].serial_max,
-								level_limit: results[i].level_limit,
-								serial_limit: results[i].serial_limit
+								depth: results[i].depth,
+								queue: results[i].queue,
+								depth_max: results[i].depth_max,
+								queue_max: results[i].queue_max,
+								depth_limit: results[i].depth_limit,
+								queue_limit: results[i].queue_limit
 							});
 
 							if(!main.htmlToCrawl[results[i].html_id].canSaveURLs) {
@@ -89,12 +89,12 @@ class Main {
 						if(canSaveURLs) {
 							branches = [{
 								url_root_id: results[i].url_root_id,
-								level: results[i].level,
-								serial: results[i].serial,
-								level_max: results[i].level_max,
-								serial_max: results[i].serial_max,
-								level_limit: results[i].level_limit,
-								serial_limit: results[i].serial_limit
+								depth: results[i].depth,
+								queue: results[i].queue,
+								depth_max: results[i].depth_max,
+								queue_max: results[i].queue_max,
+								depth_limit: results[i].depth_limit,
+								queue_limit: results[i].queue_limit
 							}];
 						}
 
@@ -131,18 +131,18 @@ class Main {
 						main.urlToCrawl = {};
 
 						for(let i = 0; i < results.length; i++) {
-							let canSaveURLs = results[i].level_max < results[i].level_limit && results[i].serial_max < results[i].serial_limit;
+							let canSaveURLs = results[i].depth_max < results[i].depth_limit && results[i].queue_max < results[i].queue_limit;
 							
 							if(main.urlToCrawl[results[i].address] !== undefined) {
 								if(canSaveURLs) {
 									main.urlToCrawl[results[i].address].branches.push({
 										url_root_id: results[i].url_root_id,
-										level: results[i].level,
-										serial: results[i].serial,
-										level_max: results[i].level_max,
-										serial_max: results[i].serial_max,
-										level_limit: results[i].level_limit,
-										serial_limit: results[i].serial_limit
+										depth: results[i].depth,
+										queue: results[i].queue,
+										depth_max: results[i].depth_max,
+										queue_max: results[i].queue_max,
+										depth_limit: results[i].depth_limit,
+										queue_limit: results[i].queue_limit
 									});
 
 									if(!main.urlToCrawl[results[i].address].canSaveURLs) {
@@ -155,12 +155,12 @@ class Main {
 								if(canSaveURLs) {
 									branches = [{
 										url_root_id: results[i].url_root_id,
-										level: results[i].level,
-										serial: results[i].serial,
-										level_max: results[i].level_max,
-										serial_max: results[i].serial_max,
-										level_limit: results[i].level_limit,
-										serial_limit: results[i].serial_limit
+										depth: results[i].depth,
+										queue: results[i].queue,
+										depth_max: results[i].depth_max,
+										queue_max: results[i].queue_max,
+										depth_limit: results[i].depth_limit,
+										queue_limit: results[i].queue_limit
 									}];
 								}
 
@@ -307,7 +307,11 @@ class Main {
 
 	#crawlURL(urlToCrawl) {
 		fetch(urlToCrawl.address, {
-			cache: 'no-cache'
+			method: 'GET',
+			mode: 'cors',
+			cache: 'no-cache',
+			redirect: 'follow',
+			referrerPolicy: 'no-referrer'
 		})
 		.then(response => {
 			const { url, status, headers } = response;
