@@ -14,7 +14,7 @@ const WORKER = require('worker_threads');
 const WS = require('ws');
 
 // Global configuration
-const CONFIG = Object.freeze(require('./config.js'));
+const CONFIG = Object.freeze(require('./config.json'));
 
 // Global classes
 const { log } = require('./logger.js');

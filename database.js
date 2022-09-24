@@ -3,8 +3,9 @@
 // Packages
 const MYSQL = require('mysql2');
 
-// Global configuration
-const CONFIG = Object.freeze(require('./config.js'));
+// Global configuration / secret
+const CONFIG = Object.freeze(require('./config.json'));
+const SECRET = Object.freeze(require('./secret.js'));
 
 // Global classes
 const { log } = require('./logger.js');
@@ -12,7 +13,7 @@ const { log } = require('./logger.js');
 // Database class
 class Database {
 	// Database connection pool
-	#connectionPool = MYSQL.createPool(CONFIG.database.mysql);
+	#connectionPool = MYSQL.createPool({ ...SECRET.database.mysql, ...CONFIG.database.mysql });
 
 	// Raw functions (connection needed)
 	#rawQuery(connection, query, msg='') {

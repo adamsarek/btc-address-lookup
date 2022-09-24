@@ -1,0 +1,57 @@
+{
+	"database": {
+		"mysql": {
+			"charset": "utf8mb4_0900_ai_ci",
+			"connectTimeout": 10000,
+			"supportBigNumbers": true,
+			"bigNumberStrings": false,
+			"trace": false,
+			"multipleStatements": false,
+			"connectionLimit": 3
+		},
+		"deleteTables": false,
+		"data": {
+			"currency": [
+				{ "currency_name": "Bitcoin", "currency_unit": "bitcoin", "currency_code": "BTC", "currency_symbol": "₿", "currency_logo": "https://btc-address-lookup.herokuapp.com/img/BTC.svg" }
+			],
+			"address_format": [
+				{ "address_format_name": "P2PKH" },
+				{ "address_format_name": "P2SH" },
+				{ "address_format_name": "P2WPKH" },
+				{ "address_format_name": "P2WSH" },
+				{ "address_format_name": "P2TR" }
+			]
+		}
+	},
+	"server": {
+		"localHTML": true
+	},
+	"websocket": {
+		"allowedOrigins": [
+			{ "protocol": "http",  "hostname": "localhost" },
+			{ "protocol": "https", "hostname": "btc-address-lookup.herokuapp.com" },
+			{ "protocol": "http",  "hostname": "btc-address-lookup.cf" }
+		]
+	},
+	"worker": {
+		"crawler": { "file": "./crawler.js", "type": "crawler" },
+		"scraper": { "file": "./scraper.js", "type": "scraper" }
+	},
+	"crawler": {
+		"noURLRetryTimeout": 10000,
+		"expirationTimeout": 604800000,
+		"allowedProtocols": [
+			"http",
+			"https"
+		],
+		"ignoredURLs": [
+			""
+		]
+	},
+	"scraper": {
+		"noHTMLRetryTimeout": 10000,
+		"regularExpressions": {
+			"BTC": "(?:[13]{1}[a-km-zA-HJ-NP-Z1-9]{26,33}|bc1[a-z0-9]{39,59})"
+		}
+	}
+}

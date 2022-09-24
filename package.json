@@ -16,7 +16,7 @@
 		"express": "^4.x",
 		"@minify-html/node": "^0.x",
 		"mysql2": "^2.x",
-		"node-html-parser": "^5.x",
+		"node-html-parser": "^6.x",
 		"ws": "^8.x"
 	},
 	"optionalDependencies": {

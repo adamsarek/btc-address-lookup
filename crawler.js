@@ -7,7 +7,7 @@ const MINIFY_HTML = require('@minify-html/node');
 const WORKER = require('worker_threads');
 
 // Global configuration
-const CONFIG = Object.freeze(require('./config.js'));
+const CONFIG = Object.freeze(require('./config.json'));
 
 // Global classes
 const { log } = require('./logger.js');
