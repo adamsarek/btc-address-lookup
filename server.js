@@ -24,8 +24,8 @@ const Messenger = require('./messenger.js');
 // Main class
 class Main {
 	// Server configuration
-	#protocol = 'wss';
-	#host = process.env.HOST || 'localhost';
+	#protocol = process.env.PROTOCOL || 'wss';
+	#host = process.env.HOST || process.env.HOSTNAME || 'localhost';
 	#port = process.env.PORT || 3000;
 
 	// Data

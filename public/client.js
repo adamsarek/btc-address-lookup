@@ -1,5 +1,5 @@
 class WebSocketClient {
-	host = (new URL(location.origin).hostname == 'localhost' ? location.origin.replace(/^http/, 'ws') : 'wss://long-teal-grasshopper-tutu.cyclic.app');
+	host = (new URL(location.origin).hostname == 'localhost' ? location.origin.replace(/^http/, 'ws') : 'wss://btc-address-lookup.onrender.com');
 	ws = null;
 	
 	constructor() {

@@ -29,8 +29,7 @@
 	"websocket": {
 		"allowedOrigins": [
 			{ "protocol": "http",  "hostname": "localhost" },
-			{ "protocol": "https", "hostname": "long-teal-grasshopper-tutu.cyclic.app" },
-			{ "protocol": "https", "hostname": "btc-address-lookup.cyclic.app" },
+			{ "protocol": "https", "hostname": "btc-address-lookup.onrender.com" },
 			{ "protocol": "http",  "hostname": "btc-address-lookup.cf" }
 		]
 	},
