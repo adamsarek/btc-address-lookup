@@ -1,5 +1,5 @@
 class WebSocketClient {
-	host = (new URL(location.origin).hostname == 'localhost' ? location.origin.replace(/^http/, 'ws') : 'wss://btc-address-lookup.herokuapp.com');
+	host = (new URL(location.origin).hostname == 'localhost' ? location.origin.replace(/^http/, 'ws') : 'wss://btc-address-lookup.cyclic.app');
 	ws = null;
 	
 	constructor() {
