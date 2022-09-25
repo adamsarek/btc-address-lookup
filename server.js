@@ -4,6 +4,7 @@
 // Scraping - extracting data
 //["addURLSettings",["http://adamsarek.eu",16,256,1000]]
 //["addURLSettings",["https://bitinfocharts.com/top-100-richest-bitcoin-addresses.html",0,0,1000]]
+// #TODO - Crawling options - twitter, reddit
 
 // Packages
 const EXPRESS = require('express');
