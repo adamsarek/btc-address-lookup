@@ -4,115 +4,236 @@
 const CRYPTO = require('crypto');
 const FS = require('fs');
 
-// Global secret
-let SECRET = null;
-const algorithm = 'aes-256-cbc';
-const pubSecretFileName = './pub-secret.json';
-const secretFileName = './secret.json';
-const keyFileName = './key.txt';
-try {
-	const pubSecretFileExists = FS.existsSync(pubSecretFileName);
-	const secretFileExists = FS.existsSync(secretFileName);
-	const keyFileExists = FS.existsSync(keyFileName);
+// Global configuration
+const CONFIG = Object.freeze(require('./config.json'));
 
-	const key = (keyFileExists ? FS.readFileSync(keyFileName) : (process.env.KEY !== undefined ? process.env.KEY : null));
+// Secret class
+class Secret {
+	// Algorithms - hash, encrypt
+	#hashAlgorithm = CONFIG.secret.hashAlgorithm;
+	#encryptAlgorithm = CONFIG.secret.encryptAlgorithm;
+	#encryptedFiles = CONFIG.secret.encryptedFiles;
 
-	const encrypt = (secretFileStats, key='') => {
+	constructor() {
+		// Update encrypted files (generate new public files if necessary)
+		const encryptedFileKeys = Object.keys(this.#encryptedFiles);
+		for(let i = 0; i < encryptedFileKeys.length; i++) {
+			this.#updateEncryptedFileData(encryptedFileKeys[i]);
+		}
+	}
+
+	#getDataHash(data) {
+		const hash = CRYPTO.createHash(this.#hashAlgorithm);
+		hash.update(data);
+
+		return hash.digest('hex');
+	}
+
+	getFileHash(filePath) {
+		const data = FS.readFileSync(filePath);
+
+		return this.#getDataHash(data);
+	}
+
+	verifyFileIntegrity(filePath, hash) {
+		return (this.getFileHash(filePath) == hash);
+	}
+
+	#encryptData(data, key) {
+		// Generate initialization vector
+		const iv = CRYPTO.randomBytes(16).toString('hex').slice(0, 16);
+
+		// Cipher
+		const cipher = CRYPTO.createCipheriv(this.#encryptAlgorithm, key, iv);
+
+		// Encrypt data
+		const encryptedData = cipher.update(data, 'utf-8', 'hex') + cipher.final('hex');
+
+		// Return encrypted JSON
+		return {
+			iv: iv,
+			data: encryptedData
+		};
+	}
+
+	#decryptData(encryptedJSON, key) {
+		// Get initialization vector
+		const iv = encryptedJSON.iv;
+
+		// Get encrypted data
+		const encryptedData = encryptedJSON.data;
+
+		// Decipher
+		const decipher = CRYPTO.createDecipheriv(this.#encryptAlgorithm, key, iv);
+
+		// Decrypt encrypted data
+		const decryptedData = decipher.update(encryptedData, 'hex', 'utf-8') + decipher.final('utf-8');
+
+		// Return decrypted data
+		return decryptedData;
+	}
+
+	#encryptFile(filePath, fileStats, publicFilePath, keyFilePath, key) {
 		// Generate key
 		if(key.length == 0) {
 			key = CRYPTO.randomBytes(32).toString('hex').slice(0, 32);
 
 			// Save key
-			FS.writeFileSync(keyFileName, key);
+			FS.writeFileSync(keyFilePath, key);
 		}
 
-		// Generate initialization vector
-		const iv = CRYPTO.randomBytes(16).toString('hex').slice(0, 16);
+		// Load original JSON
+		const originalJSON = require(filePath);
 
-		// Cipher
-		const cipher = CRYPTO.createCipheriv(algorithm, key, iv);
-		
-		// Encrypt original secret
-		const secret = require(secretFileName);
-		const encryptedData = cipher.update(JSON.stringify(secret), 'utf-8', 'hex') + cipher.final('hex');
+		// Encrypt original JSON
+		const encryptedJSON = this.#encryptData(JSON.stringify(originalJSON), key);
 
-		// Create public secret
-		const pubSecret = {
-			mtimeMs: secretFileStats.mtimeMs,
-			iv: iv,
-			data: encryptedData
+		// Create public JSON
+		const publicJSON = {
+			mtimeMs: fileStats.mtimeMs,
+			iv: encryptedJSON.iv,
+			data: encryptedJSON.data
 		};
 
-		// Save public secret
-		FS.writeFileSync(pubSecretFileName, JSON.stringify(pubSecret));
+		// Save public JSON
+		FS.writeFileSync(publicFilePath, JSON.stringify(publicJSON));
 
-		// Use original secret
-		return secret;
-	};
-	const decrypt = (key) => {
-		// Load public secret
-		const pubSecret = require(pubSecretFileName);
+		// Return original JSON
+		return originalJSON;
+	}
 
-		// Get initialization vector
-		const iv = pubSecret.iv;
+	#decryptFile(publicFilePath, key) {
+		// Load public JSON
+		const publicJSON = require(publicFilePath);
 
-		// Get encrypted secret
-		const encryptedData = pubSecret.data;
+		// Decrypt public JSON
+		const decryptedData = this.#decryptData(publicJSON, key);
 
-		// Decipher
-		const decipher = CRYPTO.createDecipheriv(algorithm, key, iv);
-
-		// Decrypt encrypted secret
-		const decryptedData = decipher.update(encryptedData, 'hex', 'utf-8') + decipher.final('utf-8');
-
-		// Use decrypted secret
+		// Return decrypted JSON
 		return JSON.parse(decryptedData);
-	};
+	}
 
-	if(pubSecretFileExists) {
-		if(secretFileExists) {
-			const pubSecret = require(pubSecretFileName);
-			const secretFileStats = FS.statSync(secretFileName);
-			
-			if(pubSecret.mtimeMs >= secretFileStats.mtimeMs) {
-				// Use original secret
-				SECRET = require(secretFileName);
+	// Update encrypted files (generate new public files if necessary)
+	#updateEncryptedFileData(encryptedFileKey) {
+		// Get paths from key
+		const filePath = this.#encryptedFiles[encryptedFileKey].filePath;
+		const publicFilePath = this.#encryptedFiles[encryptedFileKey].publicFilePath;
+		const keyFilePath = this.#encryptedFiles[encryptedFileKey].keyFilePath;
+		
+		// File exist checks
+		const fileExists = FS.existsSync(filePath);
+		const publicFileExists = FS.existsSync(publicFilePath);
+		const keyFileExists = FS.existsSync(keyFilePath);
+
+		// Get key from path / process environment
+		const key = (keyFileExists ? FS.readFileSync(keyFilePath) : (process.env.KEY !== undefined ? process.env.KEY : null));
+
+		if(publicFileExists) {
+			if(fileExists) {
+				const publicJSON = require(publicFilePath);
+				const fileStats = FS.statSync(filePath);
+				
+				if(publicJSON.mtimeMs < fileStats.mtimeMs) {
+					// Encrypt
+					return this.#encryptFile(filePath, fileStats, publicFilePath, keyFilePath, key);
+				}
+			}
+			else if(key.length == 0) {
+				throw '[SECRET] Encryption key not found!';
+			}
+		}
+		else if(fileExists) {
+			const fileStats = FS.statSync(filePath);
+
+			// Encrypt
+			return this.#encryptFile(filePath, fileStats, publicFilePath, keyFilePath, key);
+		}
+		else {
+			throw '[SECRET] File not found!';
+		}
+	}
+
+	getEncryptedFileData(encryptedFileKey) {
+		// Get paths from key
+		const filePath = this.#encryptedFiles[encryptedFileKey].filePath;
+		const publicFilePath = this.#encryptedFiles[encryptedFileKey].publicFilePath;
+		const keyFilePath = this.#encryptedFiles[encryptedFileKey].keyFilePath;
+
+		// File exist checks
+		const fileExists = FS.existsSync(filePath);
+		const publicFileExists = FS.existsSync(publicFilePath);
+		const keyFileExists = FS.existsSync(keyFilePath);
+
+		// Get key from path / process environment
+		const key = (keyFileExists ? FS.readFileSync(keyFilePath) : (process.env.KEY !== undefined ? process.env.KEY : null));
+
+		if(publicFileExists) {
+			if(fileExists) {
+				const publicJSON = require(publicFilePath);
+				const fileStats = FS.statSync(filePath);
+				
+				if(publicJSON.mtimeMs >= fileStats.mtimeMs) {
+					// Get original JSON
+					return require(filePath);
+				}
+				else {
+					// Encrypt
+					return this.#encryptFile(filePath, fileStats, publicFilePath, keyFilePath, key);
+				}
 			}
 			else if(key != null) {
-				// Encrypt (with existing key)
-				SECRET = encrypt(secretFileStats, key);
+				// Decrypt
+				return this.#decryptFile(publicFilePath, key);
 			}
 			else {
-				// Encrypt (with new generated key)
-				SECRET = encrypt(secretFileStats);
+				throw '[SECRET] Encryption key not found!';
 			}
 		}
-		else if(key != null) {
-			// Decrypt (with existing key)
-			SECRET = decrypt(key);
-		}
-		else {
-			throw '[SECRET] Key not found!';
-		}
-	}
-	else if(secretFileExists) {
-		const secretFileStats = FS.statSync(secretFileName);
+		else if(fileExists) {
+			const fileStats = FS.statSync(filePath);
 
-		if(key != null) {
-			// Encrypt (with existing key)
-			SECRET = encrypt(secretFileStats, key);
+			// Encrypt
+			return this.#encryptFile(filePath, fileStats, publicFilePath, keyFilePath, key);
 		}
 		else {
-			// Encrypt (with new generated key)
-			SECRET = encrypt(secretFileStats);
+			throw '[SECRET] File not found!';
 		}
 	}
-	else {
-		throw '[SECRET] Secret not found!';
+
+	/*
+	getEncryptedFileData(encryptedFileKey) {
+		// Get paths from key
+		const filePath = this.#encryptedFiles[encryptedFileKey].filePath;
+		const publicFilePath = this.#encryptedFiles[encryptedFileKey].publicFilePath;
+		const keyFilePath = this.#encryptedFiles[encryptedFileKey].keyFilePath;
+
+		// File exist checks
+		const fileExists = FS.existsSync(filePath);
+		const publicFileExists = FS.existsSync(publicFilePath);
+		const keyFileExists = FS.existsSync(keyFilePath);
+
+		// Get key from path / process environment
+		const key = (keyFileExists ? FS.readFileSync(keyFilePath) : (process.env.KEY !== undefined ? process.env.KEY : null));
+
+		if(fileExists) {
+			// Get original JSON
+			return require(filePath);
+		}
+		else if(publicFileExists) {
+			if(key != null) {
+				// Decrypt
+				return this.#decryptFile(publicFilePath, key);
+			}
+			else {
+				throw '[SECRET] Encryption key not found!';
+			}
+		}
+		else {
+			throw '[SECRET] File not found!';
+		}
 	}
-} catch(error) {
-	throw error;
+	*/
 }
 
 // Exports
-module.exports = SECRET;
+module.exports = Secret;

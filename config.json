@@ -23,6 +23,13 @@
 			]
 		}
 	},
+	"secret": {
+		"hashAlgorithm": "sha256",
+		"encryptAlgorithm": "aes-256-cbc",
+		"encryptedFiles": {
+			"database": { "filePath": "./db.json", "publicFilePath": "./pub-db.json", "keyFilePath": "./key.txt" }
+		}
+	},
 	"server": {
 		"localHTML": true
 	},
