@@ -78,6 +78,12 @@ class Main {
 		.listen(this.#port, () => {
 			log('server', 'Started', { address: `${this.#protocol}://${this.#host}:${this.#port}` });
 
+			// Delete crawled HTML files
+			if(CONFIG.database.deleteTables === true) {
+				FS.rmSync(CONFIG.crawler.htmlFilePath, { recursive: true, force: true });
+			}
+
+			// Create database tables
 			database.createTables()
 			.then(() => {
 				// Run workers

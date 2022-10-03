@@ -22,21 +22,37 @@ class Secret {
 		}
 	}
 
-	#getDataHash(data) {
-		const hash = CRYPTO.createHash(this.#hashAlgorithm);
-		hash.update(data);
+	getDataHash(data) {
+		const dataHash = CRYPTO.createHash(this.#hashAlgorithm);
+		dataHash.update(data);
 
-		return hash.digest('hex');
+		return dataHash.digest('hex');
 	}
 
 	getFileHash(filePath) {
 		const data = FS.readFileSync(filePath);
 
-		return this.#getDataHash(data);
+		return this.getDataHash(data);
 	}
 
-	verifyFileIntegrity(filePath, hash) {
-		return (this.getFileHash(filePath) == hash);
+	verifyDataIntegrity(data, dataHash) {
+		return (this.getDataHash(data) == dataHash);
+	}
+
+	verifyFileIntegrity(filePath, fileHash) {
+		return (this.getFileHash(filePath) == fileHash);
+	}
+
+	getDataByHash(data, fileHash) {
+		if(this.verifyDataIntegrity(data, fileHash)) {
+			return data;
+		}
+		else if(this.verifyFileIntegrity(`${CONFIG.crawler.htmlFilePath}/${fileHash}.html`, fileHash)) {
+			return FS.readFileSync(`${CONFIG.crawler.htmlFilePath}/${fileHash}.html`).toString();
+		}
+		else {
+			throw '[SECRET] Neither data & file could be verified!';
+		}
 	}
 
 	#encryptData(data, key) {

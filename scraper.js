@@ -12,6 +12,7 @@ const CONFIG = Object.freeze(require('./config.json'));
 const { log } = require('./logger.js');
 const Database = require('./database.js');
 const Messenger = require('./messenger.js');
+const Secret = require('./secret.js');
 
 // Main class
 class Main {
@@ -65,7 +66,8 @@ class Main {
 				for(let i = 0; i < results.length; i++) {
 					main.htmlToScrape[results[i].html_id] = {
 						html_id: results[i].html_id,
-						content: results[i].content,
+						content: new Secret().getDataByHash(results[i].content, results[i].file_hash),
+						fileHash: results[i].file_hash,
 						account: {},
 						address: {}
 					};
@@ -96,6 +98,7 @@ class Main {
 	}
 
 	#scrapeHTML(htmlToScrape) {
+		// DOM Parse
 		const document = new DOMParser(htmlToScrape.content);
 
 		// #TODO - Search again using all HTML tags from body to the deepest layer

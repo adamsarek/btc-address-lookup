@@ -48,6 +48,7 @@
 		"noURLRetryTimeout": 10000,
 		"expirationTimeout": 604800000,
 		"minifyHTML": false,
+		"htmlFilePath": "./crawled_html",
 		"allowedProtocols": [
 			"http",
 			"https"

@@ -3,6 +3,7 @@
 // Packages
 const DOMParser = require('node-html-parser').parse;
 const { Buffer } = require('node:buffer');
+const FS = require('fs');
 const MINIFY_HTML = require('@minify-html/node');
 const WORKER = require('worker_threads');
 
@@ -13,6 +14,7 @@ const CONFIG = Object.freeze(require('./config.json'));
 const { log } = require('./logger.js');
 const Database = require('./database.js');
 const Messenger = require('./messenger.js');
+const Secret = require('./secret.js');
 
 // Main class
 class Main {
@@ -102,7 +104,8 @@ class Main {
 							html_id: results[i].html_id,
 							url_id: results[i].url_id,
 							address: results[i].address,
-							content: results[i].content,
+							content: new Secret().getDataByHash(results[i].content, results[i].file_hash),
+							fileHash: results[i].file_hash,
 							branches: branches,
 							canSaveURLs: canSaveURLs,
 							urlToSave: {}
@@ -338,8 +341,15 @@ class Main {
 				}).toString();
 			}
 
-			// Save HTML
-			database.addHTML(urlToCrawl.url_id, html)
+			// Get HTML hash
+			const htmlHash = new Secret().getDataHash(html);
+
+			// Save HTML file
+			FS.mkdirSync(CONFIG.crawler.htmlFilePath, { recursive: true });
+			FS.writeFileSync(`${CONFIG.crawler.htmlFilePath}/${htmlHash}.html`, html);
+
+			// Save HTML hash
+			database.addHTML(urlToCrawl.url_id, html, htmlHash)
 			.then((htmlResults) => {
 				// Crawl HTML content
 				main.crawlHTMLContent(main.urlToCrawl, urlToCrawl.address, html, response.url, htmlResults[1][0].html_id);

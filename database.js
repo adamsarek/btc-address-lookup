@@ -292,6 +292,7 @@ class Database {
 				html_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 				url_id BIGINT(20) UNSIGNED NOT NULL,
 				content LONGTEXT NOT NULL,
+				file_hash CHAR(64) NOT NULL,
 				added_at BIGINT(13) UNSIGNED NOT NULL DEFAULT (FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000)),
 				crawled_at BIGINT(13) UNSIGNED,
 				scraped_at BIGINT(13) UNSIGNED,
@@ -328,16 +329,16 @@ class Database {
 			`CREATE TABLE IF NOT EXISTS user_account (
 				user_account_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 				person_id BIGINT(20) UNSIGNED,
-				id CHAR,
-				alias CHAR,
-				nickname CHAR,
-				name_tag CHAR,
-				name_prefix CHAR,
-				name_suffix CHAR,
-				first_name CHAR,
-				middle_name CHAR,
-				last_name CHAR,
-				display_name CHAR,
+				id TINYTEXT,
+				alias TINYTEXT,
+				nickname TINYTEXT,
+				name_tag TINYTEXT,
+				name_prefix TINYTEXT,
+				name_suffix TINYTEXT,
+				first_name TINYTEXT,
+				middle_name TINYTEXT,
+				last_name TINYTEXT,
+				display_name TINYTEXT,
 				email VARCHAR(320),
 				phone_number CHAR(32),
 				birthdate DATE,
@@ -403,7 +404,7 @@ class Database {
 				address_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 				currency_id BIGINT(20) UNSIGNED,
 				address_format_id BIGINT(20) UNSIGNED,
-				address CHAR NOT NULL,
+				address CHAR(255) NOT NULL,
 				valid BIT(1) NOT NULL DEFAULT 0,
 				added_at BIGINT(13) UNSIGNED NOT NULL DEFAULT (FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000)),
 				PRIMARY KEY(address_id),
@@ -527,7 +528,7 @@ class Database {
 	// Get HTML to crawl
 	getHTMLToCrawl() {
 		return this.#query(
-			`SELECT html_id, html_to_crawl.url_id, address, content, url_root_id, depth, queue, (
+			`SELECT html_id, html_to_crawl.url_id, address, content, file_hash, url_root_id, depth, queue, (
 				SELECT COALESCE(MAX(depth), 0)
 				FROM url_link
 				WHERE url_link.url_root_id = html_to_crawl.url_root_id
@@ -623,24 +624,26 @@ class Database {
 	}
 
 	// Add HTML
-	addHTML(urlID, content) {
+	addHTML(urlID, content, fileHash) {
 		return this.#executeAll(
 			[
 				false,
 				false
 			],
 			[
-				`INSERT IGNORE INTO html(url_id, content) VALUES(?, ?)`,
-				`SELECT html_id FROM html WHERE url_id = ? AND content = ? ORDER BY added_at DESC LIMIT 1`
+				`INSERT IGNORE INTO html(url_id, content, file_hash) VALUES(?, ?, ?)`,
+				`SELECT html_id FROM html WHERE url_id = ? AND content = ? AND file_hash = ? ORDER BY added_at DESC LIMIT 1`
 			],
 			[
 				[
 					urlID,
-					content
+					content,
+					fileHash
 				],
 				[
 					urlID,
-					content
+					content,
+					fileHash
 				]
 			],
 			[
@@ -704,7 +707,7 @@ class Database {
 	// Get HTML to scrape
 	getHTMLToScrape() {
 		return this.#query(
-			`SELECT html_id, content
+			`SELECT html_id, content, file_hash
 			FROM html
 			WHERE crawled_at IS NOT NULL AND scraped_at IS NULL`,
 			'Select [html_to_scrape]'
