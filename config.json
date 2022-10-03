@@ -47,6 +47,7 @@
 	"crawler": {
 		"noURLRetryTimeout": 10000,
 		"expirationTimeout": 604800000,
+		"minifyHTML": false,
 		"allowedProtocols": [
 			"http",
 			"https"

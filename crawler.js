@@ -321,24 +321,28 @@ class Main {
 		})
 		.then(response => {
 			const html = response.body;
-			const minifiedHTML = MINIFY_HTML.minify(Buffer.from(html), {
-				do_not_minify_doctype: true,
-				ensure_spec_compliant_unquoted_attribute_values: true,
-				keep_closing_tags: true,
-				keep_html_and_head_opening_tags: true,
-				keep_spaces_between_attributes: true,
-				keep_comments: true,
-				minify_css: true,
-				minify_js: true,
-				remove_bangs: false,
-				remove_processing_instructions: false
-			}).toString();
+			
+			// Minify HTML
+			if(CONFIG.crawler.minifyHTML) {
+				html = MINIFY_HTML.minify(Buffer.from(html), {
+					do_not_minify_doctype: true,
+					ensure_spec_compliant_unquoted_attribute_values: true,
+					keep_closing_tags: true,
+					keep_html_and_head_opening_tags: true,
+					keep_spaces_between_attributes: true,
+					keep_comments: true,
+					minify_css: true,
+					minify_js: true,
+					remove_bangs: false,
+					remove_processing_instructions: false
+				}).toString();
+			}
 
 			// Save HTML
-			database.addHTML(urlToCrawl.url_id, minifiedHTML)
+			database.addHTML(urlToCrawl.url_id, html)
 			.then((htmlResults) => {
 				// Crawl HTML content
-				main.crawlHTMLContent(main.urlToCrawl, urlToCrawl.address, minifiedHTML, response.url, htmlResults[1][0].html_id);
+				main.crawlHTMLContent(main.urlToCrawl, urlToCrawl.address, html, response.url, htmlResults[1][0].html_id);
 			})
 			.catch((error) => {
 				log('database', 'Error', { data: error });
