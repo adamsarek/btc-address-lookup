@@ -1,23 +1,31 @@
 # BTC Address Lookup (Master Thesis)
-The goal of the thesis is creation of a tool for pinpointing owners of the Bitcoin addresses found on the internet. The tool also provides other useful information such as where was the address found, who posted it and what format it uses. The data are collected in a MySQL database by continuously crawling provided URLs and obtained directly from the HTML code by so called "Crawler" and "Scraper" scripts. The scripts are built in JavaScript and running on a server using a Node.js runtime. For optimal performance of the server, which is also used for communicating with a user, are the scripts run in so called worker thread. Each thread has its own lifecycle which does not interrupt other threads execution.
+The goal of the thesis is creation of a tool for pinpointing owners of the Bitcoin addresses found on the internet. The data are collected in a PostgreSQL database by continuously crawling provided URLs and obtained directly from the source code. The scripts are built in Python and running on a remote server.
 
-## Server
-#### Currently supports:
-- communication with the user using a JSON formatted text
-- read/write operations with the MySQL database
+## Database Builder [[db-builder](../../tree/main/db-builder "Database Builder")]
+### Features:
+- :heavy_check_mark: The PostgreSQL database initializer
+  - :heavy_check_mark: Setup
+  - :heavy_check_mark: Reset
+- :heavy_check_mark: CRUD operations with the PostgreSQL database
+- :x: Complete database schema
+- :hammer: Crawling all BTC addresses / reports from the following sources:
+  - :hammer: [LoyceV](http://alladdresses.loyce.club "LoyceV")
+  - :x: [BitcoinAbuse](https://www.bitcoinabuse.com/reports "BitcoinAbuse")
+  - :x: [CheckBitcoinAddress](https://checkbitcoinaddress.com/abuse-reports-to-bitcoin-address "CheckBitcoinAddress")
+  - :x: [CryptoBlacklist](https://www.cryptoblacklist.io "CryptoBlacklist")
+  - :x: [Bitcoin Generator Scam](http://ssrg.site.uottawa.ca/bgsieeesb2020/#urls "Bitcoin Generator Scam")
+  - :x: [BitcoinAIS](https://bitcoinais.com "BitcoinAIS")
+  - :x: [CryptoScamDB](https://cryptoscamdb.org "CryptoScamDB")
+  - :x: [Cryptscam](https://cryptscam.com "Cryptscam")
+  - :x: [SeeKoin](https://www.seekoin.com/address.php "SeeKoin")
+- :x: Parsing the data collected by the Crawler
 
-## Crawler
-#### Currently supports:
-- communication with the server (main thread) using a JSON formatted text
-- read/write operations with the MySQL database
-- setting crawling tree limitation - max level (depth), max serial number (count), max delay (crawling frequency)
-- fetching a content of the provided URLs, parsing the HTML and obtaining additional links for further crawling
-#### In progress:
-- crawler URL filter (for specific websites)
 
-## Scraper
-#### Currently supports:
-- communication with the server (main thread) using a JSON formatted text
-- read/write operations with the MySQL database
-#### In progress:
-- searching occurrences of the BTC addresses and the accounts posting them from the crawled HTML (general-purpose & for specific websites)
+## Web Client [[client](../../tree/main/client "Web Client")]
+### Features:
+- :x: Searching of BTC address
+- :x: Searching of BTC address reports
+- :x: Searching of BTC address owners
+- :x: Account system
+  - :x: Sign up / Sign in
+  - :x: Roles
