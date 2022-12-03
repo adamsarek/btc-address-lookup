@@ -1,0 +1,62 @@
+{
+	"sources_path": "crawled_data",
+	"sources": [
+		{
+			"name": "LoyceV",
+			"urls": [
+				"http://alladdresses.loyce.club/all_Bitcoin_addresses_ever_used_in_order_of_first_appearance.txt.gz",
+				"http://alladdresses.loyce.club/daily_updates"
+			]
+		},
+		{
+			"name": "BitcoinAbuse",
+			"urls": [
+				"https://www.bitcoinabuse.com/reports"
+			]
+		},
+		{
+			"name": "CheckBitcoinAddress",
+			"urls": [
+				"https://checkbitcoinaddress.com/abuse-reports-to-bitcoin-address"
+			]
+		},
+		{
+			"name": "CryptoBlacklist",
+			"urls": [
+				"https://www.cryptoblacklist.io"
+			]
+		},
+		{
+			"name": "Bitcoin Generator Scam",
+			"urls": [
+				"http://ssrg.site.uottawa.ca/bgsieeesb2020/scamAddresses.txt",
+				"http://ssrg.site.uottawa.ca/bgsieeesb2020/transactionlessScamAddresses.txt",
+				"http://ssrg.site.uottawa.ca/bgsieeesb2020/notBitcoinAddresses.txt"
+			]
+		},
+		{
+			"name": "BitcoinAIS",
+			"urls": [
+				"https://bitcoinais.com"
+			]
+		},
+		{
+			"name": "CryptoScamDB",
+			"urls": [
+				"https://api.cryptoscamdb.org/v1/addresses"
+			]
+		},
+		{
+			"name": "Cryptscam",
+			"urls": [
+				"https://cryptscam.com"
+			]
+		},
+		{
+			"name": "SeeKoin",
+			"urls": [
+				"https://www.seekoin.com/address.php"
+			]
+		}
+	]
+}

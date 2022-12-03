@@ -2,15 +2,18 @@
 import json
 import os
 
-def load(file_name):
-	with open(file_name, "r") as f:
+# Internal imports
+import file
+
+def load(file_path_parts):
+	with file.open(file_path_parts, "r") as f:
 		config_data = json.load(f)
 
 		return config_data
 
-def save(file_name, config_data={}):
-	with open(file_name, "w") as f:
+def save(file_path_parts, config_data={}):
+	with file.open(file_path_parts, "w") as f:
 		f.write(json.dumps(config_data, indent="\t"))
 
-def delete(file_name=""):
-	os.remove(file_name)
+def delete(file_path_parts):
+	os.remove(file.get_file_path(file_path_parts))

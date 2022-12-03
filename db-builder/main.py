@@ -35,61 +35,19 @@ import zlib
 # TODO: Automatický setup - spuštění instalace postgresql.exe, instalace PY knihoven
 
 # Internal imports
+import config
+from crawler import Crawler
 from db import Database
 
 RESET = False
 DELETE_SETUP_CONFIG = False
 
-def stream_gzip_decompress(stream):
-	dec = zlib.decompressobj(32 + zlib.MAX_WBITS)
-	for chunk in stream:
-		rv = dec.decompress(chunk)
-		if rv:
-			yield rv
-
-def download_all_addresses():
-	url = "http://alladdresses.loyce.club/all_Bitcoin_addresses_ever_used_in_order_of_first_appearance.txt.gz"
-	response = requests.get(url, stream=True)
-	url_timestamp = datetime.datetime.strptime(response.headers.get("last-modified"), "%a, %d %b %Y %H:%M:%S %Z").timestamp()
-	#url_content_length = response.headers.get("content-length")
-	file_timestamp = os.path.getmtime("addresses.txt")
-	#file_content_length = os.path.getsize("addresses.txt")
-	print(str(url_timestamp) + " / " + str(file_timestamp))
-	#print(str(url_content_length) + " / " + str(file_content_length)) # na serveru je menší kvůli GZIP kompresi
-
-	"""
-	database.update("source", [
-		"source_id",
-		"roles",
-		"name"
-	], [
-		[1, [1], "Adam"],
-		[2, [1, 2], "Ben"],
-		[3, [1, 2, 3], "Chad"],
-		[4, [1, 2, 3, 4], "Daniel"],
-		[5, [1, 2, 3, 4, 5], "Eduardo"],
-		[6, [1, 2, 3, 4, 5, 6], "Frank"],
-		[7, [1, 2, 3, 4, 5, 6, 7], "George"],
-		[8, [1, 2, 3, 4, 5, 6, 7, 8], "Heisenberg"],
-		[9, [1, 2, 3, 4, 5, 6, 7, 8, 9], "Isaac"]
-	], "t.source_id = c.source_id")
-	"""
-	
-	"""
-	with open("addresses.txt", "wb") as addresses_file:
-		i = 0
-		address_count = 0
-
-		for data in stream_gzip_decompress(response.raw):
-			addresses_file.write(data)
-			address_count += data.decode("ASCII").count("\n")
-
-		print("Addresses: " + address_count)
-	"""
-
 def main():
+	configuration = config.load("config.json")
 	database = Database(reset=RESET, delete_setup_config=DELETE_SETUP_CONFIG)
-	#crawler = Crawler(database)
+	
+	if RESET == False:
+		crawler = Crawler(configuration, database)
 
 	"""
 	# Threads

@@ -10,7 +10,7 @@ import config
 class DatabaseInitializer:
 	def __init__(self, reset=False, delete_setup_config=False):
 		# Private properties
-		self.__SQL_VALUES_LIMIT = 1000
+		self._SQL_VALUES_LIMIT = 1000
 		
 		# Setup
 		self.__setup(reset, delete_setup_config)
@@ -29,13 +29,30 @@ class DatabaseInitializer:
 		if not hasattr(self, "__pool") or self.__pool is None:
 			self.__pool.close()
 	
-	def __insert(self, table_name, column_names=[], rows=[]):
+	def _select(self, table_name, column_names=[], where=""):
+		query = "SELECT "
+		params = []
+
+		query += ", ".join(["{}"] * len(column_names))
+		query += " FROM {}"
+
+		for column_name in column_names:
+			params.append(psycopg.sql.Identifier(str(column_name)))
+
+		params.append(psycopg.sql.Identifier(str(table_name)))
+		
+		query += ((" WHERE " + where) if (where != "") else ("")) + ";"
+		
+		if len(column_names) > 0:
+			return self._execute(psycopg.sql.SQL(query).format(*params))
+
+	def _insert(self, table_name, column_names=[], rows=[]):
 		query = ""
 		params = []
 		
-		for i in range(math.ceil(len(rows) / self.__SQL_VALUES_LIMIT)):
-			rows_start = i * self.__SQL_VALUES_LIMIT
-			rows_end = min((i + 1) * self.__SQL_VALUES_LIMIT, len(rows))
+		for i in range(math.ceil(len(rows) / self._SQL_VALUES_LIMIT)):
+			rows_start = i * self._SQL_VALUES_LIMIT
+			rows_end = min((i + 1) * self._SQL_VALUES_LIMIT, len(rows))
 
 			query += "INSERT INTO {} ("
 			query += ", ".join(["{}"] * len(column_names))
@@ -57,17 +74,15 @@ class DatabaseInitializer:
 			query += ") ON CONFLICT DO NOTHING;"
 		
 		if len(column_names) > 0 and len(rows) > 0:
-			self.__execute(psycopg.sql.SQL(query).format(*params))
+			self._execute(psycopg.sql.SQL(query).format(*params))
 	
-	"""
-	def update(self, table_name, column_names=[], rows=[], where=""):
-		UPDATE_ROW_LIMIT = 1000
+	def _update(self, table_name, column_names=[], rows=[], where=""):
 		query = ""
 		params = []
 
-		for i in range(math.ceil(len(rows) / UPDATE_ROW_LIMIT)):
-			rows_start = i * UPDATE_ROW_LIMIT
-			rows_end = min((i + 1) * UPDATE_ROW_LIMIT, len(rows))
+		for i in range(math.ceil(len(rows) / self._SQL_VALUES_LIMIT)):
+			rows_start = i * self._SQL_VALUES_LIMIT
+			rows_end = min((i + 1) * self._SQL_VALUES_LIMIT, len(rows))
 
 			query += "UPDATE {} AS t SET "
 			query += ", ".join(["{} = {}"] * len(column_names))
@@ -95,10 +110,15 @@ class DatabaseInitializer:
 			query += ")" + ((" WHERE " + where) if (where != "") else ("")) + ";"
 		
 		if len(column_names) > 0 and len(rows) > 0:
-			self.__execute(psycopg.sql.SQL(query).format(*params))
-	"""
+			self._execute(psycopg.sql.SQL(query).format(*params))
 
-	def __execute(self, query, args=[]):
+	def _copy(self, query, args=[], rows=[]):
+		with self.__pool.connection() as connection:
+			with connection.cursor().copy(query, args) as copy:
+				for row in rows:
+					copy.write_row(row)
+	
+	def _execute(self, query, args=[]):
 		with self.__pool.connection() as connection:
 			return self.__execute_cursor(connection, query, args)
 
@@ -375,12 +395,12 @@ class DatabaseInitializer:
 							# Tables
 							for setup_config_database_table in setup_config_database["tables"]:
 								# Create tables
-								self.__execute_cursor(connection, psycopg.sql.SQL("CREATE TABLE IF NOT EXISTS {} (" + ", ".join(setup_config_database_table["create"]) + ")").format(psycopg.sql.Identifier(setup_config_database_table["table_name"])))
+								self.__execute_cursor(connection, psycopg.sql.SQL("CREATE UNLOGGED TABLE IF NOT EXISTS {} (" + ", ".join(setup_config_database_table["create"]) + ")").format(psycopg.sql.Identifier(setup_config_database_table["table_name"])))
 								#print("[SETUP] The table {0} has been created.".format(setup_config_database_table["table_name"]))
 
 								# Insert data
 								if "insert" in setup_config_database_table and len(setup_config_database_table["insert"]) == 2:
-									self.__insert(setup_config_database_table["table_name"], setup_config_database_table["insert"][0], setup_config_database_table["insert"][1])
+									self._insert(setup_config_database_table["table_name"], setup_config_database_table["insert"][0], setup_config_database_table["insert"][1])
 									#print("[SETUP] The data into the table {0} have been inserted.".format(setup_config_database_table["table_name"]))
 
 			# Delete setup configuration data
@@ -400,3 +420,12 @@ class Database(DatabaseInitializer):
 	def __init__(self, reset=False, delete_setup_config=False):
 		# Initialize database
 		super().__init__(reset, delete_setup_config)
+
+	def get_source(self, column_names, source_name):
+		return self._select("source", column_names, "name = '{}'".format(source_name)).fetchone()
+
+	def set_source(self, column_names, row, source_name):
+		self._update("source", column_names, [row], "t.name = '{}'".format(source_name))
+
+	def add_btc_addresses(self, addresses):
+		self._copy("COPY address (address) FROM STDIN;", [], addresses)
