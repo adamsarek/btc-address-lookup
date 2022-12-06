@@ -1,8 +1,11 @@
 # External imports
 import copy
+import datetime
 import math
+import psutil
 import psycopg
 import psycopg_pool
+import zlib
 
 # Internal imports
 import config
@@ -15,19 +18,19 @@ class DatabaseInitializer:
 		# Setup
 		self.__setup(reset, delete_setup_config)
 
-		if not hasattr(self, "__pool") or self.__pool is None:
+		if not hasattr(self, "_pool") or self._pool is None:
 			# Load database configuration data
-			self.__db_config_data = config.load("db.json")
+			self._db_config_data = config.load("db.json")
 
 			# Connection pool
-			self.__pool = psycopg_pool.ConnectionPool(" ".join(list(map("=".join, zip(
-				map(str, self.__db_config_data["connection"].keys()),
-				map(str, self.__db_config_data["connection"].values())
+			self._pool = psycopg_pool.ConnectionPool(" ".join(list(map("=".join, zip(
+				map(str, self._db_config_data["connection"].keys()),
+				map(str, self._db_config_data["connection"].values())
 			)))))
 	
 	def __del__(self):
-		if not hasattr(self, "__pool") or self.__pool is None:
-			self.__pool.close()
+		if not hasattr(self, "_pool") or self._pool is None:
+			self._pool.close()
 	
 	def _select(self, table_name, column_names=[], where=""):
 		query = "SELECT "
@@ -113,16 +116,16 @@ class DatabaseInitializer:
 			self._execute(psycopg.sql.SQL(query).format(*params))
 
 	def _copy(self, query, args=[], rows=[]):
-		with self.__pool.connection() as connection:
+		with self._pool.connection() as connection:
 			with connection.cursor().copy(query, args) as copy:
 				for row in rows:
 					copy.write_row(row)
 	
 	def _execute(self, query, args=[]):
-		with self.__pool.connection() as connection:
-			return self.__execute_cursor(connection, query, args)
+		with self._pool.connection() as connection:
+			return self._execute_cursor(connection, query, args)
 
-	def __execute_cursor(self, connection, query, args=[]):
+	def _execute_cursor(self, connection, query, args=[]):
 		cursor = []
 
 		try:
@@ -163,12 +166,50 @@ class DatabaseInitializer:
 			connection = psycopg.connect(**setup_config_data["default_connection"], cursor_factory=psycopg.ClientCursor)
 			#print("[SETUP] Connected to the PostgreSQL server.")
 
+			#if reset:
+				# PostgreSQL performance parameters
+				#self._execute_cursor(connection, "ALTER SYSTEM SET fsync=on")
+				#self._execute_cursor(connection, "ALTER SYSTEM SET synchronous_commit=on")
+				#self._execute_cursor(connection, "ALTER SYSTEM SET full_page_writes=on")
+				#self._execute_cursor(connection, "ALTER SYSTEM SET bgwriter_lru_maxpages=100")
+				#self._execute_cursor(connection, "ALTER SYSTEM SET archive_mode=off")
+				#self._execute_cursor(connection, "ALTER SYSTEM SET log_checkpoints=off")
+				#self._execute_cursor(connection, "ALTER SYSTEM SET min_wal_size=80")
+				#self._execute_cursor(connection, "ALTER SYSTEM SET max_wal_size=1024")
+				#self._execute_cursor(connection, "ALTER SYSTEM SET wal_level=replica")
+				#self._execute_cursor(connection, "ALTER SYSTEM SET max_wal_senders=10")
+				#self._execute_cursor(connection, "ALTER SYSTEM SET work_mem=4096")
+				#self._execute_cursor(connection, "ALTER SYSTEM SET maintenance_work_mem=65536")
+				#self._execute_cursor(connection, "ALTER SYSTEM SET shared_buffers=1024")
+				#self._execute_cursor(connection, "ALTER SYSTEM SET temp_buffers=1024")
+			#else:
+			# Get device memory
+			virtual_memory = psutil.virtual_memory().total
+			work_memory = virtual_memory // 8192 // 8
+			buffer_memory = virtual_memory // 8192 // 4
+
+			# PostgreSQL performance parameters
+			self._execute_cursor(connection, "ALTER SYSTEM SET fsync=off")
+			self._execute_cursor(connection, "ALTER SYSTEM SET synchronous_commit=off")
+			self._execute_cursor(connection, "ALTER SYSTEM SET full_page_writes=off")
+			self._execute_cursor(connection, "ALTER SYSTEM SET bgwriter_lru_maxpages=0")
+			self._execute_cursor(connection, "ALTER SYSTEM SET archive_mode=off")
+			self._execute_cursor(connection, "ALTER SYSTEM SET log_checkpoints=off")
+			self._execute_cursor(connection, "ALTER SYSTEM SET min_wal_size=4096")
+			self._execute_cursor(connection, "ALTER SYSTEM SET max_wal_size=16384")
+			self._execute_cursor(connection, "ALTER SYSTEM SET wal_level=minimal")
+			self._execute_cursor(connection, "ALTER SYSTEM SET max_wal_senders=0")
+			self._execute_cursor(connection, "ALTER SYSTEM SET work_mem=" + str(work_memory))
+			self._execute_cursor(connection, "ALTER SYSTEM SET maintenance_work_mem=" + str(work_memory))
+			self._execute_cursor(connection, "ALTER SYSTEM SET shared_buffers=" + str(buffer_memory))
+			self._execute_cursor(connection, "ALTER SYSTEM SET temp_buffers=" + str(buffer_memory))
+
 			# Create / alter users
-			pg_users = self.__execute_cursor(connection, "SELECT usename FROM pg_user").fetchall()
+			pg_users = self._execute_cursor(connection, "SELECT usename FROM pg_user").fetchall()
 			for setup_config_user in setup_config_data["users"]:
 				if setup_config_user["user"] != setup_config_data["default_connection"]["user"]:
 					if setup_config_user["superuser"]:
-						self.__execute_cursor(connection, psycopg.sql.SQL(
+						self._execute_cursor(connection, psycopg.sql.SQL(
 							"""
 							ALTER USER {}
 							WITH
@@ -188,7 +229,7 @@ class DatabaseInitializer:
 						)
 						#print("[SETUP] The superuser {0} has been altered.".format(setup_config_user["user"]))
 
-						self.__execute_cursor(connection, psycopg.sql.SQL(
+						self._execute_cursor(connection, psycopg.sql.SQL(
 							"""
 							CREATE USER {}
 							WITH
@@ -209,7 +250,7 @@ class DatabaseInitializer:
 						)
 						#print("[SETUP] The superuser {0} has been created.".format(setup_config_user["user"]))
 					else:
-						self.__execute_cursor(connection, psycopg.sql.SQL(
+						self._execute_cursor(connection, psycopg.sql.SQL(
 							"""
 							ALTER USER {}
 							WITH
@@ -229,7 +270,7 @@ class DatabaseInitializer:
 						)
 						#print("[SETUP] The user {0} has been altered.".format(setup_config_user["user"]))
 
-						self.__execute_cursor(connection, psycopg.sql.SQL(
+						self._execute_cursor(connection, psycopg.sql.SQL(
 							"""
 							CREATE USER {}
 							WITH
@@ -250,10 +291,10 @@ class DatabaseInitializer:
 						#print("[SETUP] The user {0} has been created.".format(setup_config_user["user"]))
 
 			# Create / alter databases
-			pg_databases = self.__execute_cursor(connection, "SELECT datname FROM pg_database WHERE datistemplate = false").fetchall()
+			pg_databases = self._execute_cursor(connection, "SELECT datname FROM pg_database WHERE datistemplate = false").fetchall()
 			for setup_config_database in setup_config_data["databases"]:
 				if setup_config_database["database"] != "postgres" and setup_config_database["database"] != "template0" and setup_config_database["database"] != "template1":
-					self.__execute_cursor(connection, psycopg.sql.SQL(
+					self._execute_cursor(connection, psycopg.sql.SQL(
 						"""
 						ALTER DATABASE {}
 						OWNER TO {}
@@ -262,7 +303,7 @@ class DatabaseInitializer:
 							psycopg.sql.Identifier(setup_config_database["owner"])
 						)
 					)
-					self.__execute_cursor(connection, psycopg.sql.SQL(
+					self._execute_cursor(connection, psycopg.sql.SQL(
 						"""
 						ALTER DATABASE {}
 						CONNECTION_LIMIT -1
@@ -272,7 +313,7 @@ class DatabaseInitializer:
 					)
 					#print("[SETUP] The database {0} has been altered.".format(setup_config_database["database"]))
 
-					self.__execute_cursor(connection, psycopg.sql.SQL(
+					self._execute_cursor(connection, psycopg.sql.SQL(
 						"""
 						CREATE DATABASE {}
 						WITH
@@ -298,7 +339,7 @@ class DatabaseInitializer:
 							break
 
 					if setup_config_database_found == False:
-						self.__execute_cursor(connection, psycopg.sql.SQL("DROP DATABASE {} WITH (FORCE)").format(psycopg.sql.Identifier(pg_database[0])))
+						self._execute_cursor(connection, psycopg.sql.SQL("DROP DATABASE {} WITH (FORCE)").format(psycopg.sql.Identifier(pg_database[0])))
 						#print("[SETUP] The database {0} has been dropped.".format(pg_database[0]))
 			
 			# Drop users
@@ -312,7 +353,7 @@ class DatabaseInitializer:
 							break
 
 					if setup_config_user_found == False:
-						self.__execute_cursor(connection, psycopg.sql.SQL("DROP USER {}").format(psycopg.sql.Identifier(pg_user[0])))
+						self._execute_cursor(connection, psycopg.sql.SQL("DROP USER {}").format(psycopg.sql.Identifier(pg_user[0])))
 						#print("[SETUP] The user {0} has been dropped.".format(pg_user[0]))
 			
 			# Close connection
@@ -338,12 +379,12 @@ class DatabaseInitializer:
 					#print("[SETUP] Connected to the PostgreSQL server.")
 					
 					# Disable login to the default user
-					self.__execute_cursor(connection, psycopg.sql.SQL("ALTER USER {} NOLOGIN").format(psycopg.sql.Identifier(setup_config_data["default_connection"]["user"])))
+					self._execute_cursor(connection, psycopg.sql.SQL("ALTER USER {} NOLOGIN").format(psycopg.sql.Identifier(setup_config_data["default_connection"]["user"])))
 					#print("[SETUP] Login to the default user {0} has been disabled.".format(setup_config_data["default_connection"]["user"]))
 
 					# Drop default user
 					if setup_config_data["default_connection"]["user"] != "postgres":
-						self.__execute_cursor(connection, psycopg.sql.SQL("DROP USER {}").format(psycopg.sql.Identifier(setup_config_data["default_connection"]["user"])))
+						self._execute_cursor(connection, psycopg.sql.SQL("DROP USER {}").format(psycopg.sql.Identifier(setup_config_data["default_connection"]["user"])))
 						#print("[SETUP] The default user {0} has been dropped.".format(setup_config_data["default_connection"]["user"]))
 					
 					# Close connection
@@ -354,12 +395,12 @@ class DatabaseInitializer:
 			
 			if reset == False:
 				# Load database configuration data
-				self.__db_config_data = config.load("db.json")
+				self._db_config_data = config.load("db.json")
 
 				# Connection pool
-				self.__pool = psycopg_pool.ConnectionPool(" ".join(list(map("=".join, zip(
-					map(str, self.__db_config_data["connection"].keys()),
-					map(str, self.__db_config_data["connection"].values())
+				self._pool = psycopg_pool.ConnectionPool(" ".join(list(map("=".join, zip(
+					map(str, self._db_config_data["connection"].keys()),
+					map(str, self._db_config_data["connection"].values())
 				)))))
 
 				for setup_config_database in setup_config_data["databases"]:
@@ -379,7 +420,7 @@ class DatabaseInitializer:
 							#print("[SETUP] Connected to the PostgreSQL server.")
 
 							# Drop tables
-							pg_tables = self.__execute_cursor(connection, "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'").fetchall()
+							pg_tables = self._execute_cursor(connection, "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'").fetchall()
 							for pg_table in pg_tables:
 								setup_config_database_table_found = False
 
@@ -389,13 +430,13 @@ class DatabaseInitializer:
 										break
 								
 								if setup_config_database_table_found == False:
-									self.__execute_cursor(connection, psycopg.sql.SQL("DROP TABLE {} CASCADE").format(psycopg.sql.Identifier(pg_table[0])))
+									self._execute_cursor(connection, psycopg.sql.SQL("DROP TABLE {} CASCADE").format(psycopg.sql.Identifier(pg_table[0])))
 									#print("[SETUP] The table {0} has been dropped.".format(pg_table[0]))
 							
 							# Tables
 							for setup_config_database_table in setup_config_database["tables"]:
 								# Create tables
-								self.__execute_cursor(connection, psycopg.sql.SQL("CREATE UNLOGGED TABLE IF NOT EXISTS {} (" + ", ".join(setup_config_database_table["create"]) + ")").format(psycopg.sql.Identifier(setup_config_database_table["table_name"])))
+								self._execute_cursor(connection, psycopg.sql.SQL("CREATE TABLE IF NOT EXISTS {} (" + ", ".join(setup_config_database_table["create"]) + ")").format(psycopg.sql.Identifier(setup_config_database_table["table_name"])))
 								#print("[SETUP] The table {0} has been created.".format(setup_config_database_table["table_name"]))
 
 								# Insert data
@@ -417,6 +458,10 @@ class DatabaseInitializer:
 				#print("[SETUP] The connection to the PostgreSQL server closed.")
 
 class Database(DatabaseInitializer):
+	start = None
+	address_count = 0
+	show = 1_000_000
+
 	def __init__(self, reset=False, delete_setup_config=False):
 		# Initialize database
 		super().__init__(reset, delete_setup_config)
@@ -427,5 +472,100 @@ class Database(DatabaseInitializer):
 	def set_source(self, column_names, row, source_name):
 		self._update("source", column_names, [row], "t.name = '{}'".format(source_name))
 
-	def add_btc_addresses(self, addresses):
-		self._copy("COPY address (address) FROM STDIN;", [], addresses)
+	def add_btc_addresses(self, response_stream, format):
+		self.start = datetime.datetime.now()
+
+		with self._pool.connection() as connection:
+			self._execute_cursor(connection, psycopg.sql.SQL("CREATE TEMPORARY TABLE IF NOT EXISTS temp_address (address TEXT) ON COMMIT DROP"))
+
+			with connection.cursor().copy("COPY temp_address (address) FROM STDIN") as copy:
+				prev_text = ""
+
+				if format == "GZIP":
+					# Decompress object
+					decompress_obj = zlib.decompressobj(32 + zlib.MAX_WBITS)
+
+					for chunk in response_stream:
+						# Decompress
+						bytes = decompress_obj.decompress(chunk)
+						
+						prev_text = self.__copy_bytes(copy, bytes, prev_text)
+					
+				else:
+					for chunk in response_stream:
+						prev_text = self.__copy_bytes(copy, chunk, prev_text)
+					
+				copy.write_row([prev_text])
+				self.address_count += 1
+			
+			self.__copy_table(connection)
+	
+	def __copy_bytes(self, copy, bytes, prev_text):
+		text = prev_text + bytes.decode("ASCII")
+		text_lines = text.splitlines()
+		prev_text = text_lines[-1]
+		
+		# Add BTC addresses to database
+		for text_line in text_lines[:-1]:
+			copy.write_row([text_line])
+		
+		self.address_count += len(text_lines[:-1])
+		end = datetime.datetime.now() - self.start
+		end_total = end.total_seconds()
+		if self.address_count >= self.show:
+			print(str(self.address_count // 1_000_000) + " | " + str(end_total // 1) + " | " + str(self.address_count / end_total))
+			self.show += 1_000_000
+		
+		return prev_text
+	
+	def __copy_table(self, connection):
+		self._execute_cursor(connection, psycopg.sql.SQL(
+			"""
+			ALTER TABLE {}
+				ALTER {} DROP NOT NULL,
+				ALTER {} DROP NOT NULL
+			""").format(
+				psycopg.sql.Identifier("address"),
+				psycopg.sql.Identifier("currency_id"),
+				psycopg.sql.Identifier("address")
+		))
+		self._execute_cursor(connection, psycopg.sql.SQL("ALTER TABLE {} DROP CONSTRAINT {}").format(
+			psycopg.sql.Identifier("address"),
+			psycopg.sql.Identifier("address_address_id_pkey")
+		))
+		self._execute_cursor(connection, psycopg.sql.SQL("ALTER TABLE {} DROP CONSTRAINT {}").format(
+			psycopg.sql.Identifier("address"),
+			psycopg.sql.Identifier("address_currency_id_fkey")
+		))
+		
+		self._execute_cursor(connection, psycopg.sql.SQL(
+			"""
+			INSERT INTO address (address)
+			SELECT address
+			FROM temp_address
+			ON CONFLICT DO NOTHING
+			"""
+		))
+
+		self._execute_cursor(connection, psycopg.sql.SQL(
+			"""
+			ALTER TABLE {}
+				ALTER {} SET NOT NULL,
+				ALTER {} SET NOT NULL
+			""").format(
+				psycopg.sql.Identifier("address"),
+				psycopg.sql.Identifier("currency_id"),
+				psycopg.sql.Identifier("address")
+		))
+		self._execute_cursor(connection, psycopg.sql.SQL("ALTER TABLE {} ADD CONSTRAINT {} PRIMARY KEY ({})").format(
+			psycopg.sql.Identifier("address"),
+			psycopg.sql.Identifier("address_address_id_pkey"),
+			psycopg.sql.Identifier("address_id")
+		))
+		self._execute_cursor(connection, psycopg.sql.SQL("ALTER TABLE {} ADD CONSTRAINT {} FOREIGN KEY ({}) REFERENCES {} ({})").format(
+			psycopg.sql.Identifier("address"),
+			psycopg.sql.Identifier("address_currency_id_fkey"),
+			psycopg.sql.Identifier("currency_id"),
+			psycopg.sql.Identifier("currency"),
+			psycopg.sql.Identifier("currency_id")
+		))

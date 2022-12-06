@@ -50,9 +50,12 @@
 				{
 					"table_name": "address",
 					"create": [
-						"address_id BIGSERIAL NOT NULL PRIMARY KEY",
-						"currency_id SMALLINT NOT NULL REFERENCES currency (currency_id) CHECK (address_id > 0)",
-						"address TEXT NOT NULL UNIQUE"
+						"address_id BIGSERIAL",
+						"currency_id SMALLINT NOT NULL DEFAULT 1",
+						"address TEXT NOT NULL",
+						"CONSTRAINT address_address_id_pkey PRIMARY KEY (address_id)",
+						"CONSTRAINT address_currency_id_fkey FOREIGN KEY (currency_id) REFERENCES currency (currency_id)",
+						"CONSTRAINT address_address_key UNIQUE (address)"
 					]
 				},
 				{
@@ -61,7 +64,7 @@
 						"source_id SMALLSERIAL NOT NULL PRIMARY KEY",
 						"roles SMALLINT[] NOT NULL",
 						"name TEXT NOT NULL UNIQUE",
-						"last_downloaded_at TIMESTAMP"
+						"last_crawled_at TIMESTAMP"
 					],
 					"insert": [
 						[

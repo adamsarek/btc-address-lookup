@@ -19,3 +19,6 @@ def get_file_path(file_path_parts):
 		return os.path.join(*file_path_parts)
 	else:
 		return file_path_parts
+
+def exists(file_path):
+	return os.path.exists(file_path)

@@ -4,6 +4,7 @@
 		{
 			"name": "LoyceV",
 			"urls": [
+				"http://localhost/all_Bitcoin_addresses_ever_used_in_order_of_first_appearance.txt.gz",
 				"http://alladdresses.loyce.club/all_Bitcoin_addresses_ever_used_in_order_of_first_appearance.txt.gz",
 				"http://alladdresses.loyce.club/daily_updates"
 			]
