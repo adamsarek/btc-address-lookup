@@ -19,7 +19,8 @@
 # TODO: sending query failed another command is already in progress
 # TODO: https://stackoverflow.com/questions/3122145/zlib-error-error-3-while-decompressing-incorrect-header-check/22310760#22310760
 # TODO: io.DEFAULT_BUFFER_SIZE
-# TODO: isal_zlib
+
+# TODO: could not extend file "base/52269/52311.5": No space left on device\nHINT:  Check free disk space.
 
 # Internal imports
 import config

@@ -487,7 +487,7 @@ class Database(DatabaseInitializer):
 	def set_source(self, column_names, row, source_name):
 		self._update("source", column_names, [row], "t.name = '{}'".format(source_name))
 
-	def add_btc_addresses(self, response_stream, format):
+	def add_btc_addresses(self, response_stream, content_type=""):
 		self.start = datetime.datetime.now()
 
 		with self._pool.connection() as connection:
@@ -517,7 +517,7 @@ class Database(DatabaseInitializer):
 			with connection.cursor().copy("COPY address (address) FROM STDIN") as copy:
 				prev_text = ""
 				
-				if format == "GZIP":
+				if content_type == "application/x-gzip":
 					# Decompress object
 					decompress_obj = isal_zlib.decompressobj(32 + isal_zlib.MAX_WBITS)
 
@@ -530,7 +530,7 @@ class Database(DatabaseInitializer):
 					for chunk in response_stream:
 						prev_text = self.__add_some_btc_addresses(copy, chunk, prev_text)
 				
-				copy.write_row([prev_text])
+				copy.write_row([prev_text.strip()])
 				self.address_count += 1
 				
 			self._execute_cursor(connection, psycopg.sql.SQL(
@@ -563,12 +563,12 @@ class Database(DatabaseInitializer):
 	
 	def __add_some_btc_addresses(self, copy, bytes, prev_text):
 		text = prev_text + bytes.decode("ASCII")
-		text_lines = text.splitlines()
+		text_lines = text.splitlines(True)
 		prev_text = text_lines[-1]
 		
 		# Add BTC addresses to database
 		for text_line in text_lines[:-1]:
-			copy.write_row([text_line])
+			copy.write_row([text_line.strip()])
 		
 		self.address_count += len(text_lines[:-1])
 		end = datetime.datetime.now() - self.start

@@ -9,13 +9,13 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
 - :heavy_check_mark: CRUD operations with the PostgreSQL database
 - :x: Complete database schema
 - :hammer: Crawling all BTC addresses / reports from the following sources:
-  - :hammer: [LoyceV](http://alladdresses.loyce.club "LoyceV")
+  - :heavy_check_mark: [LoyceV](http://alladdresses.loyce.club "LoyceV")
     - :heavy_check_mark: Weekly updates with full address history (GZIP)
-    - :hammer: Daily updates (TXT)
+    - :heavy_check_mark: Daily updates (TXT)
   - :x: [BitcoinAbuse](https://www.bitcoinabuse.com/reports "BitcoinAbuse")
   - :x: [CheckBitcoinAddress](https://checkbitcoinaddress.com/abuse-reports-to-bitcoin-address "CheckBitcoinAddress")
   - :x: [CryptoBlacklist](https://www.cryptoblacklist.io "CryptoBlacklist")
-  - :x: [Bitcoin Generator Scam](http://ssrg.site.uottawa.ca/bgsieeesb2020/#urls "Bitcoin Generator Scam")
+  - :hammer: [Bitcoin Generator Scam](http://ssrg.site.uottawa.ca/bgsieeesb2020/#urls "Bitcoin Generator Scam")
   - :x: [BitcoinAIS](https://bitcoinais.com "BitcoinAIS")
   - :x: [CryptoScamDB](https://cryptoscamdb.org "CryptoScamDB")
   - :x: [Cryptscam](https://cryptscam.com "Cryptscam")
