@@ -10,6 +10,8 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
 - :x: Complete database schema
 - :hammer: Crawling all BTC addresses / reports from the following sources:
   - :hammer: [LoyceV](http://alladdresses.loyce.club "LoyceV")
+    - :heavy_check_mark: Weekly updates with full address history (GZIP)
+    - :hammer: Daily updates (TXT)
   - :x: [BitcoinAbuse](https://www.bitcoinabuse.com/reports "BitcoinAbuse")
   - :x: [CheckBitcoinAddress](https://checkbitcoinaddress.com/abuse-reports-to-bitcoin-address "CheckBitcoinAddress")
   - :x: [CryptoBlacklist](https://www.cryptoblacklist.io "CryptoBlacklist")

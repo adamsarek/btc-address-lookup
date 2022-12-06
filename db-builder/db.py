@@ -5,7 +5,7 @@ import math
 import psutil
 import psycopg
 import psycopg_pool
-import zlib
+from isal import isal_zlib
 
 # Internal imports
 import config
@@ -33,6 +33,10 @@ class DatabaseInitializer:
 			self._pool.close()
 	
 	def _select(self, table_name, column_names=[], where=""):
+		with self._pool.connection() as connection:
+			return self._select_cursor(connection, table_name, column_names, where)
+	
+	def _select_cursor(self, connection, table_name, column_names=[], where=""):
 		query = "SELECT "
 		params = []
 
@@ -47,9 +51,13 @@ class DatabaseInitializer:
 		query += ((" WHERE " + where) if (where != "") else ("")) + ";"
 		
 		if len(column_names) > 0:
-			return self._execute(psycopg.sql.SQL(query).format(*params))
+			return self._execute_cursor(connection, psycopg.sql.SQL(query).format(*params))
 
 	def _insert(self, table_name, column_names=[], rows=[]):
+		with self._pool.connection() as connection:
+			self._insert_cursor(connection, table_name, column_names, rows)
+	
+	def _insert_cursor(self, connection, table_name, column_names=[], rows=[]):
 		query = ""
 		params = []
 		
@@ -77,9 +85,13 @@ class DatabaseInitializer:
 			query += ") ON CONFLICT DO NOTHING;"
 		
 		if len(column_names) > 0 and len(rows) > 0:
-			self._execute(psycopg.sql.SQL(query).format(*params))
+			self._execute_cursor(connection, psycopg.sql.SQL(query).format(*params))
 	
 	def _update(self, table_name, column_names=[], rows=[], where=""):
+		with self._pool.connection() as connection:
+			self._update_cursor(connection, table_name, column_names, rows, where)
+	
+	def _update_cursor(self, connection, table_name, column_names=[], rows=[], where=""):
 		query = ""
 		params = []
 
@@ -113,11 +125,14 @@ class DatabaseInitializer:
 			query += ")" + ((" WHERE " + where) if (where != "") else ("")) + ";"
 		
 		if len(column_names) > 0 and len(rows) > 0:
-			self._execute(psycopg.sql.SQL(query).format(*params))
+			self._execute_cursor(connection, psycopg.sql.SQL(query).format(*params))
 
 	def _copy(self, query, args=[], rows=[]):
 		with self._pool.connection() as connection:
-			with connection.cursor().copy(query, args) as copy:
+			self._copy_cursor(connection, query, args, rows)
+	
+	def _copy_cursor(self, connection, query, args=[], rows=[]):
+		with connection.cursor().copy(query, args) as copy:
 				for row in rows:
 					copy.write_row(row)
 	
@@ -476,31 +491,77 @@ class Database(DatabaseInitializer):
 		self.start = datetime.datetime.now()
 
 		with self._pool.connection() as connection:
-			self._execute_cursor(connection, psycopg.sql.SQL("CREATE TEMPORARY TABLE IF NOT EXISTS temp_address (address TEXT) ON COMMIT DROP"))
+			self._execute_cursor(connection, psycopg.sql.SQL(
+				"""
+				ALTER TABLE {}
+					ALTER {} DROP NOT NULL,
+					ALTER {} DROP NOT NULL
+				""").format(
+					psycopg.sql.Identifier("address"),
+					psycopg.sql.Identifier("currency_id"),
+					psycopg.sql.Identifier("address")
+			))
+			self._execute_cursor(connection, psycopg.sql.SQL("ALTER TABLE {} DROP CONSTRAINT {}").format(
+				psycopg.sql.Identifier("address"),
+				psycopg.sql.Identifier("address_address_id_pkey")
+			))
+			self._execute_cursor(connection, psycopg.sql.SQL("ALTER TABLE {} DROP CONSTRAINT {}").format(
+				psycopg.sql.Identifier("address"),
+				psycopg.sql.Identifier("address_currency_id_fkey")
+			))
+			self._execute_cursor(connection, psycopg.sql.SQL("ALTER TABLE {} DROP CONSTRAINT {}").format(
+				psycopg.sql.Identifier("address"),
+				psycopg.sql.Identifier("address_address_key")
+			))
 
-			with connection.cursor().copy("COPY temp_address (address) FROM STDIN") as copy:
+			with connection.cursor().copy("COPY address (address) FROM STDIN") as copy:
 				prev_text = ""
-
+				
 				if format == "GZIP":
 					# Decompress object
-					decompress_obj = zlib.decompressobj(32 + zlib.MAX_WBITS)
+					decompress_obj = isal_zlib.decompressobj(32 + isal_zlib.MAX_WBITS)
 
 					for chunk in response_stream:
 						# Decompress
 						bytes = decompress_obj.decompress(chunk)
 						
-						prev_text = self.__copy_bytes(copy, bytes, prev_text)
-					
+						prev_text = self.__add_some_btc_addresses(copy, bytes, prev_text)
 				else:
 					for chunk in response_stream:
-						prev_text = self.__copy_bytes(copy, chunk, prev_text)
-					
+						prev_text = self.__add_some_btc_addresses(copy, chunk, prev_text)
+				
 				copy.write_row([prev_text])
 				self.address_count += 1
-			
-			self.__copy_table(connection)
+				
+			self._execute_cursor(connection, psycopg.sql.SQL(
+				"""
+				ALTER TABLE {}
+					ALTER {} SET NOT NULL,
+					ALTER {} SET NOT NULL
+				""").format(
+					psycopg.sql.Identifier("address"),
+					psycopg.sql.Identifier("currency_id"),
+					psycopg.sql.Identifier("address")
+			))
+			self._execute_cursor(connection, psycopg.sql.SQL("ALTER TABLE {} ADD CONSTRAINT {} PRIMARY KEY ({})").format(
+				psycopg.sql.Identifier("address"),
+				psycopg.sql.Identifier("address_address_id_pkey"),
+				psycopg.sql.Identifier("address_id")
+			))
+			self._execute_cursor(connection, psycopg.sql.SQL("ALTER TABLE {} ADD CONSTRAINT {} FOREIGN KEY ({}) REFERENCES {} ({})").format(
+				psycopg.sql.Identifier("address"),
+				psycopg.sql.Identifier("address_currency_id_fkey"),
+				psycopg.sql.Identifier("currency_id"),
+				psycopg.sql.Identifier("currency"),
+				psycopg.sql.Identifier("currency_id")
+			))
+			self._execute_cursor(connection, psycopg.sql.SQL("ALTER TABLE {} ADD CONSTRAINT {} UNIQUE ({})").format(
+				psycopg.sql.Identifier("address"),
+				psycopg.sql.Identifier("address_address_key"),
+				psycopg.sql.Identifier("address")
+			))
 	
-	def __copy_bytes(self, copy, bytes, prev_text):
+	def __add_some_btc_addresses(self, copy, bytes, prev_text):
 		text = prev_text + bytes.decode("ASCII")
 		text_lines = text.splitlines()
 		prev_text = text_lines[-1]
@@ -517,55 +578,3 @@ class Database(DatabaseInitializer):
 			self.show += 1_000_000
 		
 		return prev_text
-	
-	def __copy_table(self, connection):
-		self._execute_cursor(connection, psycopg.sql.SQL(
-			"""
-			ALTER TABLE {}
-				ALTER {} DROP NOT NULL,
-				ALTER {} DROP NOT NULL
-			""").format(
-				psycopg.sql.Identifier("address"),
-				psycopg.sql.Identifier("currency_id"),
-				psycopg.sql.Identifier("address")
-		))
-		self._execute_cursor(connection, psycopg.sql.SQL("ALTER TABLE {} DROP CONSTRAINT {}").format(
-			psycopg.sql.Identifier("address"),
-			psycopg.sql.Identifier("address_address_id_pkey")
-		))
-		self._execute_cursor(connection, psycopg.sql.SQL("ALTER TABLE {} DROP CONSTRAINT {}").format(
-			psycopg.sql.Identifier("address"),
-			psycopg.sql.Identifier("address_currency_id_fkey")
-		))
-		
-		self._execute_cursor(connection, psycopg.sql.SQL(
-			"""
-			INSERT INTO address (address)
-			SELECT address
-			FROM temp_address
-			ON CONFLICT DO NOTHING
-			"""
-		))
-
-		self._execute_cursor(connection, psycopg.sql.SQL(
-			"""
-			ALTER TABLE {}
-				ALTER {} SET NOT NULL,
-				ALTER {} SET NOT NULL
-			""").format(
-				psycopg.sql.Identifier("address"),
-				psycopg.sql.Identifier("currency_id"),
-				psycopg.sql.Identifier("address")
-		))
-		self._execute_cursor(connection, psycopg.sql.SQL("ALTER TABLE {} ADD CONSTRAINT {} PRIMARY KEY ({})").format(
-			psycopg.sql.Identifier("address"),
-			psycopg.sql.Identifier("address_address_id_pkey"),
-			psycopg.sql.Identifier("address_id")
-		))
-		self._execute_cursor(connection, psycopg.sql.SQL("ALTER TABLE {} ADD CONSTRAINT {} FOREIGN KEY ({}) REFERENCES {} ({})").format(
-			psycopg.sql.Identifier("address"),
-			psycopg.sql.Identifier("address_currency_id_fkey"),
-			psycopg.sql.Identifier("currency_id"),
-			psycopg.sql.Identifier("currency"),
-			psycopg.sql.Identifier("currency_id")
-		))
