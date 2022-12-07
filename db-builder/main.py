@@ -22,6 +22,10 @@
 
 # TODO: could not extend file "base/52269/52311.5": No space left on device\nHINT:  Check free disk space.
 
+# TODO: Local MFT / FTP server
+
+# ["Unknown", "N/A", "n/a", "n/a", "/src/img/unknown.svg"]
+
 # Internal imports
 import config
 from crawler import Crawler

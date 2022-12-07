@@ -27,12 +27,15 @@
 				{
 					"table_name": "currency",
 					"create": [
-						"currency_id SMALLSERIAL NOT NULL PRIMARY KEY",
-						"name TEXT NOT NULL UNIQUE",
-						"code TEXT NOT NULL UNIQUE",
+						"currency_id SMALLSERIAL NOT NULL",
+						"name TEXT NOT NULL",
+						"code TEXT NOT NULL",
 						"unit TEXT NOT NULL",
 						"symbol TEXT NOT NULL",
-						"logo TEXT NOT NULL"
+						"logo TEXT NOT NULL",
+						"CONSTRAINT currency_currency_id_pkey PRIMARY KEY (currency_id)",
+						"CONSTRAINT currency_name_key UNIQUE (name)",
+						"CONSTRAINT currency_code_key UNIQUE (code)"
 					],
 					"insert": [
 						[
@@ -43,28 +46,32 @@
 							"logo"
 						],
 						[
-							["Bitcoin", "BTC", "bitcoin", "&#8383;", "/src/img/BTC.svg"]
+							["Bitcoin", "BTC", "bitcoin", "&#8383;", "/src/img/BTC.svg"],
+							["Cardano", "ADA", "Ada", "&#8371;", "/src/img/ADA.svg"],
+							["Bitcoin Cash", "BCH", "bitcoin", "&#579;", "/src/img/BCH.svg"],
+							["Binance Coin", "BNB", "BNB", "&#10070;", "/src/img/BNB.svg"],
+							["Dash", "DASH", "Dash", "&#272;", "/src/img/DASH.svg"],
+							["Dogecoin", "DOGE", "DOGE", "&#208;", "/src/img/DOGE.svg"],
+							["Polkadot", "DOT", "Dot", "&#9679;", "/src/img/DOT.svg"],
+							["Ethereum", "ETH", "ether", "&#926;", "/src/img/ETH.svg"],
+							["Litecoin", "LTC", "litecoin", "&#321;", "/src/img/LTC.svg"],
+							["Tron", "TRX", "TRX", "&#11482;", "/src/img/TRX.svg"],
+							["Stellar", "XLM", "XLM", "&#55349;&#56397;", "/src/img/XLM.svg"],
+							["Monero", "XMR", "monero", "&#625;", "/src/img/XMR.svg"],
+							["Ripple", "XRP", "ripple", "&#10005;", "/src/img/XRP.svg"],
+							["Zilliqa", "ZIL", "ZIL", "&#55349;&#56397;", "/src/img/ZIL.svg"]
 						]
-					]
-				},
-				{
-					"table_name": "address",
-					"create": [
-						"address_id BIGSERIAL",
-						"currency_id SMALLINT NOT NULL DEFAULT 1",
-						"address TEXT NOT NULL",
-						"CONSTRAINT address_address_id_pkey PRIMARY KEY (address_id)",
-						"CONSTRAINT address_currency_id_fkey FOREIGN KEY (currency_id) REFERENCES currency (currency_id)",
-						"CONSTRAINT address_address_key UNIQUE (address)"
 					]
 				},
 				{
 					"table_name": "source",
 					"create": [
-						"source_id SMALLSERIAL NOT NULL PRIMARY KEY",
+						"source_id SMALLSERIAL NOT NULL",
 						"roles SMALLINT[] NOT NULL",
-						"name TEXT NOT NULL UNIQUE",
-						"last_crawled_at TIMESTAMP"
+						"name TEXT NOT NULL",
+						"last_crawled_at TIMESTAMP",
+						"CONSTRAINT source_source_id_pkey PRIMARY KEY (source_id)",
+						"CONSTRAINT source_name_key UNIQUE (name)"
 					],
 					"insert": [
 						[
@@ -82,6 +89,66 @@
 							["{}", "Cryptscam"],
 							["{}", "SeeKoin"]
 						]
+					]
+				},
+				{
+					"table_name": "source_label",
+					"create": [
+						"source_label_id SMALLSERIAL",
+						"source_id SMALLINT NOT NULL",
+						"roles SMALLINT[] NOT NULL",
+						"name TEXT NOT NULL",
+						"CONSTRAINT source_label_source_label_id_pkey PRIMARY KEY (source_label_id)",
+						"CONSTRAINT source_label_source_id_fkey FOREIGN KEY (source_id) REFERENCES source (source_id)",
+						"CONSTRAINT source_label_source_id_name_key UNIQUE (source_id, name)"
+					],
+					"insert": [
+						[
+							"source_id",
+							"roles",
+							"name"
+						],
+						[
+							["1", "{}", "Full BTC Address List"],
+							["5", "{}", "Scam BTC Address List"],
+							["5", "{}", "Scam Non-BTC Address List"]
+						]
+					]
+				},
+				{
+					"table_name": "address",
+					"create": [
+						"address_id BIGSERIAL",
+						"currency_id SMALLINT",
+						"source_label_id SMALLINT NOT NULL",
+						"address TEXT NOT NULL",
+						"CONSTRAINT address_address_id_pkey PRIMARY KEY (address_id)",
+						"CONSTRAINT address_currency_id_fkey FOREIGN KEY (currency_id) REFERENCES currency (currency_id)",
+						"CONSTRAINT address_source_label_id_fkey FOREIGN KEY (source_label_id) REFERENCES source_label (source_label_id)",
+						"CONSTRAINT address_address_key UNIQUE (address)"
+					]
+				},
+				{
+					"table_name": "url",
+					"create": [
+						"url_id SERIAL",
+						"address TEXT NOT NULL",
+						"CONSTRAINT url_url_id_pkey PRIMARY KEY (url_id)",
+						"CONSTRAINT url_address_key UNIQUE (address)"
+					]
+				},
+				{
+					"table_name": "data",
+					"create": [
+						"data_id SERIAL",
+						"source_label_id SMALLINT NOT NULL",
+						"url_id INTEGER NOT NULL",
+						"roles SMALLINT[] NOT NULL",
+						"path TEXT NOT NULL",
+						"crawled_at TIMESTAMP",
+						"CONSTRAINT data_data_id_pkey PRIMARY KEY (data_id)",
+						"CONSTRAINT data_source_label_id_fkey FOREIGN KEY (source_label_id) REFERENCES source_label (source_label_id)",
+						"CONSTRAINT data_url_id_fkey FOREIGN KEY (url_id) REFERENCES url (url_id)"
 					]
 				}
 			]
