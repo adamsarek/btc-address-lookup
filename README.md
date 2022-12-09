@@ -20,7 +20,8 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
     - :heavy_check_mark: Scam BTC addresses
     - :hammer: Scam non-BTC addresses (address currency not yet specified)
   - :x: [BitcoinAIS](https://bitcoinais.com "BitcoinAIS")
-  - :x: [CryptoScamDB](https://cryptoscamdb.org "CryptoScamDB")
+  - :hammer: [CryptoScamDB](https://cryptoscamdb.org "CryptoScamDB")
+      - :hammer: Scam addresses (address currency not yet specified)
   - :x: [Cryptscam](https://cryptscam.com "Cryptscam")
   - :x: [SeeKoin](https://www.seekoin.com/address.php "SeeKoin")
 - :x: Parsing the data collected by the Crawler
@@ -43,7 +44,7 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
 - :memo: [ER diagram](documentation/er-diagram.png "ER diagram")
 
 ## :ice_cube: Crawler (Node.js) [[deprecated](deprecated "Crawler (Node.js)")]
-### **Crawler (Node.js) is now deprecated and was replaced by the newer [Database Builder](#hammer_and_wrench-database-builder-db-builder "Database Builder")!**
+*Crawler (Node.js) is now deprecated and has been replaced by the newer [Database Builder](#hammer_and_wrench-database-builder-db-builder "Database Builder")!*
 ### Features:
 - :heavy_check_mark: CRUD operations with the MySQL database
 - :heavy_check_mark: Multi-threaded downloading and processing

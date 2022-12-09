@@ -1,6 +1,7 @@
 # External imports
 import copy
 import datetime
+import json
 import math
 import psutil
 import psycopg
@@ -484,8 +485,8 @@ class Database(DatabaseInitializer):
 	def set_source(self, column_names, row, source_name):
 		self._update("source", column_names, [row], "t.name = '{}'".format(source_name))
 	
-	def get_source_label(self, column_names, source_label_name):
-		return self._select("source_label", column_names, "name = '{}'".format(source_label_name)).fetchone()
+	def get_source_label(self, column_names, source_id, source_label_name):
+		return self._select("source_label", column_names, "source_id = '{}' AND name = '{}'".format(source_id, source_label_name)).fetchone()
 
 	def get_url(self, column_names, url_address):
 		return self._select("url", column_names, "address = '{}'".format(url_address)).fetchone()
@@ -495,6 +496,9 @@ class Database(DatabaseInitializer):
 	
 	def add_data(self, column_names, row):
 		self._insert("data", column_names, [row])
+
+	def add_addresses(self, connection, column_names, rows):
+		self._insert_cursor(connection, "address", column_names, rows)
 
 	def add_data_only(self, sources_path, source_path, source_url, source_label_id, response_stream):
 		with file.open([sources_path, source_path], "wb") as f:
@@ -507,13 +511,13 @@ class Database(DatabaseInitializer):
 	
 	def add_data_and_addresses(self, sources_path, source_path, source_name, source_url, currency_id, source_label_id, response_stream, content_type=""):
 		with self._pool.connection() as connection:
-			self.__pre_add_addresses(connection, currency_id, source_label_id)
-
-			with connection.cursor().copy("COPY address (address) FROM STDIN") as copy:
-				with file.open([sources_path, source_path], "wb") as f:
-					prev_text = ""
-					
-					if source_name == "LoyceV":
+			with file.open([sources_path, source_path], "wb") as f:
+				self.__pre_add_addresses(connection, currency_id, source_label_id)
+				
+				if source_name == "LoyceV":
+					with connection.cursor().copy("COPY address (address) FROM STDIN") as copy:
+						prev_text = ""
+						
 						if content_type == "application/x-gzip":
 							# Decompress object
 							decompress_obj = isal_zlib.decompressobj(32 + isal_zlib.MAX_WBITS)
@@ -534,23 +538,50 @@ class Database(DatabaseInitializer):
 
 								# Add BTC addresses
 								prev_text = self.__add_some_btc_addresses(copy, chunk, prev_text)
-					elif source_name == "Bitcoin Generator Scam":
-						for chunk in response_stream:
-							# Write file
-							f.write(chunk)
+						
+						# Add last address
+						if len(prev_text) > 0:
+							copy.write_row([prev_text.strip()])
+				elif source_name == "Bitcoin Generator Scam":
+					prev_text = ""
 
-							text = prev_text + chunk.decode("ASCII").replace("{'", "").replace("{ '", "").replace(" '", "").replace("',", "").replace("'}", "").replace("'", "")
-							text_lines = text.splitlines(True)
-							prev_text = text_lines[-1]
-							
-							# Add addresses
-							for text_line in text_lines[:-1]:
-								copy.write_row([text_line.strip()])
-					
+					for chunk in response_stream:
+						# Write file
+						f.write(chunk)
+
+						text = prev_text + chunk.decode("ASCII").replace("{'", "").replace("{ '", "").replace(" '", "").replace("',", "").replace("'}", "").replace("'", "")
+						text_lines = text.splitlines(True)
+						prev_text = text_lines[-1]
+						
+						# Add addresses
+						addresses = []
+						for text_line in text_lines[:-1]:
+							addresses.append([text_line.strip()])
+						self.add_addresses(connection, ["address"], addresses)
+
+						# TODO: https://blockchair.com/search?q=
 					# Add last address
-					copy.write_row([prev_text.strip()])
+					if len(prev_text) > 0:
+						self.add_addresses(connection, ["address"], [[prev_text.strip()]])
+				elif source_name == "CryptoScamDB":
+					chunks = []
+					for chunk in response_stream.iter_content(chunk_size=4096):
+						# Write file
+						f.write(chunk)
+						
+						chunks.append(chunk)
+					text = b"".join(chunks)
+					text_json = json.loads(text)
 
-			self.__post_add_addresses(connection)
+					# Add addresses
+					addresses = []
+					for address in text_json["result"].keys():
+						addresses.append([address])
+					self.add_addresses(connection, ["address"], addresses)
+					
+					# TODO: https://blockchair.com/search?q=
+
+				self.__post_add_addresses(connection, currency_id)
 
 		# Add url and data
 		self.__add_url_and_data(source_path, source_url, source_label_id)
@@ -598,10 +629,11 @@ class Database(DatabaseInitializer):
 			psycopg.sql.Identifier("address"),
 			psycopg.sql.Identifier("address_source_label_id_fkey")
 		))
-		self._execute_cursor(connection, psycopg.sql.SQL("ALTER TABLE {} DROP CONSTRAINT {}").format(
-			psycopg.sql.Identifier("address"),
-			psycopg.sql.Identifier("address_address_key")
-		))
+		if currency_id is not None:
+			self._execute_cursor(connection, psycopg.sql.SQL("ALTER TABLE {} DROP CONSTRAINT {}").format(
+				psycopg.sql.Identifier("address"),
+				psycopg.sql.Identifier("address_address_key")
+			))
 		self._execute_cursor(connection, psycopg.sql.SQL("ALTER TABLE {} DROP CONSTRAINT {}").format(
 			psycopg.sql.Identifier("address"),
 			psycopg.sql.Identifier("address_currency_id_check")
@@ -622,7 +654,7 @@ class Database(DatabaseInitializer):
 		
 		return prev_text
 	
-	def __post_add_addresses(self, connection):
+	def __post_add_addresses(self, connection, currency_id):
 		self._execute_cursor(connection, psycopg.sql.SQL(
 			"""
 			ALTER TABLE {}
@@ -656,11 +688,12 @@ class Database(DatabaseInitializer):
 			psycopg.sql.Identifier("source_label"),
 			psycopg.sql.Identifier("source_label_id")
 		))
-		self._execute_cursor(connection, psycopg.sql.SQL("ALTER TABLE {} ADD CONSTRAINT {} UNIQUE ({})").format(
-			psycopg.sql.Identifier("address"),
-			psycopg.sql.Identifier("address_address_key"),
-			psycopg.sql.Identifier("address")
-		))
+		if currency_id is not None:
+			self._execute_cursor(connection, psycopg.sql.SQL("ALTER TABLE {} ADD CONSTRAINT {} UNIQUE ({})").format(
+				psycopg.sql.Identifier("address"),
+				psycopg.sql.Identifier("address_address_key"),
+				psycopg.sql.Identifier("address")
+			))
 		self._execute_cursor(connection, psycopg.sql.SQL("ALTER TABLE {} ADD CONSTRAINT {} CHECK ({} > 0)").format(
 			psycopg.sql.Identifier("address"),
 			psycopg.sql.Identifier("address_currency_id_check"),

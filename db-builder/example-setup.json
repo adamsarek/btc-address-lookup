@@ -111,7 +111,8 @@
 						[
 							["1", "{}", "Full BTC Address List"],
 							["5", "{}", "Scam BTC Address List"],
-							["5", "{}", "Scam Non-BTC Address List"]
+							["5", "{}", "Scam Non-BTC Address List"],
+							["7", "{}", "Scam Address List"]
 						]
 					]
 				},
