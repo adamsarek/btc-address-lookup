@@ -9,7 +9,7 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
 - :heavy_check_mark: CRUD operations with the PostgreSQL database
 - :heavy_check_mark: Multi-threaded downloading and processing
 - :x: Complete database schema
-- :hammer: Crawling all BTC addresses / reports from the following sources:
+- :hammer: Crawling all addresses / reports from the following sources[^robots-txt]:
   - :heavy_check_mark: [LoyceV](http://alladdresses.loyce.club "LoyceV")
     - :heavy_check_mark: Weekly updates with full address history (GZIP)
     - :heavy_check_mark: Daily updates (TXT)
@@ -24,9 +24,15 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
       - :hammer: Scam addresses (address currency not yet specified)
   - :x: [Cryptscam](https://cryptscam.com "Cryptscam")
   - :x: [SeeKoin](https://www.seekoin.com/address.php "SeeKoin")
-- :x: Parsing the data collected by the Crawler
+- :x: Parsing the data collected by the Crawler[^connecting-addresses-and-data]
+- :x: Fulfilling the robots.txt rules
 - :x: Exception handling
-- :x: Automated crawling and parsing
+- :x: Automated crawling and parsing[^automated-crawling]
+
+[^robots-txt]: The Crawler respects robots.txt rules of each source.
+[^automated-crawling]: The program automatically checks the availability of new data.\
+  Once the new data are available, it downloads and stores them in the database and on the disk.
+[^connecting-addresses-and-data]: The Parser connects the stored addresses and data.
 
 ## :earth_americas: Web Client [[client](client "Web Client")]
 ### Features:
