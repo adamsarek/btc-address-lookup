@@ -1,13 +1,13 @@
 # External imports
 from bs4 import BeautifulSoup
 
-class Parser:
-	def __init__(self, response, parser="lxml"):
-		# Private properties
-		self.__soup = BeautifulSoup(response, parser)
-	
-	def get_soup(self):
-		return self.__soup
+# Internal imports
+from response.response import Response
 
-	def get_all_links(self):
+class HtmlResponse(Response):
+	def __init__(self, response, parser="lxml"):
+		super().__init__(response)
+		self.__soup = BeautifulSoup(response, parser)
+
+	def get_links(self):
 		return self.__soup.find_all("a", href=True)

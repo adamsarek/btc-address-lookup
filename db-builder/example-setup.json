@@ -7,6 +7,9 @@
 		"dbname": "postgres",
 		"autocommit": true
 	},
+	"service": {
+		"postgresql": "postgresql-x64-15"
+	},
 	"users": [
 		{
 			"user": "builder",
@@ -38,22 +41,17 @@
 						"CONSTRAINT currency_code_key UNIQUE (code)"
 					],
 					"insert": [
-						[
-							"name",
-							"code",
-							"unit",
-							"symbol",
-							"logo"
-						],
+						["name", "code", "unit", "symbol", "logo"],
 						[
 							["Bitcoin", "BTC", "bitcoin", "&#8383;", "/src/img/BTC.svg"],
+							["Unknown", "N/A", "n/a", "n/a", "/src/img/unknown.svg"],
+							["Ethereum", "ETH", "ether", "&#926;", "/src/img/ETH.svg"],
 							["Cardano", "ADA", "Ada", "&#8371;", "/src/img/ADA.svg"],
 							["Bitcoin Cash", "BCH", "bitcoin", "&#579;", "/src/img/BCH.svg"],
 							["Binance Coin", "BNB", "BNB", "&#10070;", "/src/img/BNB.svg"],
 							["Dash", "DASH", "Dash", "&#272;", "/src/img/DASH.svg"],
 							["Dogecoin", "DOGE", "DOGE", "&#208;", "/src/img/DOGE.svg"],
 							["Polkadot", "DOT", "Dot", "&#9679;", "/src/img/DOT.svg"],
-							["Ethereum", "ETH", "ether", "&#926;", "/src/img/ETH.svg"],
 							["Litecoin", "LTC", "litecoin", "&#321;", "/src/img/LTC.svg"],
 							["Tron", "TRX", "TRX", "&#11482;", "/src/img/TRX.svg"],
 							["Stellar", "XLM", "XLM", "&#55349;&#56397;", "/src/img/XLM.svg"],
@@ -69,15 +67,11 @@
 						"source_id SMALLSERIAL NOT NULL",
 						"roles SMALLINT[] NOT NULL",
 						"name TEXT NOT NULL",
-						"last_crawled_at TIMESTAMP",
 						"CONSTRAINT source_source_id_pkey PRIMARY KEY (source_id)",
 						"CONSTRAINT source_name_key UNIQUE (name)"
 					],
 					"insert": [
-						[
-							"roles",
-							"name"
-						],
+						["roles", "name"],
 						[
 							["{}", "LoyceV"],
 							["{}", "BitcoinAbuse"],
@@ -96,23 +90,31 @@
 					"create": [
 						"source_label_id SMALLSERIAL",
 						"source_id SMALLINT NOT NULL",
+						"new_addresses_currency_id BIGINT",
 						"roles SMALLINT[] NOT NULL",
 						"name TEXT NOT NULL",
 						"CONSTRAINT source_label_source_label_id_pkey PRIMARY KEY (source_label_id)",
 						"CONSTRAINT source_label_source_id_fkey FOREIGN KEY (source_id) REFERENCES source (source_id)",
-						"CONSTRAINT source_label_source_id_name_key UNIQUE (source_id, name)"
+						"CONSTRAINT source_label_new_addresses_currency_id_fkey FOREIGN KEY (new_addresses_currency_id) REFERENCES currency (currency_id)",
+						"CONSTRAINT source_label_source_id_name_key UNIQUE (source_id, name)",
+						"CONSTRAINT source_label_source_id_check CHECK (source_id > 0)",
+						"CONSTRAINT source_label_new_addresses_currency_id_check CHECK (new_addresses_currency_id > 0)"
 					],
 					"insert": [
+						["source_id", "new_addresses_currency_id", "roles", "name"],
 						[
-							"source_id",
-							"roles",
-							"name"
-						],
-						[
-							["1", "{}", "Full BTC Address List"],
-							["5", "{}", "Scam BTC Address List"],
-							["5", "{}", "Scam Non-BTC Address List"],
-							["7", "{}", "Scam Address List"]
+							["1", 1, "{}", "All BTC Addresses"],
+							["2", null, "{}", "Reported BTC Addresses"],
+							["3", null, "{}", "Reported BTC Addresses"],
+							["4", null, "{}", "Searched Reported BTC Addresses"],
+							["4", 3, "{}", "Last Reported Ethereum Addresses"],
+							["5", null, "{}", "Scam BTC Addresses"],
+							["5", 2, "{}", "Scam Non-BTC Addresses"],
+							["6", null, "{}", "Reported BTC Addresses"],
+							["7", 2, "{}", "Reported Addresses"],
+							["8", null, "{}", "Searched Reported BTC Addresses"],
+							["8", 2, "{}", "Reported Addresses"],
+							["9", null, "{}", "Reported BTC Addresses"]
 						]
 					]
 				},
@@ -126,7 +128,9 @@
 						"CONSTRAINT address_address_id_pkey PRIMARY KEY (address_id)",
 						"CONSTRAINT address_currency_id_fkey FOREIGN KEY (currency_id) REFERENCES currency (currency_id)",
 						"CONSTRAINT address_source_label_id_fkey FOREIGN KEY (source_label_id) REFERENCES source_label (source_label_id)",
-						"CONSTRAINT address_address_key UNIQUE (address)"
+						"CONSTRAINT address_address_key UNIQUE (address)",
+						"CONSTRAINT address_currency_id_check CHECK (currency_id > 0)",
+						"CONSTRAINT address_source_label_id_check CHECK (source_label_id > 0)"
 					]
 				},
 				{
@@ -136,20 +140,76 @@
 						"address TEXT NOT NULL",
 						"CONSTRAINT url_url_id_pkey PRIMARY KEY (url_id)",
 						"CONSTRAINT url_address_key UNIQUE (address)"
+					],
+					"insert": [
+						["address"],
+						[
+							["http://alladdresses.loyce.club/all_Bitcoin_addresses_ever_used_in_order_of_first_appearance.txt.gz"],
+							["http://alladdresses.loyce.club/daily_updates"],
+							["https://www.bitcoinabuse.com/reports"],
+							["https://checkbitcoinaddress.com/abuse-reports-to-bitcoin-address"],
+							["https://www.cryptoblacklist.io/?s="],
+							["https://www.cryptoblacklist.io"],
+							["http://ssrg.site.uottawa.ca/bgsieeesb2020/scamAddresses.txt"],
+							["http://ssrg.site.uottawa.ca/bgsieeesb2020/transactionlessScamAddresses.txt"],
+							["http://ssrg.site.uottawa.ca/bgsieeesb2020/notBitcoinAddresses.txt"],
+							["https://bitcoinais.com"],
+							["https://api.cryptoscamdb.org/v1/addresses"],
+							["https://cryptscam.com/detail"],
+							["https://cryptscam.com"],
+							["https://www.seekoin.com/address.php"]
+						]
+					]
+				},
+				{
+					"table_name": "source_label_url",
+					"create": [
+						"source_label_url_id SMALLSERIAL",
+						"source_label_id SMALLINT NOT NULL",
+						"url_id SMALLINT NOT NULL",
+						"roles SMALLINT[] NOT NULL",
+						"last_crawled_at TIMESTAMP",
+						"CONSTRAINT source_label_url_id_pkey PRIMARY KEY (source_label_url_id)",
+						"CONSTRAINT source_label_url_source_label_id_fkey FOREIGN KEY (source_label_id) REFERENCES source_label (source_label_id)",
+						"CONSTRAINT source_label_url_url_id_fkey FOREIGN KEY (url_id) REFERENCES url (url_id)",
+						"CONSTRAINT source_label_url_source_label_id_url_id_key UNIQUE (source_label_id, url_id)",
+						"CONSTRAINT source_label_url_source_label_id_check CHECK (source_label_id > 0)",
+						"CONSTRAINT source_label_url_url_id_check CHECK (url_id > 0)"
+					],
+					"insert": [
+						["source_label_id", "url_id", "roles"],
+						[
+							[1, 1, "{}"],
+							[1, 2, "{}"],
+							[2, 3, "{}"],
+							[3, 4, "{}"],
+							[4, 5, "{}"],
+							[5, 6, "{}"],
+							[6, 7, "{}"],
+							[6, 8, "{}"],
+							[7, 9, "{}"],
+							[8, 10, "{}"],
+							[9, 11, "{}"],
+							[10, 12, "{}"],
+							[11, 13, "{}"],
+							[12, 14, "{}"]
+						]
 					]
 				},
 				{
 					"table_name": "data",
 					"create": [
 						"data_id SERIAL",
-						"source_label_id SMALLINT NOT NULL",
-						"url_id INTEGER NOT NULL",
+						"source_label_url_id SMALLINT NOT NULL",
+						"url_id SMALLINT NOT NULL",
 						"roles SMALLINT[] NOT NULL",
 						"path TEXT NOT NULL",
 						"crawled_at TIMESTAMP",
 						"CONSTRAINT data_data_id_pkey PRIMARY KEY (data_id)",
-						"CONSTRAINT data_source_label_id_fkey FOREIGN KEY (source_label_id) REFERENCES source_label (source_label_id)",
-						"CONSTRAINT data_url_id_fkey FOREIGN KEY (url_id) REFERENCES url (url_id)"
+						"CONSTRAINT data_source_label_url_id_fkey FOREIGN KEY (source_label_url_id) REFERENCES source_label_url (source_label_url_id)",
+						"CONSTRAINT data_url_id_fkey FOREIGN KEY (url_id) REFERENCES url (url_id)",
+						"CONSTRAINT data_source_label_url_id_check CHECK (source_label_url_id > 0)",
+						"CONSTRAINT data_url_id_check CHECK (url_id > 0)"
 					]
 				}
 			]

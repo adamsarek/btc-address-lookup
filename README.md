@@ -11,19 +11,27 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
 - :x: Complete database schema
 - :hammer: Crawling all addresses / reports from the following sources[^robots-txt]:
   - :heavy_check_mark: [LoyceV](http://alladdresses.loyce.club "LoyceV")
-    - :heavy_check_mark: Weekly updates with full address history (GZIP)
+    - :heavy_check_mark: Weekly updates with all BTC addresses (GZIP)
     - :heavy_check_mark: Daily updates (TXT)
   - :x: [BitcoinAbuse](https://www.bitcoinabuse.com/reports "BitcoinAbuse")
+    - :x: Reported BTC addresses (HTML)
   - :x: [CheckBitcoinAddress](https://checkbitcoinaddress.com/abuse-reports-to-bitcoin-address "CheckBitcoinAddress")
+    - :x: Reported BTC addresses (HTML)
   - :x: [CryptoBlacklist](https://www.cryptoblacklist.io "CryptoBlacklist")
+    - :x: Searched reported BTC addresses (HTML)
+    - :hammer: Last reported ETH addresses (HTML) *- addresses not yet crawled*
   - :hammer: [Bitcoin Generator Scam](http://ssrg.site.uottawa.ca/bgsieeesb2020/#urls "Bitcoin Generator Scam")
-    - :heavy_check_mark: Scam BTC addresses
-    - :hammer: Scam non-BTC addresses (address currency not yet specified)
+    - :heavy_check_mark: Scam BTC addresses (TXT)
+    - :hammer: Scam non-BTC addresses (TXT) *- address currency not yet specified*
   - :x: [BitcoinAIS](https://bitcoinais.com "BitcoinAIS")
+    - :x: Reported BTC addresses (HTML)
   - :hammer: [CryptoScamDB](https://cryptoscamdb.org "CryptoScamDB")
-      - :hammer: Scam addresses (address currency not yet specified)
+    - :hammer: Reported addresses (JSON) *- address currency not yet specified*
   - :x: [Cryptscam](https://cryptscam.com "Cryptscam")
+    - :x: Searched reported BTC addresses (HTML)
+    - :x: Reported addresses (HTML)
   - :x: [SeeKoin](https://www.seekoin.com/address.php "SeeKoin")
+    - :x: Reported BTC addresses (HTML)
 - :x: Parsing the data collected by the Crawler[^connecting-addresses-and-data]
 - :x: Fulfilling the robots.txt rules
 - :x: Exception handling

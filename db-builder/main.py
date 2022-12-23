@@ -26,22 +26,75 @@
 
 # ["Unknown", "N/A", "n/a", "n/a", "/src/img/unknown.svg"]
 
-# Internal imports
-import config
-from crawler import Crawler
-from db import Database
+# Implement Layers (Business, Data, etc.)
+# Robots: urllib.robotparser
+# https://stackoverflow.com/questions/43085744/parsing-robots-txt-in-python
+# psycopg.rows.dict_row
+# When there is no timestamp (last-modified) of remote file, check size
 
-RESET = False
-DELETE_SETUP_CONFIG = False
+# Data (table) - whole remote file
+# SubData (table) - part of remote file (JSON - only 1 key = 1 address not whole JSON file)
+
+# DatabaseInitializer (singleton)
+
+# https://www.xingyulei.com/post/py-admin/index.html
+
+# Auto-install python libraries + postgresql?
+
+# External imports
+import ctypes
+import os
+import sys
+
+# Internal imports
+from crawler import Crawler
+from setup import Setup
+
+def is_admin():
+	try:
+		return ctypes.windll.shell32.IsUserAnAdmin()
+	except:
+		return False
+
+def rerun_as_admin():
+	return ctypes.windll.shell32.ShellExecuteW(
+		None,
+		"runas",
+		sys.executable,
+		" ".join(sys.argv),
+		None,
+		1
+	)
 
 def main():
-	configuration = config.load("config.json")
-	database = Database(reset=RESET, delete_setup_config=DELETE_SETUP_CONFIG)
+	ARGS = {
+		"reset": False,
+		"restart_db": False,
+		"delete_setup_config": False
+	}
 	
-	if RESET == False:
-		crawler = Crawler(configuration, database)
+	# Change default arguments with input arguments
+	for i in range(len(ARGS.keys())):
+		if len(sys.argv) > (i + 1):
+			ARGS[list(ARGS.keys())[i]] = True if sys.argv[i + 1] == "1" else False
+	
+	# Setup (reset, restart_db, delete_setup_config)
+	setup = Setup(**ARGS)
+	
+	try:
+		if ARGS["reset"] == False:
+			crawler = Crawler()
+	except (Exception) as error:
+		print(str(error))
+	finally:
+		os.system("PAUSE")
 
-	del database
+	# Rerun
+	main()
 
 # Start
-main()
+if __name__ == "__main__":
+	if is_admin():
+		main()
+	else:
+		rerun_as_admin()
