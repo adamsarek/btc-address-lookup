@@ -19,7 +19,7 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
     - :x: Reported BTC addresses (HTML)
   - :x: [CryptoBlacklist](https://www.cryptoblacklist.io "CryptoBlacklist")
     - :x: Searched reported BTC addresses (HTML)
-    - :hammer: Last reported ETH addresses (HTML) *- addresses not yet crawled*
+    - :heavy_check_mark: Last reported ETH addresses (HTML)
   - :hammer: [Bitcoin Generator Scam](http://ssrg.site.uottawa.ca/bgsieeesb2020/#urls "Bitcoin Generator Scam")
     - :heavy_check_mark: Scam BTC addresses (TXT)
     - :hammer: Scam non-BTC addresses (TXT) *- address currency not yet specified*

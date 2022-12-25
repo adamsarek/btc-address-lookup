@@ -71,13 +71,11 @@ class Crawler:
 	
 	def __crawl_source_label_url(self, db_connection, source_label_url):
 		# LoyceV / All BTC Addresses - Weekly update
-		# CryptoBlacklist / Last Reported Ethereum Addresses
 		# Bitcoin Generator Scam / Scam BTC Addresses - Scam addresses
 		# Bitcoin Generator Scam / Scam BTC Addresses - Transactionless scam addresses
 		# Bitcoin Generator Scam / Scam Non-BTC Addresses
 		# CryptoScamDB / Reported Addresses
 		if(source_label_url["source_label_url_id"] == 1
-		or source_label_url["source_label_url_id"] == 6
 		or source_label_url["source_label_url_id"] == 7
 		or source_label_url["source_label_url_id"] == 8
 		or source_label_url["source_label_url_id"] == 9
@@ -94,12 +92,31 @@ class Crawler:
 				# Crawl response
 				response = self.__request(response_link)
 				self.__crawl_response(db_connection, response, source_label_url)
+		# CryptoBlacklist / Last Reported Ethereum Addresses
+		elif source_label_url["source_label_url_id"] == 6:
+			# Crawl response
+			response = self.__request(source_label_url["address"], False)
+			self.__crawl_response(db_connection, response, source_label_url)
 		# Cryptscam / Reported Addresses
 		elif source_label_url["source_label_url_id"] == 13:
 			print("TODO: " + str(source_label_url))
 		else:
 			print("TODO: " + str(source_label_url))
 
+	def __save_file_from_response(self, response, file, return_chunks=False):
+		if return_chunks:
+			chunks = []
+			
+			for chunk in response.iter_content(chunk_size=4096):
+				# Write file
+				file.write(chunk)
+
+				chunks.append(chunk)
+		else:
+			for chunk in response.iter_content(chunk_size=4096):
+				# Write file
+				file.write(chunk)
+	
 	def __get_text_from_chunk(self, prev_text, chunk, chunk_decode_option=0):
 		# Decode chunk
 		if chunk_decode_option == 0:
@@ -125,7 +142,7 @@ class Crawler:
 		if len(prev_text) > 0:
 			AddressMapper().insert(db_connection, ["address"], [[prev_text.strip()]])
 	
-	def __add_addresses_from_response(self, db_connection, response, file, add_address_option=0, chunk_decode_option=0, detect_address_currency=False):
+	def __add_addresses_from_response(self, db_connection, response, source_label_url, source_label_url_depth, file, add_address_option=0, chunk_decode_option=0, detect_address_currency=False):
 		if add_address_option == 0:
 			with Database().get_copy(db_connection.get_connection(), "COPY address (address) FROM STDIN") as copy:
 				db_copy = DatabaseCopy(copy)
@@ -171,12 +188,25 @@ class Crawler:
 			# Add last address
 			self.__add_last_address_from_text(db_connection, prev_text)
 		elif add_address_option == 2:
-			chunks = []
-			for chunk in response.iter_content(chunk_size=4096):
-				# Write file
-				file.write(chunk)
+			if source_label_url_depth == 0:
+				response_links = [node.get("href") for node in HtmlResponse(response.text).get_links(class_="wp-block-latest-posts__post-title")]
+				for response_link in response_links:
+					# Crawl response
+					response = self.__request(response_link, False)
+					self.__crawl_response(db_connection, response, source_label_url, 1)
 				
-				chunks.append(chunk)
+				# Save file from response
+				self.__save_file_from_response(response, file)
+			elif source_label_url_depth == 1:
+				# Save file from response
+				self.__save_file_from_response(response, file)
+
+				# Add last address
+				self.__add_last_address_from_text(db_connection, response.url.split("/")[-2])
+		elif add_address_option == 3:
+			# Save file from response
+			chunks = self.__save_file_from_response(response, file, True)
+			
 			text = b"".join(chunks)
 			text_json = json.loads(text)
 
@@ -185,40 +215,43 @@ class Crawler:
 			
 			# TODO: https://blockchair.com/search?q=
 	
-	def __add_addresses(self, db_connection, response, source_label_url, file):
+	def __add_addresses(self, db_connection, response, source_label_url, source_label_url_depth, file):
 		# LoyceV / All BTC Addresses - Weekly update
 		if source_label_url["source_label_url_id"] == 1:
-			self.__add_addresses_from_response(db_connection, response, file, 0, 0, None)
+			self.__add_addresses_from_response(db_connection, response, source_label_url, source_label_url_depth, file, 0, 0, None)
 		# LoyceV / All BTC Addresses - Daily update
 		elif source_label_url["source_label_url_id"] == 2:
-			self.__add_addresses_from_response(db_connection, response, file, 1, 0, False)
+			self.__add_addresses_from_response(db_connection, response, source_label_url, source_label_url_depth, file, 1, 0, False)
 		# CryptoBlacklist / Last Reported Ethereum Addresses
 		elif source_label_url["source_label_url_id"] == 6:
-			print("TODO: " + str(source_label_url))
+			self.__add_addresses_from_response(db_connection, response, source_label_url, source_label_url_depth, file, 2, None, None)
 		# Bitcoin Generator Scam / Scam Non-BTC Addresses
 		elif source_label_url["source_label_url_id"] == 9:
-			self.__add_addresses_from_response(db_connection, response, file, 1, 1, True)
+			self.__add_addresses_from_response(db_connection, response, source_label_url, source_label_url_depth, file, 1, 1, True)
 		# CryptoScamDB / Reported Addresses
 		elif source_label_url["source_label_url_id"] == 11:
-			self.__add_addresses_from_response(db_connection, response, file, 2, None, None)
+			self.__add_addresses_from_response(db_connection, response, source_label_url, source_label_url_depth, file, 3, None, None)
 
-	def __crawl_response(self, db_connection, response, source_label_url):
+	def __crawl_response(self, db_connection, response, source_label_url, source_label_url_depth=0):
 		response_last_modified_at = datetime.datetime.fromtimestamp(0)
 		if response.headers.get("last-modified"):
 			response_last_modified_at = datetime.datetime.strptime(response.headers.get("last-modified"), "%a, %d %b %Y %H:%M:%S %Z")
 		
 		# Add addresses (if not added yet)
 		if(source_label_url["last_crawled_at"] is None or source_label_url["last_crawled_at"] < response_last_modified_at):
-			# Get file name
+			# Get data file name
 			data_file_name = response.url.split("/")[-1]
 			
 			# CryptoBlacklist / Last Reported Ethereum Addresses
 			if source_label_url["source_label_url_id"] == 6:
-				data_file_name = "lastReportedEthereumAddresses.html"
+				if source_label_url_depth == 0:
+					data_file_name = "lastReportedEthereumAddresses.html"
+				elif source_label_url_depth == 1:
+					data_file_name = response.url.split("/")[-2] + ".html"
 			# CryptoScamDB / Reported Addresses
 			elif source_label_url["source_label_url_id"] == 11:
 				data_file_name = "reportedAddresses.json"
-
+				
 			# Data & local file path parts
 			data_file_path_parts = [str(source_label_url["source_label_url_id"]), data_file_name]
 			local_data_file_path_parts = [self.__config_data["crawler"]["data_path"]] + data_file_path_parts
@@ -229,50 +262,53 @@ class Crawler:
 					for chunk in response:
 						# Write file
 						file.write(chunk)
+				# Add local file & addresses
 				else:
-					db_connection.alter_table(
-						"address", [
-							"ALTER source_label_id DROP NOT NULL",
-							"ALTER address DROP NOT NULL",
-							"ALTER source_label_id SET DEFAULT {}".format(source_label_url["source_label_id"]),
-							"DROP CONSTRAINT address_address_id_pkey",
-							"DROP CONSTRAINT address_currency_id_fkey",
-							"DROP CONSTRAINT address_source_label_id_fkey",
-							"DROP CONSTRAINT address_currency_id_check",
-							"DROP CONSTRAINT address_source_label_id_check"
-						]
-					)
+					if source_label_url_depth == 0:
+						db_connection.alter_table(
+							"address", [
+								"ALTER source_label_id DROP NOT NULL",
+								"ALTER address DROP NOT NULL",
+								"ALTER source_label_id SET DEFAULT {}".format(source_label_url["source_label_id"]),
+								"DROP CONSTRAINT address_address_id_pkey",
+								"DROP CONSTRAINT address_currency_id_fkey",
+								"DROP CONSTRAINT address_source_label_id_fkey",
+								"DROP CONSTRAINT address_currency_id_check",
+								"DROP CONSTRAINT address_source_label_id_check"
+							]
+						)
 
-					# Single currency addresses
-					if source_label_url["new_addresses_currency_id"] != 2:
-						db_connection.alter_table("address", ["ALTER currency_id SET DEFAULT {}".format(source_label_url["new_addresses_currency_id"])])
+						# Single currency addresses
+						if source_label_url["new_addresses_currency_id"] != 2:
+							db_connection.alter_table("address", ["ALTER currency_id SET DEFAULT {}".format(source_label_url["new_addresses_currency_id"])])
 
-						# LoyceV / All BTC Addresses - Weekly update
-						if source_label_url["source_label_url_id"] == 1:
-							db_connection.alter_table("address", ["DROP CONSTRAINT address_address_key"])
+							# LoyceV / All BTC Addresses - Weekly update
+							if source_label_url["source_label_url_id"] == 1:
+								db_connection.alter_table("address", ["DROP CONSTRAINT address_address_key"])
 					
-					self.__add_addresses(db_connection, response, source_label_url, file)
+					self.__add_addresses(db_connection, response, source_label_url, source_label_url_depth, file)
 
-					db_connection.alter_table(
-						"address", [
-							"ALTER source_label_id SET NOT NULL",
-							"ALTER address SET NOT NULL",
-							"ALTER source_label_id DROP DEFAULT",
-							"ADD CONSTRAINT address_address_id_pkey PRIMARY KEY (address_id)",
-							"ADD CONSTRAINT address_currency_id_fkey FOREIGN KEY (currency_id) REFERENCES currency (currency_id)",
-							"ADD CONSTRAINT address_source_label_id_fkey FOREIGN KEY (source_label_id) REFERENCES source_label (source_label_id)",
-							"ADD CONSTRAINT address_currency_id_check CHECK (currency_id > 0)",
-							"ADD CONSTRAINT address_source_label_id_check CHECK (source_label_id > 0)"
-						]
-					)
+					if source_label_url_depth == 0:
+						db_connection.alter_table(
+							"address", [
+								"ALTER source_label_id SET NOT NULL",
+								"ALTER address SET NOT NULL",
+								"ALTER source_label_id DROP DEFAULT",
+								"ADD CONSTRAINT address_address_id_pkey PRIMARY KEY (address_id)",
+								"ADD CONSTRAINT address_currency_id_fkey FOREIGN KEY (currency_id) REFERENCES currency (currency_id)",
+								"ADD CONSTRAINT address_source_label_id_fkey FOREIGN KEY (source_label_id) REFERENCES source_label (source_label_id)",
+								"ADD CONSTRAINT address_currency_id_check CHECK (currency_id > 0)",
+								"ADD CONSTRAINT address_source_label_id_check CHECK (source_label_id > 0)"
+							]
+						)
 
-					# Single currency addresses
-					if source_label_url["new_addresses_currency_id"] != 2:
-						db_connection.alter_table("address", ["ALTER currency_id DROP DEFAULT"])
-						
-						# LoyceV / All BTC Addresses - Weekly update
-						if source_label_url["source_label_url_id"] == 1:
-							db_connection.alter_table("address", ["ADD CONSTRAINT address_address_key UNIQUE (address)"])
+						# Single currency addresses
+						if source_label_url["new_addresses_currency_id"] != 2:
+							db_connection.alter_table("address", ["ALTER currency_id DROP DEFAULT"])
+							
+							# LoyceV / All BTC Addresses - Weekly update
+							if source_label_url["source_label_url_id"] == 1:
+								db_connection.alter_table("address", ["ADD CONSTRAINT address_address_key UNIQUE (address)"])
 
 			# Add url
 			UrlMapper().insert(db_connection, ["address"], [[response.url]])
