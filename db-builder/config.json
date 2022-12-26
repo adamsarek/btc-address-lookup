@@ -1,4 +1,8 @@
 {
+	"run_timeout": {
+		"crawler": 60,
+		"exception": 10
+	},
 	"crawler": {
 		"data_path": "crawled_data"
 	}

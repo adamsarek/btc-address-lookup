@@ -43,12 +43,14 @@
 
 # External imports
 import ctypes
-import os
+import datetime
 import sys
+import time
 
 # Internal imports
 from crawler import Crawler
 from setup import Setup
+from file.json_file import JsonFile
 
 def is_admin():
 	try:
@@ -66,31 +68,52 @@ def rerun_as_admin():
 		1
 	)
 
+def wait(seconds):
+	# Wait before starting the next run
+	date_now = datetime.datetime.now()
+	date_future = date_now + datetime.timedelta(seconds=seconds)
+	print("Crawler will now wait till {0} for the next run.".format(date_future))
+	time.sleep(seconds)
+
 def main():
 	ARGS = {
 		"reset": False,
 		"restart_db": False,
 		"delete_setup_config": False
 	}
-	
+
 	# Change default arguments with input arguments
 	for i in range(len(ARGS.keys())):
 		if len(sys.argv) > (i + 1):
 			ARGS[list(ARGS.keys())[i]] = True if sys.argv[i + 1] == "1" else False
 	
-	# Setup (reset, restart_db, delete_setup_config)
+	# Reset / Setup - reset, restart_db, delete_setup_config
 	setup = Setup(**ARGS)
-	
-	try:
-		if ARGS["reset"] == False:
-			crawler = Crawler()
-	except (Exception) as error:
-		print(str(error))
-	finally:
-		os.system("PAUSE")
 
-	# Rerun
-	main()
+	# Configuration data
+	config_data = JsonFile("config.json").load()
+	
+	if ARGS["reset"] == False:
+		# Run forever
+		while(True):
+			print("\nCrawler is running...")
+
+			try:
+				crawler = Crawler(config_data)
+
+				# Run finish message
+				print("Crawler finished the current run successfully.")
+
+				# Wait (secs) before starting the next run
+				wait(config_data["run_timeout"]["crawler"])
+			except (Exception) as error:
+				print(str(error))
+
+				# Run finish message
+				print("Crawler could not finish the current run due to an exception.")
+
+				# Wait (secs) before starting the next run
+				wait(config_data["run_timeout"]["exception"])
 
 # Start
 if __name__ == "__main__":

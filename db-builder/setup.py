@@ -26,7 +26,7 @@ class Setup:
 			self.__restart_db(restart_db)
 
 			# Delete setup configuration
-			if delete_setup_config:
+			if reset == False and delete_setup_config:
 				JsonFile(self.__SETUP_CONFIG_FILE_PATH).delete()
 		else:
 			# Restart PostgreSQL database service
@@ -80,6 +80,8 @@ class Setup:
 					db_connection.drop_user(pg_user["usename"])
 	
 	def __reset(self):
+		print("Resetting...")
+
 		# Save new setup configuration
 		new_setup_config_data = copy.deepcopy(self.__setup_config_data)
 		new_setup_config_data["default_connection"]["user"] = "postgres"
@@ -119,6 +121,8 @@ class Setup:
 			self.__setup_users_and_databases(db_connection)
 	
 	def __setup(self):
+		print("Setting up...")
+
 		with Database().get_connection(self.__setup_config_data["default_connection"], connection_pool=False) as connection:
 			db_connection = DatabaseConnection(connection)
 

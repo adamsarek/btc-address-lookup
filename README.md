@@ -4,10 +4,11 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
 ## :hammer_and_wrench: Database Builder [[db-builder](db-builder "Database Builder")]
 ### Features:
 - :heavy_check_mark: The PostgreSQL database initializer
-  - :heavy_check_mark: Setup
-  - :heavy_check_mark: Reset
+  - :hammer: Setup[^setup] *- installing required Python packages not yet implemented*
+  - :heavy_check_mark: Reset[^reset]
 - :heavy_check_mark: CRUD operations with the PostgreSQL database
-- :heavy_check_mark: Multi-threaded downloading and processing
+- :heavy_check_mark: Multi-threaded downloading and processing[^multi-threaded]
+- :heavy_check_mark: Automated run[^automated-run]
 - :x: Complete database schema
 - :hammer: Crawling all addresses / reports from the following sources[^robots-txt]:
   - :heavy_check_mark: [LoyceV](http://alladdresses.loyce.club "LoyceV")
@@ -33,13 +34,21 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   - :x: [SeeKoin](https://www.seekoin.com/address.php "SeeKoin")
     - :x: Reported BTC addresses (HTML)
 - :x: Parsing the data collected by the Crawler[^connecting-addresses-and-data]
-- :x: Fulfilling the robots.txt rules
+- :x: Fulfilling the robots.txt rules[^robots-txt]
 - :x: Exception handling
-- :x: Automated crawling and parsing[^automated-crawling]
 
+[^setup]: Installs required Python packages.\
+  Creates PostgreSQL users, database and its tables. Fills the tables with the initial data.\
+  Sets some performance parameters of the PostgreSQL server.\
+  Restarts the PostgreSQL service.
+[^reset]: Deletes PostgreSQL users, database and its tables.\
+  Sets the default parameters of the PostgreSQL server.\
+  Restarts the PostgreSQL service.
+[^multi-threaded]: Uses multiple threads for crawling sources which do not contain new addresses (mainly reports).
+[^automated-run]: The program automatically checks the availability of new data.\
+  Once the new data are available, it downloads and stores them in the database and on the disk.\
+  The program never stops unless it is terminated by the user or the operating system.
 [^robots-txt]: The Crawler respects robots.txt rules of each source.
-[^automated-crawling]: The program automatically checks the availability of new data.\
-  Once the new data are available, it downloads and stores them in the database and on the disk.
 [^connecting-addresses-and-data]: The Parser connects the stored addresses and data.
 
 ## :earth_americas: Web Client [[client](client "Web Client")]

@@ -18,8 +18,8 @@ from mapper.url_mapper import UrlMapper
 from response.html_response import HtmlResponse
 
 class Crawler:
-	def __init__(self):
-		self.__config_data = JsonFile("config.json").load()
+	def __init__(self, config_data):
+		self.__config_data = config_data
 		self.__db_config_data = JsonFile("db.json").load()
 		self.__session = requests.Session()
 
