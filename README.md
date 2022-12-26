@@ -30,7 +30,7 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
     - :hammer: Reported addresses (JSON) *- address currency not yet specified*
   - :x: [Cryptscam](https://cryptscam.com "Cryptscam")
     - :x: Searched reported BTC addresses (HTML)
-    - :x: Reported addresses (HTML)
+    - :hammer: Last Reported addresses (HTML) *- address currency not yet specified*
   - :x: [SeeKoin](https://www.seekoin.com/address.php "SeeKoin")
     - :x: Reported BTC addresses (HTML)
 - :x: Parsing the data collected by the Crawler[^connecting-addresses-and-data]

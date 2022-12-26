@@ -113,7 +113,7 @@
 							["6", null, "{}", "Reported BTC Addresses"],
 							["7", 2, "{}", "Reported Addresses"],
 							["8", null, "{}", "Searched Reported BTC Addresses"],
-							["8", 2, "{}", "Reported Addresses"],
+							["8", 2, "{}", "Last Reported Addresses"],
 							["9", null, "{}", "Reported BTC Addresses"]
 						]
 					]
@@ -156,7 +156,7 @@
 							["https://bitcoinais.com"],
 							["https://api.cryptoscamdb.org/v1/addresses"],
 							["https://cryptscam.com/detail"],
-							["https://cryptscam.com"],
+							["https://cryptscam.com/en?page=1"],
 							["https://www.seekoin.com/address.php"]
 						]
 					]

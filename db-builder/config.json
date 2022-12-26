@@ -1,6 +1,6 @@
 {
 	"run_timeout": {
-		"crawler": 60,
+		"crawler": 300,
 		"exception": 10
 	},
 	"crawler": {

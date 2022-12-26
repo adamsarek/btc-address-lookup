@@ -1,6 +1,6 @@
 # External imports
 import datetime
-import isal
+from isal import isal_zlib
 import json
 import requests
 import threading
@@ -90,10 +90,12 @@ class Crawler:
 			response_links = [response.url + node.get("href") for node in HtmlResponse(response.text).get_links() if node.get("href").endswith(".txt")]
 			for response_link in response_links:
 				# Crawl response
-				response = self.__request(response_link)
+				response = self.__request(response_link.strip())
 				self.__crawl_response(db_connection, response, source_label_url)
 		# CryptoBlacklist / Last Reported Ethereum Addresses
-		elif source_label_url["source_label_url_id"] == 6:
+		# Cryptscam / Last Reported Addresses
+		elif(source_label_url["source_label_url_id"] == 6
+		or   source_label_url["source_label_url_id"] == 13):
 			# Crawl response
 			response = self.__request(source_label_url["address"], False)
 			self.__crawl_response(db_connection, response, source_label_url)
@@ -148,7 +150,7 @@ class Crawler:
 				db_copy = DatabaseCopy(copy)
 
 				# Decompress object
-				decompress_obj = isal.isal_zlib.decompressobj(32 + isal.isal_zlib.MAX_WBITS)
+				decompress_obj = isal_zlib.decompressobj(32 + isal_zlib.MAX_WBITS)
 
 				prev_text = ""
 				
@@ -192,7 +194,7 @@ class Crawler:
 				response_links = [node.get("href") for node in HtmlResponse(response.text).get_links(class_="wp-block-latest-posts__post-title")]
 				for response_link in response_links:
 					# Crawl response
-					response = self.__request(response_link, False)
+					response = self.__request(response_link.strip(), False)
 					self.__crawl_response(db_connection, response, source_label_url, 1)
 				
 				# Save file from response
@@ -202,7 +204,7 @@ class Crawler:
 				self.__save_file_from_response(response, file)
 
 				# Add last address
-				self.__add_last_address_from_text(db_connection, response.url.split("/")[-2])
+				self.__add_last_address_from_text(db_connection, response.url.split("/")[-2].strip())
 		elif add_address_option == 3:
 			# Save file from response
 			chunks = self.__save_file_from_response(response, file, True)
@@ -212,6 +214,32 @@ class Crawler:
 
 			# Add addresses
 			self.__add_addresses_from_text(db_connection, text_json["result"].keys())
+			
+			# TODO: https://blockchair.com/search?q=
+		elif add_address_option == 4:
+			if source_label_url_depth < 50:
+				response_url_parts = response.url.split("/en?page=")
+				page_id = int(response_url_parts[1].strip())
+
+				# Crawl response
+				if (page_id + 1) < 50:
+					response = self.__request("{0}/en?page={1}".format(response_url_parts[0].strip(), str(page_id + 1)), False)
+					self.__crawl_response(db_connection, response, source_label_url, page_id)
+
+				# Save file from response
+				self.__save_file_from_response(response, file)
+
+				response_links = [response_url_parts[0].strip() + node.get("href") for node in HtmlResponse(response.text).select("div.font-weight-bold a[href]")]
+				for response_link in response_links:
+					# Crawl response
+					response = self.__request(response_link.strip(), False)
+					self.__crawl_response(db_connection, response, source_label_url, 50)
+			else:
+				# Save file from response
+				self.__save_file_from_response(response, file)
+
+				# Add last address
+				self.__add_last_address_from_text(db_connection, response.url.split("/")[-1].strip())
 			
 			# TODO: https://blockchair.com/search?q=
 	
@@ -231,6 +259,9 @@ class Crawler:
 		# CryptoScamDB / Reported Addresses
 		elif source_label_url["source_label_url_id"] == 11:
 			self.__add_addresses_from_response(db_connection, response, source_label_url, source_label_url_depth, file, 3, None, None)
+		# Cryptscam / Last Reported Addresses
+		elif source_label_url["source_label_url_id"] == 13:
+			self.__add_addresses_from_response(db_connection, response, source_label_url, source_label_url_depth, file, 4, None, None)
 
 	def __crawl_response(self, db_connection, response, source_label_url, source_label_url_depth=0):
 		response_last_modified_at = datetime.datetime.fromtimestamp(0)
@@ -240,17 +271,24 @@ class Crawler:
 		# Add addresses (if not added yet)
 		if(source_label_url["last_crawled_at"] is None or source_label_url["last_crawled_at"] < response_last_modified_at):
 			# Get data file name
-			data_file_name = response.url.split("/")[-1]
+			data_file_name = response.url.split("/")[-1].strip()
 			
 			# CryptoBlacklist / Last Reported Ethereum Addresses
 			if source_label_url["source_label_url_id"] == 6:
 				if source_label_url_depth == 0:
-					data_file_name = "lastReportedEthereumAddresses.html"
+					data_file_name = "last_reported_eth_addresses.html"
 				elif source_label_url_depth == 1:
-					data_file_name = response.url.split("/")[-2] + ".html"
+					data_file_name = response.url.split("/")[-2].strip() + ".html"
 			# CryptoScamDB / Reported Addresses
 			elif source_label_url["source_label_url_id"] == 11:
-				data_file_name = "reportedAddresses.json"
+				data_file_name = "reported_addresses.json"
+			# Cryptscam / Last Reported Addresses
+			elif source_label_url["source_label_url_id"] == 13:
+				if source_label_url_depth < 50:
+					data_file_name = "last_reported_addresses_{0}.html".format(str(source_label_url_depth + 1))
+				else:
+					data_file_name = response.url.split("/")[-1].strip() + ".html"
+
 				
 			# Data & local file path parts
 			data_file_path_parts = [str(source_label_url["source_label_url_id"]), data_file_name]
