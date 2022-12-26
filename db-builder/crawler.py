@@ -1,6 +1,7 @@
 # External imports
 import datetime
 from isal import isal_zlib
+from isal import igzip
 import json
 import requests
 import threading

@@ -14,8 +14,6 @@
 # TODO: https://stackoverflow.com/questions/16694907/download-large-file-in-python-with-requests
 # TODO: https://www.dbi-services.com/blog/the-fastest-way-to-load-1m-rows-in-postgresql/
 
-# TODO: Auto setup - running postgres installation postgresql.exe, install python libraries
-
 # TODO: sending query failed another command is already in progress
 # TODO: https://stackoverflow.com/questions/3122145/zlib-error-error-3-while-decompressing-incorrect-header-check/22310760#22310760
 # TODO: io.DEFAULT_BUFFER_SIZE
@@ -24,22 +22,23 @@
 
 # TODO: Local MFT / FTP server
 
-# ["Unknown", "N/A", "n/a", "n/a", "/src/img/unknown.svg"]
-
 # Implement Layers (Business, Data, etc.)
+
 # Robots: urllib.robotparser
 # https://stackoverflow.com/questions/43085744/parsing-robots-txt-in-python
-# psycopg.rows.dict_row
+
 # When there is no timestamp (last-modified) of remote file, check size
 
 # Data (table) - whole remote file
 # SubData (table) - part of remote file (JSON - only 1 key = 1 address not whole JSON file)
 
-# DatabaseInitializer (singleton)
+# UAC: https://www.xingyulei.com/post/py-admin/index.html
 
-# https://www.xingyulei.com/post/py-admin/index.html
+# List all requirements
+# pip freeze > requirements.txt
 
-# Auto-install python libraries + postgresql?
+# Create .exe
+# python -m PyInstaller main.py -F -n db-builder --distpath . ; Remove-Item -Recurse -Force "build" ; Remove-Item "db-builder.spec"
 
 # External imports
 import ctypes
