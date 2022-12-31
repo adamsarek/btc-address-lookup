@@ -9,7 +9,7 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
 - :heavy_check_mark: CRUD operations with the PostgreSQL database
 - :heavy_check_mark: Multi-threaded downloading and processing[^multi-threaded]
 - :heavy_check_mark: Automated run[^automated-run]
-- :x: Fulfilling the robots.txt rules[^robots-txt]
+- :heavy_check_mark: Fulfilling the robots.txt rules[^robots-txt]
 - :x: Complete database schema
 - :hammer: Crawling all addresses / reports from the following sources[^robots-txt]:
   - :heavy_check_mark: [LoyceV](http://alladdresses.loyce.club "LoyceV")
