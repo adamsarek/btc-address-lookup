@@ -3,6 +3,7 @@ import math
 import psycopg
 
 # Internal imports
+from console.console import Console
 from database.database import Database
 
 class DatabaseConnection:
@@ -18,7 +19,7 @@ class DatabaseConnection:
 		try:
 			cursor = self.__connection.cursor(row_factory=psycopg.rows.dict_row).execute(query, args)
 		except (Exception, psycopg.DatabaseError) as error:
-			print(str(error))
+			Console().print_warn(str(error))
 		
 		return cursor
 	

@@ -34,6 +34,12 @@
 
 # UAC: https://www.xingyulei.com/post/py-admin/index.html
 
+# Bug: do not copy weekly loyce update for 2nd+ time but insert with unique key
+
+# Robots.txt sitemap crawling: https://practicaldatascience.co.uk/data-science/how-to-parse-xml-sitemaps-using-python
+# https://github.com/scrapy/protego#comparison
+# https://github.com/python/cpython/blob/main/Lib/urllib/robotparser.py
+
 # List all requirements
 # pip freeze > requirements.txt
 
@@ -43,10 +49,12 @@
 # External imports
 import ctypes
 import datetime
+import os
 import sys
 import time
 
 # Internal imports
+from console.console import Console
 from crawler import Crawler
 from setup import Setup
 from file.json_file import JsonFile
@@ -71,10 +79,12 @@ def wait(seconds):
 	# Wait before starting the next run
 	date_now = datetime.datetime.now()
 	date_future = date_now + datetime.timedelta(seconds=seconds)
-	print("Crawler will now wait till {0} for the next run.".format(date_future))
+	Console().print_info("Crawler will now wait till {0} for the next run.".format(date_future.isoformat(" ", "seconds")))
 	time.sleep(seconds)
 
 def main():
+	os.system("")
+
 	ARGS = {
 		"reset": False,
 		"restart_db": False,
@@ -86,30 +96,49 @@ def main():
 		if len(sys.argv) > (i + 1):
 			ARGS[list(ARGS.keys())[i]] = True if sys.argv[i + 1] == "1" else False
 	
-	# Reset / Setup - reset, restart_db, delete_setup_config
-	setup = Setup(**ARGS)
-
 	# Configuration data
 	config_data = JsonFile("config.json").load()
-	
+
+	Console().set_title(config_data["program"]["title"])
+	Console().print_header(config_data["program"]["title"])
+
+	# Run forever (only until finished successfully)
+	while(True):
+		try:
+			# Reset / Setup - reset, restart_db, delete_setup_config
+			setup = Setup(**ARGS)
+
+			# Setup finish message
+			Console().print_success("Setup finished successfully.")
+
+			break
+		except (Exception) as error:
+			Console().print_error(str(error))
+
+			# Setup finish message
+			Console().print_info("Setup could not finish due to an exception.")
+
+			# Wait (secs) before starting the next setup
+			wait(config_data["run_timeout"]["exception"])
+
 	if ARGS["reset"] == False:
 		# Run forever
 		while(True):
-			print("\nCrawler is running...")
+			Console().print_info("\nCrawler is running...")
 
 			try:
 				crawler = Crawler(config_data)
 
 				# Run finish message
-				print("Crawler finished the current run successfully.")
+				Console().print_success("Crawler finished the current run successfully.")
 
 				# Wait (secs) before starting the next run
 				wait(config_data["run_timeout"]["crawler"])
 			except (Exception) as error:
-				print(str(error))
+				Console().print_error(str(error))
 
 				# Run finish message
-				print("Crawler could not finish the current run due to an exception.")
+				Console().print_info("Crawler could not finish the current run due to an exception.")
 
 				# Wait (secs) before starting the next run
 				wait(config_data["run_timeout"]["exception"])

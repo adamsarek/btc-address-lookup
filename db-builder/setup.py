@@ -4,6 +4,7 @@ import psutil
 import subprocess
 
 # Internal imports
+from console.console import Console
 from database.database import Database
 from database.database_connection import DatabaseConnection
 from file.json_file import JsonFile
@@ -80,7 +81,7 @@ class Setup:
 					db_connection.drop_user(pg_user["usename"])
 	
 	def __reset(self):
-		print("Resetting...")
+		Console().print_info("\nResetting...")
 
 		# Save new setup configuration
 		new_setup_config_data = copy.deepcopy(self.__setup_config_data)
@@ -121,7 +122,7 @@ class Setup:
 			self.__setup_users_and_databases(db_connection)
 	
 	def __setup(self):
-		print("Setting up...")
+		Console().print_info("\nSetting up...")
 
 		with Database().get_connection(self.__setup_config_data["default_connection"], connection_pool=False) as connection:
 			db_connection = DatabaseConnection(connection)

@@ -5,8 +5,11 @@ from isal import igzip
 import json
 import requests
 import threading
+import urllib.parse
+import urllib.robotparser
 
 # Internal imports
+from console.console import Console
 from database.database import Database
 from database.database_connection import DatabaseConnection
 from database.database_copy import DatabaseCopy
@@ -67,7 +70,37 @@ class Crawler:
 			for thread in self.__threads:
 				thread.join()
 
+	def __get_robots_parser(self, url):
+		# Get robots.txt url
+		parsed_url = urllib.parse.urlparse(url)
+		robots_url = "{url.scheme}://{url.netloc}/robots.txt".format(url=parsed_url)
+		robots_txt = self.__session.get(robots_url)
+
+		# Robots.txt exists
+		if robots_txt.status_code == 200 and len(robots_txt.text) > 0:
+			robots_parser = urllib.robotparser.RobotFileParser()
+			robots_parser.set_url(robots_url)
+			robots_parser.disallow_all = False
+			robots_parser.parse(robots_txt.text.splitlines())
+			
+			return robots_parser
+
+		# Robots.txt does not exist
+		return None
+
 	def __request(self, url, stream=True):
+		robots_parser = self.__get_robots_parser(url)
+
+		# Robots.txt exists
+		if robots_parser is not None:
+			# Url can be requested
+			if robots_parser.can_fetch(self.__config_data["crawler"]["user_agent"], url):
+				return self.__session.get(url, stream=stream)
+			
+			# Url cannot be requested
+			raise Exception("A request to the URL: {0} could not be sent because the URL is not allowed to be accessed by the robots.txt".format(url))
+		
+		# Robots.txt does not exist => Url can be requested
 		return self.__session.get(url, stream=stream)
 	
 	def __crawl_source_label_url(self, db_connection, source_label_url):
@@ -100,11 +133,8 @@ class Crawler:
 			# Crawl response
 			response = self.__request(source_label_url["address"], False)
 			self.__crawl_response(db_connection, response, source_label_url)
-		# Cryptscam / Reported Addresses
-		elif source_label_url["source_label_url_id"] == 13:
-			print("TODO: " + str(source_label_url))
 		else:
-			print("TODO: " + str(source_label_url))
+			Console().print_warn("TODO: " + str(source_label_url))
 
 	def __save_file_from_response(self, response, file, return_chunks=False):
 		if return_chunks:
@@ -115,6 +145,8 @@ class Crawler:
 				file.write(chunk)
 
 				chunks.append(chunk)
+			
+			return chunks
 		else:
 			for chunk in response.iter_content(chunk_size=4096):
 				# Write file
@@ -209,7 +241,7 @@ class Crawler:
 		elif add_address_option == 3:
 			# Save file from response
 			chunks = self.__save_file_from_response(response, file, True)
-			
+
 			text = b"".join(chunks)
 			text_json = json.loads(text)
 
