@@ -95,7 +95,7 @@
 					"create": [
 						"source_label_id SMALLSERIAL",
 						"source_id SMALLINT NOT NULL",
-						"new_addresses_currency_id BIGINT",
+						"new_addresses_currency_id SMALLINT",
 						"roles SMALLINT[] NOT NULL",
 						"name TEXT NOT NULL",
 						"CONSTRAINT source_label_source_label_id_pkey PRIMARY KEY (source_label_id)",
@@ -141,7 +141,7 @@
 				{
 					"table_name": "url",
 					"create": [
-						"url_id SERIAL",
+						"url_id BIGSERIAL",
 						"address TEXT NOT NULL",
 						"CONSTRAINT url_url_id_pkey PRIMARY KEY (url_id)",
 						"CONSTRAINT url_address_key UNIQUE (address)"
@@ -171,7 +171,7 @@
 					"create": [
 						"source_label_url_id SMALLSERIAL",
 						"source_label_id SMALLINT NOT NULL",
-						"url_id SMALLINT NOT NULL",
+						"url_id BIGINT NOT NULL",
 						"roles SMALLINT[] NOT NULL",
 						"last_crawled_at TIMESTAMP",
 						"CONSTRAINT source_label_url_id_pkey PRIMARY KEY (source_label_url_id)",
@@ -204,9 +204,9 @@
 				{
 					"table_name": "data",
 					"create": [
-						"data_id SERIAL",
+						"data_id BIGSERIAL",
 						"source_label_url_id SMALLINT NOT NULL",
-						"url_id SMALLINT NOT NULL",
+						"url_id BIGINT NOT NULL",
 						"roles SMALLINT[] NOT NULL",
 						"path TEXT NOT NULL",
 						"crawled_at TIMESTAMP",
