@@ -22,16 +22,16 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   - :x: [CryptoBlacklist](https://www.cryptoblacklist.io "CryptoBlacklist")
     - :x: Searched reported BTC addresses (HTML)
     - :heavy_check_mark: Last reported ETH addresses (HTML)
-  - :hammer: [Bitcoin Generator Scam](http://ssrg.site.uottawa.ca/bgsieeesb2020/#urls "Bitcoin Generator Scam")
+  - :heavy_check_mark: [Bitcoin Generator Scam](http://ssrg.site.uottawa.ca/bgsieeesb2020/#urls "Bitcoin Generator Scam")
     - :heavy_check_mark: Scam BTC addresses (TXT)
-    - :hammer: Scam non-BTC addresses (TXT) *- address currency not yet specified*
+    - :heavy_check_mark: Scam non-BTC addresses (TXT)[^altcoins]
   - :x: [BitcoinAIS](https://bitcoinais.com "BitcoinAIS")
     - :x: Reported BTC addresses (HTML)
-  - :hammer: [CryptoScamDB](https://cryptoscamdb.org "CryptoScamDB")
-    - :hammer: Reported addresses (JSON) *- address currency not yet specified*
+  - :heavy_check_mark: [CryptoScamDB](https://cryptoscamdb.org "CryptoScamDB")
+    - :heavy_check_mark: Reported addresses (JSON)[^altcoins]
   - :x: [Cryptscam](https://cryptscam.com "Cryptscam")
     - :x: Searched reported BTC addresses (HTML)
-    - :hammer: Last reported addresses (HTML) *- address currency not yet specified*
+    - :heavy_check_mark: Last reported addresses (HTML)[^altcoins]
   - :x: [SeeKoin](https://www.seekoin.com/address.php "SeeKoin")
     - :x: Reported BTC addresses (HTML)
 - :x: Parsing the data collected by the Crawler[^connecting-addresses-and-data]
@@ -49,6 +49,7 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   Once the new data are available, it downloads and stores them in the database and on the disk.\
   The program never stops unless it is terminated by the user or the operating system.
 [^robots-txt]: The Crawler respects robots.txt rules of each source.
+[^altcoins]: The Crawler is able to find out the cryptocurrency of a given address from the 18 blockchains available on [Blockchair](https://blockchair.com/ "Blockchair").
 [^connecting-addresses-and-data]: The Parser connects the stored addresses and data.
 
 ### Requirements:
