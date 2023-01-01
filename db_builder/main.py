@@ -34,8 +34,6 @@
 
 # UAC: https://www.xingyulei.com/post/py-admin/index.html
 
-# Bug: do not copy weekly loyce update for 2nd+ time but insert with unique key
-
 # Robots.txt sitemap crawling: https://practicaldatascience.co.uk/data-science/how-to-parse-xml-sitemaps-using-python
 # https://github.com/scrapy/protego#comparison
 # https://github.com/python/cpython/blob/main/Lib/urllib/robotparser.py
@@ -44,7 +42,7 @@
 # pip freeze > requirements.txt
 
 # Create .exe
-# python -m PyInstaller main.py -F -n db-builder --distpath . ; Remove-Item -Recurse -Force "build" ; Remove-Item "db-builder.spec"
+# python -m PyInstaller main.py -F -n db_builder --distpath . ; Remove-Item -Recurse -Force "build" ; Remove-Item "db_builder.spec"
 
 # External imports
 import ctypes
