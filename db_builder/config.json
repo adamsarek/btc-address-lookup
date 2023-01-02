@@ -8,6 +8,7 @@
 	},
 	"crawler": {
 		"user_agent": "BTCAddressLookupBot",
-		"data_path": "crawled_data"
+		"data_path": "crawled_data",
+		"thread_count": 1000
 	}
 }

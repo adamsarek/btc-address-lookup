@@ -3,6 +3,7 @@ import datetime
 from isal import isal_zlib
 from isal import igzip
 import json
+import math
 import requests
 import threading
 import urllib.parse
@@ -140,23 +141,54 @@ class Crawler:
 		elif source_label_url["source_label_url_id"] == 2:
 			# Get html response
 			response = self.__request(source_label_url["address"], False)
-
-			# Start threads
-			threads = []
-			for response_link in [response.url + node.get("href") for node in HtmlResponse(response.text).get_links() if node.get("href").endswith(".txt")]:
+			response_links = [response.url + node.get("href") for node in HtmlResponse(response.text).get_links() if node.get("href").endswith(".txt")]
+			for response_link in response_links:
 				# Crawl response
 				response = self.__request(response_link.strip())
-				
-				thread = threading.Thread(
-					target = self.__crawl_response,
-					args = (db_connection, response, source_label_url,)
-				)
-				thread.start()
-				threads.append(thread)
+				self.__crawl_response(db_connection, response, source_label_url)
+		# CryptoBlacklist / Searched Reported BTC Addresses
+		# Cryptscam / Searched Reported BTC Addresses
+		elif(source_label_url["source_label_url_id"] == 5
+		or   source_label_url["source_label_url_id"] == 12):
+			# Get BTC addresses
+			btc_address_count = AddressMapper().select_count(
+				db_connection,
+				[],
+				"currency_id = 1"
+			).fetchone()["count"]
 			
-			# Join threads
-			for thread in threads:
-				thread.join()
+			for i in range(math.ceil(btc_address_count / self.__config_data["crawler"]["thread_count"])):
+				# Start threads
+				threads = []
+
+				btc_addresses = AddressMapper().select(
+					db_connection, [
+						"address_id",
+						"address"
+					],
+					[],
+					"currency_id = 1",
+					"",
+					"{0} OFFSET {1}".format(
+						self.__config_data["crawler"]["thread_count"],
+						self.__config_data["crawler"]["thread_count"] * i
+					)
+				).fetchall()
+				
+				for btc_address in btc_addresses:
+					# Crawl response
+					response = self.__request(source_label_url["address"] + btc_address["address"])
+
+					thread = threading.Thread(
+						target = self.__crawl_response,
+						args = (db_connection, response, source_label_url,)
+					)
+					thread.start()
+					threads.append(thread)
+				
+				# Join threads
+				for thread in threads:
+					thread.join()
 		# CryptoBlacklist / Last Reported Ethereum Addresses
 		# Cryptscam / Last Reported Addresses
 		elif(source_label_url["source_label_url_id"] == 6
@@ -420,6 +452,11 @@ class Crawler:
 			if source_label_url["source_label_url_id"] == 1:
 				if source_label_url["last_crawled_at"] is not None:
 					source_label_url_depth = 1
+			# CryptoBlacklist / Searched Reported BTC Addresses
+			# Cryptscam / Searched Reported BTC Addresses
+			elif(source_label_url["source_label_url_id"] == 5
+			or   source_label_url["source_label_url_id"] == 12):
+				data_file_name = response.url.split("/")[-1].strip() + ".html"
 			# CryptoBlacklist / Last Reported Ethereum Addresses
 			elif source_label_url["source_label_url_id"] == 6:
 				if source_label_url_depth == 0:
@@ -468,7 +505,7 @@ class Crawler:
 							db_connection.alter_table("address", ["ALTER currency_id SET DEFAULT {}".format(source_label_url["new_addresses_currency_id"])])
 
 							# LoyceV / All BTC Addresses - Weekly update
-							if source_label_url["source_label_url_id"] == 1 and source_label_url_depth != 1:
+							if source_label_url["source_label_url_id"] == 1 and source_label_url_depth == 0:
 								db_connection.alter_table("address", ["DROP CONSTRAINT address_address_key"])
 					
 					self.__add_addresses(db_connection, response, source_label_url, source_label_url_depth, file)
@@ -493,7 +530,7 @@ class Crawler:
 							db_connection.alter_table("address", ["ALTER currency_id DROP DEFAULT"])
 							
 							# LoyceV / All BTC Addresses - Weekly update
-							if source_label_url["source_label_url_id"] == 1 and source_label_url_depth != 1:
+							if source_label_url["source_label_url_id"] == 1 and source_label_url_depth == 0:
 								db_connection.alter_table("address", ["ADD CONSTRAINT address_address_key UNIQUE (address)"])
 
 			# Add url

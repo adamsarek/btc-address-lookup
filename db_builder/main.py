@@ -38,6 +38,8 @@
 # https://github.com/scrapy/protego#comparison
 # https://github.com/python/cpython/blob/main/Lib/urllib/robotparser.py
 
+# Auto-generate db.json during setup
+
 # List all requirements
 # pip freeze > requirements.txt
 
@@ -104,7 +106,7 @@ def main():
 	while(True):
 		try:
 			# Reset / Setup - reset, restart_db, delete_setup_config
-			setup = Setup(**ARGS)
+			setup = Setup(config_data, **ARGS)
 
 			# Setup finish message
 			Console().print_success("Setup finished successfully.")

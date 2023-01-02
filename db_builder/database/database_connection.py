@@ -227,13 +227,14 @@ class DatabaseConnection:
 			)
 		)
 
-	def select(self, table_name, column_names, joins=[], where="", order_by=""):
+	def select(self, table_name, column_names, joins=[], where="", order_by="", limit=""):
 		query = "SELECT "
 		query += ", ".join(["{}"] * len(column_names))
 		query += " FROM {} "
 		query += " ".join(joins)
 		query += ((" WHERE " + where) if (where != "") else (""))
 		query += ((" ORDER BY " + order_by) if (order_by != "") else (""))
+		query += ((" LIMIT " + limit) if (limit != "") else (""))
 		params = []
 
 		for column_name in column_names:
@@ -242,6 +243,28 @@ class DatabaseConnection:
 				column_name_parts.append(psycopg.sql.Identifier(str(column_name_part)))
 			params.append(psycopg.sql.SQL(".").join(column_name_parts))
 		
+		table_name_parts = []
+		for table_name_part in table_name.split("."):
+			table_name_parts.append(psycopg.sql.Identifier(table_name_part))
+		params.append(psycopg.sql.SQL(".").join(table_name_parts))
+
+		return self.__execute(
+			psycopg.sql.SQL(
+				query
+			).format(
+				*params
+			)
+		)
+	
+	def select_count(self, table_name, joins=[], where="", order_by="", limit=""):
+		query = "SELECT COUNT(*)"
+		query += " FROM {} "
+		query += " ".join(joins)
+		query += ((" WHERE " + where) if (where != "") else (""))
+		query += ((" ORDER BY " + order_by) if (order_by != "") else (""))
+		query += ((" LIMIT " + limit) if (limit != "") else (""))
+		params = []
+
 		table_name_parts = []
 		for table_name_part in table_name.split("."):
 			table_name_parts.append(psycopg.sql.Identifier(table_name_part))

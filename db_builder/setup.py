@@ -1,17 +1,24 @@
 # External imports
 import copy
 import psutil
+import shutil
 import subprocess
 
 # Internal imports
 from console.console import Console
 from database.database import Database
 from database.database_connection import DatabaseConnection
+from file.file import File
 from file.json_file import JsonFile
 
 class Setup:
-	def __init__(self, reset, restart_db, delete_setup_config):
+	def __init__(self, config_data, reset, restart_db, delete_setup_config):
 		self.__SETUP_CONFIG_FILE_PATH = "setup.json"
+
+		# Delete crawled data
+		if reset:
+			if File(config_data["crawler"]["data_path"]).exists():
+				shutil.rmtree(config_data["crawler"]["data_path"])
 		
 		if JsonFile(self.__SETUP_CONFIG_FILE_PATH).exists():
 			# Load setup configuration
