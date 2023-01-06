@@ -34,6 +34,10 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
     - :heavy_check_mark: Last reported addresses (HTML)[^altcoins]
   - :x: [SeeKoin](https://www.seekoin.com/address.php "SeeKoin")
     - :x: Reported BTC addresses (HTML)
+  - :heavy_check_mark: [BitcoinWhosWho](https://www.bitcoinwhoswho.com "BitcoinWhosWho")
+    - :heavy_check_mark: Searched reported BTC addresses (HTML)
+  - :x: [WalletExplorer](https://www.walletexplorer.com "WalletExplorer")
+    - :x: Labeled BTC addresses (JSON + HTML)
 - :x: Connecting the crawled addresses and data[^connecting_addresses_and_data]
 - :x: Exception handling
 

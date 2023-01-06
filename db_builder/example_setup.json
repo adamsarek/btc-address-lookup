@@ -86,7 +86,8 @@
 							["{}", "BitcoinAIS"],
 							["{}", "CryptoScamDB"],
 							["{}", "Cryptscam"],
-							["{}", "SeeKoin"]
+							["{}", "SeeKoin"],
+							["{}", "BitcoinWhosWho"]
 						]
 					]
 				},
@@ -119,7 +120,8 @@
 							["7", 2, "{}", "Reported Addresses"],
 							["8", null, "{}", "Searched Reported BTC Addresses"],
 							["8", 2, "{}", "Last Reported Addresses"],
-							["9", null, "{}", "Reported BTC Addresses"]
+							["9", null, "{}", "Reported BTC Addresses"],
+							["10", null, "{}", "Searched Reported BTC Addresses"]
 						]
 					]
 				},
@@ -162,7 +164,8 @@
 							["https://api.cryptoscamdb.org/v1/addresses"],
 							["https://cryptscam.com/detail/"],
 							["https://cryptscam.com/en?page=1"],
-							["https://www.seekoin.com/address.php"]
+							["https://www.seekoin.com/address.php"],
+							["https://www.bitcoinwhoswho.com/address/"]
 						]
 					]
 				},
@@ -197,7 +200,8 @@
 							[9, 11, "{}"],
 							[10, 12, "{}"],
 							[11, 13, "{}"],
-							[12, 14, "{}"]
+							[12, 14, "{}"],
+							[13, 15, "{}"]
 						]
 					]
 				},

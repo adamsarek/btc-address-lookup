@@ -148,8 +148,10 @@ class Crawler:
 				self.__crawl_response(db_connection, response, source_label_url)
 		# CryptoBlacklist / Searched Reported BTC Addresses
 		# Cryptscam / Searched Reported BTC Addresses
+		# BitcoinWhosWho / Searched Reported BTC Addresses
 		elif(source_label_url["source_label_url_id"] == 5
-		or   source_label_url["source_label_url_id"] == 12):
+		or   source_label_url["source_label_url_id"] == 12
+		or   source_label_url["source_label_url_id"] == 15):
 			# Get BTC addresses
 			btc_address_count = AddressMapper().select_count(
 				db_connection,
@@ -454,8 +456,10 @@ class Crawler:
 					source_label_url_depth = 1
 			# CryptoBlacklist / Searched Reported BTC Addresses
 			# Cryptscam / Searched Reported BTC Addresses
+			# BitcoinWhosWho / Searched Reported BTC Addresses
 			elif(source_label_url["source_label_url_id"] == 5
-			or   source_label_url["source_label_url_id"] == 12):
+			or   source_label_url["source_label_url_id"] == 12
+			or   source_label_url["source_label_url_id"] == 15):
 				data_file_name = response.url.split("/")[-1].strip() + ".html"
 			# CryptoBlacklist / Last Reported Ethereum Addresses
 			elif source_label_url["source_label_url_id"] == 6:

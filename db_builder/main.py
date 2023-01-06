@@ -39,6 +39,14 @@
 # https://github.com/python/cpython/blob/main/Lib/urllib/robotparser.py
 
 # Auto-generate db.json during setup
+# Get rid of setup.json, db.json & config.json to enable .exe only use
+
+# Crawl known address labels - Binance, Coinbase, etc.
+# https://www.walletexplorer.com/
+
+# Data (table) - add column: new version - if NULL (it's latest version), else (there's ID of newer version)
+
+# Searched reported BTC addresses - do not save file unless it's useful
 
 # List all requirements
 # pip freeze > requirements.txt
