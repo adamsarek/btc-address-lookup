@@ -230,9 +230,11 @@ class Crawler:
 		# CryptoBlacklist / Last Reported Ethereum Addresses
 		# BitcoinAIS / Reported BTC Addresses
 		# Cryptscam / Last Reported Addresses
+		# SeeKoin / Reported BTC Addresses
 		elif(source_label_url["source_label_url_id"] == 6
 		or   source_label_url["source_label_url_id"] == 10
-		or   source_label_url["source_label_url_id"] == 13):
+		or   source_label_url["source_label_url_id"] == 13
+		or   source_label_url["source_label_url_id"] == 14):
 			# Crawl response
 			with self.__request(source_label_url["address"], False) as response:
 				self.__crawl_response(db_connection, response, source_label_url)
@@ -523,6 +525,12 @@ class Crawler:
 					data_file_name = "last_reported_addresses_{0}.html".format(str(source_label_url_depth + 1))
 				else:
 					data_file_name = response.url.split("/")[-1].strip() + ".html"
+			# SeeKoin / Reported BTC Addresses
+			elif source_label_url["source_label_url_id"] == 14:
+				if source_label_url_depth >= 0:
+					data_file_name = "reported_btc_addresses_{0}.html".format(str(source_label_url_depth + 1))
+				else:
+					data_file_name = response.url.split("/addr-")[-1].strip() + ".html"
 
 			# Data & local file path parts
 			data_file_path_parts = [str(source_label_url["source_label_url_id"]), data_file_name]
@@ -577,6 +585,31 @@ class Crawler:
 							if len(response_links) > 0:
 								# Crawl response
 								with self.__request(response.url.split("/page/")[0] + response_links[0].strip(), False) as r:
+									self.__crawl_response(db_connection, r, source_label_url, source_label_url_depth + 1)
+					# SeeKoin / Reported BTC Addresses
+					elif source_label_url["source_label_url_id"] == 14:
+						if source_label_url_depth >= 0:
+							# Start threads
+							threads = []
+							for response_link in [node.get("href") for node in HtmlResponse(response.text).select("a[href*=\"addr-\"]")]:
+								# Crawl response
+								with self.__request(response_link.strip(), False) as r:
+									thread = threading.Thread(
+										target = self.__crawl_response,
+										args = (db_connection, r, source_label_url, -1,)
+									)
+									thread.start()
+									threads.append(thread)
+							
+							# Join threads
+							for thread in threads:
+								thread.join()
+
+							response_links = [node.get("href") for node in HtmlResponse(response.text).select("a[href*=\"?d=\"]")]
+
+							if len(response_links) > 0:
+								# Crawl response
+								with self.__request(response_links[0].strip(), False) as r:
 									self.__crawl_response(db_connection, r, source_label_url, source_label_url_depth + 1)
 				# Add local file & addresses
 				else:

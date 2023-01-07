@@ -32,8 +32,8 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   - :heavy_check_mark: [Cryptscam](https://cryptscam.com "Cryptscam")
     - :heavy_check_mark: Searched reported BTC addresses (HTML)
     - :heavy_check_mark: Last reported addresses (HTML)[^altcoins]
-  - :x: [SeeKoin](https://www.seekoin.com/address.php "SeeKoin")
-    - :x: Reported BTC addresses (HTML)
+  - :heavy_check_mark: [SeeKoin](https://www.seekoin.com/address.php "SeeKoin")
+    - :heavy_check_mark: Reported BTC addresses (HTML)
   - :heavy_check_mark: [BitcoinWhosWho](https://www.bitcoinwhoswho.com "BitcoinWhosWho")
     - :heavy_check_mark: Searched reported BTC addresses (HTML)
   - :x: [WalletExplorer](https://www.walletexplorer.com "WalletExplorer")
