@@ -9,6 +9,8 @@
 	"crawler": {
 		"user_agent": "BTCAddressLookupBot",
 		"data_path": "crawled_data",
-		"thread_count": 1000
+		"thread_count": 1000,
+		"attempt_count": 10,
+		"attempt_timeout": 1
 	}
 }
