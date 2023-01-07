@@ -228,8 +228,10 @@ class Crawler:
 				for thread in threads:
 					thread.join()
 		# CryptoBlacklist / Last Reported Ethereum Addresses
+		# BitcoinAIS / Reported BTC Addresses
 		# Cryptscam / Last Reported Addresses
 		elif(source_label_url["source_label_url_id"] == 6
+		or   source_label_url["source_label_url_id"] == 10
 		or   source_label_url["source_label_url_id"] == 13):
 			# Crawl response
 			with self.__request(source_label_url["address"], False) as response:
@@ -506,6 +508,12 @@ class Crawler:
 					data_file_name = "last_reported_eth_addresses.html"
 				elif source_label_url_depth == 1:
 					data_file_name = response.url.split("/")[-2].strip() + ".html"
+			# BitcoinAIS / Reported BTC Addresses
+			elif source_label_url["source_label_url_id"] == 10:
+				if source_label_url_depth >= 0:
+					data_file_name = "reported_btc_addresses_{0}.html".format(str(source_label_url_depth + 1))
+				else:
+					data_file_name = response.url.split("/")[-1].strip() + ".html"
 			# CryptoScamDB / Reported Addresses
 			elif source_label_url["source_label_url_id"] == 11:
 				data_file_name = "reported_addresses.json"
@@ -545,6 +553,31 @@ class Crawler:
 							# Join threads
 							for thread in threads:
 								thread.join()
+					# BitcoinAIS / Reported BTC Addresses
+					elif source_label_url["source_label_url_id"] == 10:
+						if source_label_url_depth >= 0:
+							# Start threads
+							threads = []
+							for response_link in ["https://bitcoinais.com" + node.get("href") for node in HtmlResponse(response.text).select("#commentaar a")]:
+								# Crawl response
+								with self.__request(response_link.strip(), False) as r:
+									thread = threading.Thread(
+										target = self.__crawl_response,
+										args = (db_connection, r, source_label_url, -1,)
+									)
+									thread.start()
+									threads.append(thread)
+							
+							# Join threads
+							for thread in threads:
+								thread.join()
+
+							response_links = [node.get("href") for node in HtmlResponse(response.text).select(".paginas > a") if "/page/" in node.get("href") and int(node.get("href").split("/page/")[1]) > int(response.url.split("/page/")[1])]
+
+							if len(response_links) > 0:
+								# Crawl response
+								with self.__request(response.url.split("/page/")[0] + response_links[0].strip(), False) as r:
+									self.__crawl_response(db_connection, r, source_label_url, source_label_url_depth + 1)
 				# Add local file & addresses
 				else:
 					if((source_label_url_depth == 0)
