@@ -15,8 +15,8 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   - :heavy_check_mark: [LoyceV](http://alladdresses.loyce.club "LoyceV")
     - :heavy_check_mark: Weekly updates with all BTC addresses (GZIP)
     - :heavy_check_mark: Daily updates (TXT)
-  - :x: [BitcoinAbuse](https://www.bitcoinabuse.com/reports "BitcoinAbuse")
-    - :x: Reported BTC addresses (HTML)
+  - :heavy_check_mark: [BitcoinAbuse](https://www.bitcoinabuse.com/reports "BitcoinAbuse")
+    - :heavy_check_mark: Reported BTC addresses (HTML)
   - :heavy_check_mark: [CheckBitcoinAddress](https://checkbitcoinaddress.com/abuse-reports-to-bitcoin-address "CheckBitcoinAddress")
     - :heavy_check_mark: Reported BTC addresses (HTML)
   - :heavy_check_mark: [CryptoBlacklist](https://www.cryptoblacklist.io "CryptoBlacklist")
@@ -39,7 +39,7 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   - :x: [WalletExplorer](https://www.walletexplorer.com "WalletExplorer")
     - :x: Labeled BTC addresses (JSON + HTML)
 - :x: Connecting the crawled addresses and data[^connecting_addresses_and_data]
-- :x: Exception handling
+- :hammer: Exception handling
 
 [^setup]: Creates PostgreSQL users, database and its tables.\
   Fills the tables with the initial data.\

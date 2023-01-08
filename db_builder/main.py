@@ -48,6 +48,26 @@
 
 # Searched reported BTC addresses - do not save file unless it's useful
 
+# ---------- Problems ----------
+# 3 BitcoinAbuse
+# - all crypto
+# 4 CheckBitcoinAddress
+# - all crypto
+# 10 BitcoinAIS
+# - all crypto
+# - email-protection.html, marksman.html
+# 14
+# - only 1st page? - Your IP was blacklisted
+# - all crypto or BTC only?
+# ---------- Problems ----------
+
+# ---------- TODO ----------
+# - Check new addresses sources
+# - Check searched BTC sources
+# - Save file only when useful data inside
+#   - SeeKoin: Your IP was blacklisted
+# ---------- TODO ----------
+
 # List all requirements
 # pip freeze > requirements.txt
 

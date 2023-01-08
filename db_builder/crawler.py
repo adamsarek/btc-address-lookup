@@ -119,7 +119,11 @@ class Crawler:
 				for attempt in range(self.__config_data["crawler"]["attempt_count"]):
 					try:
 						return self.__session.get(url, stream=stream)
-					except:
+					except (Exception) as error:
+						Console().print_error(str(error))
+						
+						# Wait (secs) before starting the next request
+						Console().print_info("Crawler will now wait {0} s for the next request.".format(str(self.__config_data["crawler"]["attempt_timeout"])))
 						time.sleep(self.__config_data["crawler"]["attempt_timeout"])
 			
 			# Url cannot be requested
@@ -151,11 +155,13 @@ class Crawler:
 					# Crawl response
 					response = self.__request(response_link.strip())
 					self.__crawl_response(db_connection, response, source_label_url)
+		# BitcoinAbuse / Reported BTC Addresses
 		# CheckBitcoinAddress / Reported BTC Addresses
-		elif source_label_url["source_label_url_id"] == 4:
+		elif(source_label_url["source_label_url_id"] == 3
+		or   source_label_url["source_label_url_id"] == 4):
 			# Get html response
 			with self.__request(source_label_url["address"], False) as response:
-				response_links = [node.get("href") for node in HtmlResponse(response.text).select(".pagination > li > a")]
+				response_links = [node.get("href") for node in HtmlResponse(response.text).select(".pagination a")]
 				last_page_id = 1
 				for response_link in response_links:
 					page_id = int(response_link.split("?page=")[1])
@@ -238,8 +244,6 @@ class Crawler:
 			# Crawl response
 			with self.__request(source_label_url["address"], False) as response:
 				self.__crawl_response(db_connection, response, source_label_url)
-		else:
-			Console().print_warn("TODO: " + str(source_label_url))
 
 	def __save_file_from_response(self, response, file, return_chunks=False):
 		if return_chunks:
@@ -476,62 +480,89 @@ class Crawler:
 		# Cryptscam / Last Reported Addresses
 		elif source_label_url["source_label_url_id"] == 13:
 			self.__add_addresses_from_response(db_connection, response, source_label_url, source_label_url_depth, file, 4, None, True)
+	
+	def __get_data_file_name(self, response, source_label_url, source_label_url_depth):
+		if "?" in response.url.split("/")[-1].strip():
+			data_file_name = response.url.split("/")[-1].split("?")[0].strip()
+		else:
+			data_file_name = response.url.split("/")[-1].strip()
+		
+		# LoyceV / All BTC Addresses - Weekly update
+		if source_label_url["source_label_url_id"] == 1:
+			if source_label_url["last_crawled_at"] is not None:
+				source_label_url_depth = 1
+		# BitcoinAbuse / Reported BTC Addresses
+		# BitcoinAIS / Reported BTC Addresses
+		elif(source_label_url["source_label_url_id"] == 3
+		or   source_label_url["source_label_url_id"] == 10):
+			if source_label_url_depth >= 0:
+				data_file_name = "reported_btc_addresses_{0}.html".format(str(source_label_url_depth + 1))
+			elif "?" in response.url.split("/")[-1].strip():
+				data_file_name = data_file_name.split("?")[0].strip() + ".html"
+			else:
+				data_file_name += ".html"
+		# CheckBitcoinAddress / Reported BTC Addresses
+		elif source_label_url["source_label_url_id"] == 4:
+			if source_label_url_depth >= 0:
+				data_file_name = "abuse_reports_to_bitcoin_address_{0}.html".format(str(source_label_url_depth + 1))
+			else:
+				data_file_name = response.url.split("?address=")[1].strip() + ".html"
+		# CryptoBlacklist / Searched Reported BTC Addresses
+		# Cryptscam / Searched Reported BTC Addresses
+		# BitcoinWhosWho / Searched Reported BTC Addresses
+		elif(source_label_url["source_label_url_id"] == 5
+		or   source_label_url["source_label_url_id"] == 12
+		or   source_label_url["source_label_url_id"] == 15):
+			data_file_name += ".html"
+		# CryptoBlacklist / Last Reported Ethereum Addresses
+		elif source_label_url["source_label_url_id"] == 6:
+			if source_label_url_depth == 0:
+				data_file_name = "last_reported_eth_addresses.html"
+			elif source_label_url_depth == 1:
+				data_file_name = response.url.split("/")[-2].strip() + ".html"
+		# CryptoScamDB / Reported Addresses
+		elif source_label_url["source_label_url_id"] == 11:
+			data_file_name = "reported_addresses.json"
+		# Cryptscam / Last Reported Addresses
+		elif source_label_url["source_label_url_id"] == 13:
+			if source_label_url_depth < 50:
+				data_file_name = "last_reported_addresses_{0}.html".format(str(source_label_url_depth + 1))
+			else:
+				data_file_name += ".html"
+		# SeeKoin / Reported BTC Addresses
+		elif source_label_url["source_label_url_id"] == 14:
+			if source_label_url_depth >= 0:
+				data_file_name = "reported_btc_addresses_{0}.html".format(str(source_label_url_depth + 1))
+			else:
+				data_file_name = response.url.split("/addr-")[1].strip() + ".html"
+		
+		return data_file_name
 
 	def __crawl_response(self, db_connection, response, source_label_url, source_label_url_depth=0):
 		response_last_modified_at = datetime.datetime.fromtimestamp(0)
 		if response.headers.get("last-modified"):
 			response_last_modified_at = datetime.datetime.strptime(response.headers.get("last-modified"), "%a, %d %b %Y %H:%M:%S %Z")
 		
+		response_content_length = int(response.headers.get("content-length")) if "content-length" in response.headers.keys() else len(response.text)
+		
+		ok_file = response.status_code == 200
+		new_file = source_label_url["last_crawled_at"] is None or source_label_url["last_crawled_at"] < response_last_modified_at
+		not_empty_file = response_content_length > 0
+		allowed_file = True
+
+		if source_label_url["source_label_url_id"] == 14:
+			allowed_file = response.text != "Your IP was blacklisted"
+
 		# Add addresses (if not added yet)
-		if(source_label_url["last_crawled_at"] is None or source_label_url["last_crawled_at"] < response_last_modified_at):
-			# Get data file name
-			data_file_name = response.url.split("/")[-1].strip()
-			
+		if ok_file and new_file and not_empty_file and allowed_file:
 			# LoyceV / All BTC Addresses - Weekly update
 			if source_label_url["source_label_url_id"] == 1:
 				if source_label_url["last_crawled_at"] is not None:
 					source_label_url_depth = 1
-			# CheckBitcoinAddress / Reported BTC Addresses
-			elif source_label_url["source_label_url_id"] == 4:
-				if source_label_url_depth >= 0:
-					data_file_name = "abuse_reports_to_bitcoin_address_{0}.html".format(str(source_label_url_depth + 1))
-				else:
-					data_file_name = response.url.split("/")[-1].split("?address=")[1].strip() + ".html"
-			# CryptoBlacklist / Searched Reported BTC Addresses
-			# Cryptscam / Searched Reported BTC Addresses
-			# BitcoinWhosWho / Searched Reported BTC Addresses
-			elif(source_label_url["source_label_url_id"] == 5
-			or   source_label_url["source_label_url_id"] == 12
-			or   source_label_url["source_label_url_id"] == 15):
-				data_file_name = response.url.split("/")[-1].strip() + ".html"
-			# CryptoBlacklist / Last Reported Ethereum Addresses
-			elif source_label_url["source_label_url_id"] == 6:
-				if source_label_url_depth == 0:
-					data_file_name = "last_reported_eth_addresses.html"
-				elif source_label_url_depth == 1:
-					data_file_name = response.url.split("/")[-2].strip() + ".html"
-			# BitcoinAIS / Reported BTC Addresses
-			elif source_label_url["source_label_url_id"] == 10:
-				if source_label_url_depth >= 0:
-					data_file_name = "reported_btc_addresses_{0}.html".format(str(source_label_url_depth + 1))
-				else:
-					data_file_name = response.url.split("/")[-1].strip() + ".html"
-			# CryptoScamDB / Reported Addresses
-			elif source_label_url["source_label_url_id"] == 11:
-				data_file_name = "reported_addresses.json"
-			# Cryptscam / Last Reported Addresses
-			elif source_label_url["source_label_url_id"] == 13:
-				if source_label_url_depth < 50:
-					data_file_name = "last_reported_addresses_{0}.html".format(str(source_label_url_depth + 1))
-				else:
-					data_file_name = response.url.split("/")[-1].strip() + ".html"
-			# SeeKoin / Reported BTC Addresses
-			elif source_label_url["source_label_url_id"] == 14:
-				if source_label_url_depth >= 0:
-					data_file_name = "reported_btc_addresses_{0}.html".format(str(source_label_url_depth + 1))
-				else:
-					data_file_name = response.url.split("/addr-")[-1].strip() + ".html"
-
+			
+			# Get data file name
+			data_file_name = self.__get_data_file_name(response, source_label_url, source_label_url_depth)
+			
 			# Data & local file path parts
 			data_file_path_parts = [str(source_label_url["source_label_url_id"]), data_file_name]
 			local_data_file_path_parts = [self.__config_data["crawler"]["data_path"]] + data_file_path_parts
@@ -543,8 +574,26 @@ class Crawler:
 						# Write file
 						file.write(chunk)
 					
+					# BitcoinAbuse / Reported BTC Addresses
+					if source_label_url["source_label_url_id"] == 3:
+						if source_label_url_depth >= 0:
+							# Start threads
+							threads = []
+							for response_link in ["https://www.bitcoinabuse.com" + node.get("href") for node in HtmlResponse(response.text).select(".row div > a")]:
+								# Crawl response
+								with self.__request(response_link.strip(), False) as r:
+									thread = threading.Thread(
+										target = self.__crawl_response,
+										args = (db_connection, r, source_label_url, -1,)
+									)
+									thread.start()
+									threads.append(thread)
+							
+							# Join threads
+							for thread in threads:
+								thread.join()
 					# CheckBitcoinAddress / Reported BTC Addresses
-					if source_label_url["source_label_url_id"] == 4:
+					elif source_label_url["source_label_url_id"] == 4:
 						if source_label_url_depth >= 0:
 							# Start threads
 							threads = []
