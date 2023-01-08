@@ -55,7 +55,6 @@
 # - all crypto
 # 10 BitcoinAIS
 # - all crypto
-# - email-protection.html, marksman.html
 # 14
 # - only 1st page? - Your IP was blacklisted
 # - all crypto or BTC only?

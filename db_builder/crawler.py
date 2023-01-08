@@ -391,21 +391,12 @@ class Crawler:
 		# CryptoBlacklist / Last Reported Ethereum Addresses
 		elif add_address_option == 2:
 			if source_label_url_depth == 0:
-				# Start threads
-				threads = []
-				for response_link in [node.get("href") for node in HtmlResponse(response.text).get_links(class_="wp-block-latest-posts__post-title")]:
-					# Crawl response
-					with self.__request(response_link.strip(), False) as response:
-						thread = threading.Thread(
-							target = self.__crawl_response,
-							args = (db_connection, response, source_label_url, 1,)
-						)
-						thread.start()
-						threads.append(thread)
-				
-				# Join threads
-				for thread in threads:
-					thread.join()
+				self.__crawl_responses_in_threads(
+					db_connection,
+					[node.get("href") for node in HtmlResponse(response.text).get_links(class_="wp-block-latest-posts__post-title")],
+					source_label_url,
+					1
+				)
 				
 				# Save file from response
 				self.__save_file_from_response(response, file)
@@ -439,21 +430,12 @@ class Crawler:
 				# Save file from response
 				self.__save_file_from_response(response, file)
 
-				# Start threads
-				threads = []
-				for response_link in [response_url_parts[0].strip() + node.get("href") for node in HtmlResponse(response.text).select("div.font-weight-bold a[href]")]:
-					# Crawl response
-					with self.__request(response_link.strip(), False) as response:
-						thread = threading.Thread(
-							target = self.__crawl_response,
-							args = (db_connection, response, source_label_url, 50,)
-						)
-						thread.start()
-						threads.append(thread)
-				
-				# Join threads
-				for thread in threads:
-					thread.join()
+				self.__crawl_responses_in_threads(
+					db_connection,
+					[response_url_parts[0].strip() + node.get("href") for node in HtmlResponse(response.text).select("div.font-weight-bold a[href]")],
+					source_label_url,
+					50
+				)
 			else:
 				# Save file from response
 				self.__save_file_from_response(response, file)
@@ -537,6 +519,24 @@ class Crawler:
 				data_file_name = response.url.split("/addr-")[1].strip() + ".html"
 		
 		return data_file_name
+	
+	def __crawl_responses_in_threads(self, db_connection, response_links, source_label_url, source_label_url_depth=0):
+		# Start threads
+		threads = []
+		
+		for response_link in response_links:
+			# Crawl response
+			with self.__request(response_link.strip(), False) as response:
+				thread = threading.Thread(
+					target = self.__crawl_response,
+					args = (db_connection, response, source_label_url, source_label_url_depth,)
+				)
+				thread.start()
+				threads.append(thread)
+		
+		# Join threads
+		for thread in threads:
+			thread.join()
 
 	def __crawl_response(self, db_connection, response, source_label_url, source_label_url_depth=0):
 		response_last_modified_at = datetime.datetime.fromtimestamp(0)
@@ -577,82 +577,46 @@ class Crawler:
 					# BitcoinAbuse / Reported BTC Addresses
 					if source_label_url["source_label_url_id"] == 3:
 						if source_label_url_depth >= 0:
-							# Start threads
-							threads = []
-							for response_link in ["https://www.bitcoinabuse.com" + node.get("href") for node in HtmlResponse(response.text).select(".row div > a")]:
-								# Crawl response
-								with self.__request(response_link.strip(), False) as r:
-									thread = threading.Thread(
-										target = self.__crawl_response,
-										args = (db_connection, r, source_label_url, -1,)
-									)
-									thread.start()
-									threads.append(thread)
-							
-							# Join threads
-							for thread in threads:
-								thread.join()
+							self.__crawl_responses_in_threads(
+								db_connection,
+								["https://www.bitcoinabuse.com" + node.get("href") for node in HtmlResponse(response.text).select(".row div > a")],
+								source_label_url,
+								-1
+							)
 					# CheckBitcoinAddress / Reported BTC Addresses
 					elif source_label_url["source_label_url_id"] == 4:
 						if source_label_url_depth >= 0:
-							# Start threads
-							threads = []
-							for response_link in ["https://checkbitcoinaddress.com/" + node.get("href") for node in HtmlResponse(response.text).select(".ml-3 > a")]:
-								# Crawl response
-								with self.__request(response_link.strip(), False) as response:
-									thread = threading.Thread(
-										target = self.__crawl_response,
-										args = (db_connection, response, source_label_url, -1,)
-									)
-									thread.start()
-									threads.append(thread)
-							
-							# Join threads
-							for thread in threads:
-								thread.join()
+							self.__crawl_responses_in_threads(
+								db_connection,
+								["https://checkbitcoinaddress.com/" + node.get("href") for node in HtmlResponse(response.text).select(".ml-3 > a")],
+								source_label_url,
+								-1
+							)
 					# BitcoinAIS / Reported BTC Addresses
 					elif source_label_url["source_label_url_id"] == 10:
 						if source_label_url_depth >= 0:
-							# Start threads
-							threads = []
-							for response_link in ["https://bitcoinais.com" + node.get("href") for node in HtmlResponse(response.text).select("#commentaar a")]:
-								# Crawl response
-								with self.__request(response_link.strip(), False) as r:
-									thread = threading.Thread(
-										target = self.__crawl_response,
-										args = (db_connection, r, source_label_url, -1,)
-									)
-									thread.start()
-									threads.append(thread)
-							
-							# Join threads
-							for thread in threads:
-								thread.join()
+							self.__crawl_responses_in_threads(
+								db_connection,
+								["https://bitcoinais.com" + node.get("href") for node in HtmlResponse(response.text).select("#commentaar a") if node.get("href") != "/cdn-cgi/l/email-protection"],
+								source_label_url,
+								-1
+							)
 
-							response_links = [node.get("href") for node in HtmlResponse(response.text).select(".paginas > a") if "/page/" in node.get("href") and int(node.get("href").split("/page/")[1]) > int(response.url.split("/page/")[1])]
+							response_links = [response.url.split("/page/")[0] + node.get("href") for node in HtmlResponse(response.text).select(".paginas > a") if "/page/" in node.get("href") and int(node.get("href").split("/page/")[1]) > int(response.url.split("/page/")[1])]
 
 							if len(response_links) > 0:
 								# Crawl response
-								with self.__request(response.url.split("/page/")[0] + response_links[0].strip(), False) as r:
+								with self.__request(response_links[0].strip(), False) as r:
 									self.__crawl_response(db_connection, r, source_label_url, source_label_url_depth + 1)
 					# SeeKoin / Reported BTC Addresses
 					elif source_label_url["source_label_url_id"] == 14:
 						if source_label_url_depth >= 0:
-							# Start threads
-							threads = []
-							for response_link in [node.get("href") for node in HtmlResponse(response.text).select("a[href*=\"addr-\"]")]:
-								# Crawl response
-								with self.__request(response_link.strip(), False) as r:
-									thread = threading.Thread(
-										target = self.__crawl_response,
-										args = (db_connection, r, source_label_url, -1,)
-									)
-									thread.start()
-									threads.append(thread)
-							
-							# Join threads
-							for thread in threads:
-								thread.join()
+							self.__crawl_responses_in_threads(
+								db_connection,
+								[node.get("href") for node in HtmlResponse(response.text).select("a[href*=\"addr-\"]")],
+								source_label_url,
+								-1
+							)
 
 							response_links = [node.get("href") for node in HtmlResponse(response.text).select("a[href*=\"?d=\"]")]
 
