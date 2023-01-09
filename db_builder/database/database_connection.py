@@ -248,13 +248,17 @@ class DatabaseConnection:
 			table_name_parts.append(psycopg.sql.Identifier(table_name_part))
 		params.append(psycopg.sql.SQL(".").join(table_name_parts))
 
-		return self.__execute(
+		cursor = self.__execute(
 			psycopg.sql.SQL(
 				query
 			).format(
 				*params
 			)
 		)
+		if cursor == []:
+			return cursor
+		else:
+			return cursor.fetchall()
 	
 	def select_count(self, table_name, joins=[], where="", order_by="", limit=""):
 		query = "SELECT COUNT(*)"
@@ -270,13 +274,17 @@ class DatabaseConnection:
 			table_name_parts.append(psycopg.sql.Identifier(table_name_part))
 		params.append(psycopg.sql.SQL(".").join(table_name_parts))
 
-		return self.__execute(
+		cursor = self.__execute(
 			psycopg.sql.SQL(
 				query
 			).format(
 				*params
 			)
 		)
+		if cursor == []:
+			return cursor
+		else:
+			return cursor.fetchall()
 
 	def insert(self, table_name, column_names, rows):
 		query = ""

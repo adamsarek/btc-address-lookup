@@ -58,6 +58,7 @@
 # 14
 # - only 1st page? - Your IP was blacklisted
 # - all crypto or BTC only?
+# - RecursionError: maximum recursion depth exceeded while calling a Python object
 # ---------- Problems ----------
 
 # ---------- TODO ----------
@@ -65,6 +66,7 @@
 # - Check searched BTC sources
 # - Save file only when useful data inside
 #   - SeeKoin: Your IP was blacklisted
+# - Add to Run/RunOnce
 # ---------- TODO ----------
 
 # List all requirements

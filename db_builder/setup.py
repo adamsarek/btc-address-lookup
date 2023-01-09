@@ -60,7 +60,7 @@ class Setup:
 				db_connection.create_database(setup_config_database["database"], setup_config_database["owner"])
 		
 		# Drop databases
-		pg_databases = db_connection.select("pg_database", ["datname"], [], "datistemplate = false").fetchall()
+		pg_databases = db_connection.select("pg_database", ["datname"], [], "datistemplate = false")
 		for pg_database in pg_databases:
 			if pg_database["datname"] != "postgres":
 				setup_config_database_found = False
@@ -74,7 +74,7 @@ class Setup:
 					db_connection.drop_database(pg_database["datname"])
 
 		# Drop users
-		pg_users = db_connection.select("pg_user", ["usename"]).fetchall()
+		pg_users = db_connection.select("pg_user", ["usename"])
 		for pg_user in pg_users:
 			if pg_user["usename"] != self.__setup_config_data["default_connection"]["user"] and pg_user["usename"] != "postgres":
 				setup_config_user_found = False
@@ -192,7 +192,7 @@ class Setup:
 						db_connection = DatabaseConnection(connection)
 
 						# Drop tables
-						pg_tables = db_connection.select("information_schema.tables", ["table_name"], [], "table_schema = 'public'").fetchall()
+						pg_tables = db_connection.select("information_schema.tables", ["table_name"], [], "table_schema = 'public'")
 						for pg_table in pg_tables:
 							setup_config_database_table_found = False
 

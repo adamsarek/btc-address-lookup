@@ -45,7 +45,7 @@ class Crawler:
 				],
 				[],
 				"blockchair_request_name IS NOT NULL"
-			).fetchall()
+			)
 
 			# Get source label urls
 			source_label_urls = SourceLabelUrlMapper().select(
@@ -63,7 +63,7 @@ class Crawler:
 				],
 				"",
 				"source_label_url.source_label_url_id"
-			).fetchall()
+			)
 
 			# Get source label urls without new addresses
 			source_label_urls_without_new_addresses = []
@@ -74,17 +74,18 @@ class Crawler:
 					source_label_urls_without_new_addresses.append(source_label_url)
 			
 			# Start threads
-			self.__threads = []
+			threads = []
+			
 			for source_label_url in source_label_urls_without_new_addresses:
 				thread = threading.Thread(
 					target = self.__crawl_source_label_url,
 					args = (db_connection, source_label_url,)
 				)
 				thread.start()
-				self.__threads.append(thread)
+				threads.append(thread)
 			
 			# Join threads
-			for thread in self.__threads:
+			for thread in threads:
 				thread.join()
 
 	def __get_robots_parser(self, url):
@@ -200,7 +201,7 @@ class Crawler:
 				db_connection,
 				[],
 				"currency_id = 1"
-			).fetchone()["count"]
+			)[0]["count"]
 			
 			for i in range(math.ceil(btc_address_count / self.__config_data["crawler"]["thread_count"])):
 				# Start threads
@@ -218,7 +219,7 @@ class Crawler:
 						self.__config_data["crawler"]["thread_count"],
 						self.__config_data["crawler"]["thread_count"] * i
 					)
-				).fetchall()
+				)
 				
 				for btc_address in btc_addresses:
 					# Crawl response
@@ -676,7 +677,7 @@ class Crawler:
 
 			# Add url
 			UrlMapper().insert(db_connection, ["address"], [[response.url]])
-			url = UrlMapper().select(db_connection, ["url_id"], [], "address = '{}'".format(response.url)).fetchone()
+			url = UrlMapper().select(db_connection, ["url_id"], [], "address = '{}'".format(response.url))[0]
 
 			# Add data
 			DataMapper().insert(
