@@ -4,14 +4,9 @@ from isal import isal_zlib
 from isal import igzip
 import json
 import math
-import requests
 import threading
-import time
-import urllib.parse
-import urllib.robotparser
 
 # Internal imports
-from console.console import Console
 from database.database import Database
 from database.database_connection import DatabaseConnection
 from database.database_copy import DatabaseCopy
@@ -22,19 +17,18 @@ from mapper.currency_mapper import CurrencyMapper
 from mapper.data_mapper import DataMapper
 from mapper.source_label_url_mapper import SourceLabelUrlMapper
 from mapper.url_mapper import UrlMapper
+from request.request import Request
+from response.response import Response
 from response.html_response import HtmlResponse
 
 class Crawler:
 	def __init__(self, config_data):
 		self.__config_data = config_data
 		self.__db_config_data = JsonFile("db.json").load()
-		self.__session = requests.Session()
-
+		
 		with Database().get_connection(self.__db_config_data["connection"]) as connection:
 			db_connection = DatabaseConnection(connection)
 
-			self.__robots_parser = {}
-			
 			# Get currencies
 			self.__currencies = CurrencyMapper().select(
 				db_connection, [
@@ -65,73 +59,69 @@ class Crawler:
 				"source_label_url.source_label_url_id"
 			)
 
-			# Get source label urls without new addresses
+			# Sort out source label urls
+			source_label_urls_with_known_new_addresses = []
+			source_label_urls_with_unknown_new_addresses = []
 			source_label_urls_without_new_addresses = []
 			for source_label_url in source_label_urls:
-				if source_label_url["new_addresses_currency_id"] is not None:
-					self.__crawl_source_label_url(db_connection, source_label_url)
-				else:
+				if source_label_url["new_addresses_currency_id"] is None:
 					source_label_urls_without_new_addresses.append(source_label_url)
+				elif source_label_url["new_addresses_currency_id"] == 2:
+					source_label_urls_with_unknown_new_addresses.append(source_label_url)
+				elif source_label_url["source_label_url_id"] != 1:
+					source_label_urls_with_known_new_addresses.append(source_label_url)
+				else:
+					self.__crawl_source_label_url(db_connection, source_label_url)
 			
-			# Start threads
-			threads = []
+			# Crawl source label urls
+			db_connection.alter_table(
+				"address", [
+					"ALTER source_label_id DROP NOT NULL",
+					"ALTER address DROP NOT NULL",
+					"DROP CONSTRAINT address_address_id_pkey",
+					"DROP CONSTRAINT address_currency_id_fkey",
+					"DROP CONSTRAINT address_source_label_id_fkey",
+					"DROP CONSTRAINT address_address_key",
+					"DROP CONSTRAINT address_currency_id_check",
+					"DROP CONSTRAINT address_source_label_id_check"
+				]
+			)
 			
-			for source_label_url in source_label_urls_without_new_addresses:
-				thread = threading.Thread(
-					target = self.__crawl_source_label_url,
-					args = (db_connection, source_label_url,)
-				)
-				thread.start()
-				threads.append(thread)
+			self.__crawl_source_label_urls_in_threads(db_connection, source_label_urls_with_known_new_addresses)
 			
-			# Join threads
-			for thread in threads:
-				thread.join()
-
-	def __get_robots_parser(self, url):
-		# Get robots.txt url
-		parsed_url = urllib.parse.urlparse(url)
-		robots_url = "{url.scheme}://{url.netloc}/robots.txt".format(url=parsed_url)
-
-		if robots_url not in self.__robots_parser:
-			robots_txt = self.__session.get(robots_url)
-
-			# Robots.txt exists
-			if robots_txt.status_code == 200 and len(robots_txt.text) > 0:
-				robots_parser = urllib.robotparser.RobotFileParser()
-				robots_parser.set_url(robots_url)
-				robots_parser.disallow_all = False
-				robots_parser.parse(robots_txt.text.splitlines())
-				
-				self.__robots_parser[robots_url] = robots_parser
-
-			# Robots.txt does not exist
-			self.__robots_parser[robots_url] = None
-
-		return self.__robots_parser[robots_url]
-
-	def __request(self, url, stream=True):
-		robots_parser = self.__get_robots_parser(url)
-
-		# Robots.txt exists
-		if robots_parser is not None:
-			# Url can be requested
-			if robots_parser.can_fetch(self.__config_data["crawler"]["user_agent"], url):
-				for attempt in range(self.__config_data["crawler"]["attempt_count"]):
-					try:
-						return self.__session.get(url, stream=stream)
-					except (Exception) as error:
-						Console().print_error(str(error))
-						
-						# Wait (secs) before starting the next request
-						Console().print_info("Crawler will now wait {0} s for the next request.".format(str(self.__config_data["crawler"]["attempt_timeout"])))
-						time.sleep(self.__config_data["crawler"]["attempt_timeout"])
+			db_connection.alter_table("address", ["ADD CONSTRAINT address_address_key UNIQUE (address)"])
 			
-			# Url cannot be requested
-			raise Exception("A request to the URL: {0} could not be sent because the URL is not allowed to be accessed by the robots.txt".format(url))
+			self.__crawl_source_label_urls_in_threads(db_connection, source_label_urls_with_unknown_new_addresses)
+			
+			db_connection.alter_table(
+				"address", [
+					"ALTER source_label_id SET NOT NULL",
+					"ALTER address SET NOT NULL",
+					"ADD CONSTRAINT address_address_id_pkey PRIMARY KEY (address_id)",
+					"ADD CONSTRAINT address_currency_id_fkey FOREIGN KEY (currency_id) REFERENCES currency (currency_id)",
+					"ADD CONSTRAINT address_source_label_id_fkey FOREIGN KEY (source_label_id) REFERENCES source_label (source_label_id)",
+					"ADD CONSTRAINT address_currency_id_check CHECK (currency_id > 0)",
+					"ADD CONSTRAINT address_source_label_id_check CHECK (source_label_id > 0)"
+				]
+			)
+			
+			self.__crawl_source_label_urls_in_threads(db_connection, source_label_urls_without_new_addresses)
+
+	def __crawl_source_label_urls_in_threads(self, db_connection, source_label_urls):
+		# Start threads
+		threads = []
 		
-		# Robots.txt does not exist => Url can be requested
-		return self.__session.get(url, stream=stream)
+		for source_label_url in source_label_urls:
+			thread = threading.Thread(
+				target = self.__crawl_source_label_url,
+				args = (db_connection, source_label_url,)
+			)
+			thread.start()
+			threads.append(thread)
+		
+		# Join threads
+		for thread in threads:
+			thread.join()
 	
 	def __crawl_source_label_url(self, db_connection, source_label_url):
 		# LoyceV / All BTC Addresses - Weekly update
@@ -145,23 +135,23 @@ class Crawler:
 		or source_label_url["source_label_url_id"] == 9
 		or source_label_url["source_label_url_id"] == 11):
 			# Crawl response
-			with self.__request(source_label_url["address"]) as response:
+			with Request().request(source_label_url["address"]) as response:
 				self.__crawl_response(db_connection, response, source_label_url)
 		# LoyceV / All BTC Addresses - Daily update
 		elif source_label_url["source_label_url_id"] == 2:
 			# Get html response
-			with self.__request(source_label_url["address"], False) as response:
+			with Request().request(source_label_url["address"], False) as response:
 				response_links = [response.url + node.get("href") for node in HtmlResponse(response.text).get_links() if node.get("href").endswith(".txt")]
 				for response_link in response_links:
 					# Crawl response
-					response = self.__request(response_link.strip())
+					response = Request().request(response_link.strip())
 					self.__crawl_response(db_connection, response, source_label_url)
 		# BitcoinAbuse / Reported Addresses
 		# CheckBitcoinAddress / Reported Addresses
 		elif(source_label_url["source_label_url_id"] == 3
 		or   source_label_url["source_label_url_id"] == 4):
 			# Get html response
-			with self.__request(source_label_url["address"], False) as response:
+			with Request().request(source_label_url["address"], False) as response:
 				response_links = [node.get("href") for node in HtmlResponse(response.text).select(".pagination a")]
 				last_page_id = 1
 				for response_link in response_links:
@@ -179,7 +169,7 @@ class Crawler:
 						page_id = self.__config_data["crawler"]["thread_count"] * i + j
 
 						# Crawl response
-						with self.__request(response.url.split("?page=")[0] + "?page=" + str(page_id + 1), False) as response:
+						with Request().request(response.url.split("?page=")[0] + "?page=" + str(page_id + 1), False) as response:
 							thread = threading.Thread(
 								target = self.__crawl_response,
 								args = (db_connection, response, source_label_url, page_id,)
@@ -223,7 +213,7 @@ class Crawler:
 				
 				for btc_address in btc_addresses:
 					# Crawl response
-					with self.__request(source_label_url["address"] + btc_address["address"]) as response:
+					with Request().request(source_label_url["address"] + btc_address["address"]) as response:
 						thread = threading.Thread(
 							target = self.__crawl_response,
 							args = (db_connection, response, source_label_url,)
@@ -243,25 +233,9 @@ class Crawler:
 		or   source_label_url["source_label_url_id"] == 13
 		or   source_label_url["source_label_url_id"] == 14):
 			# Crawl response
-			with self.__request(source_label_url["address"], False) as response:
+			with Request().request(source_label_url["address"], False) as response:
 				self.__crawl_response(db_connection, response, source_label_url)
 
-	def __save_file_from_response(self, response, file, return_chunks=False):
-		if return_chunks:
-			chunks = []
-			
-			for chunk in response.iter_content(chunk_size=4096):
-				# Write file
-				file.write(chunk)
-
-				chunks.append(chunk)
-			
-			return chunks
-		else:
-			for chunk in response.iter_content(chunk_size=4096):
-				# Write file
-				file.write(chunk)
-	
 	def __get_text_from_chunk(self, prev_text, chunk, chunk_decode_option=0):
 		# Decode chunk
 		if chunk_decode_option == 0:
@@ -275,52 +249,45 @@ class Crawler:
 
 		return (text_lines[-1], text_lines)
 	
-	def __load_address_currency(self, currency, address):
-		# Crawl Blockchair
-		with self.__request("https://blockchair.com/{0}/address/{1}".format(currency["blockchair_request_name"], address), False) as response:
-			if response.status_code == 200:
-				if HtmlResponse(response.text).select(".address-aside-wrap > .transaction-costs .transaction-costs__value .wb-ba")[0].text != "–":
-					self.__currency_id = currency["currency_id"]
-	
 	def __get_currency_from_address(self, address):
-		self.__currency_id = 2
+		currency_id = 2
 
-		# Start threads
-		threads = []
 		for currency in self.__currencies:
-			thread = threading.Thread(
-				target = self.__load_address_currency,
-				args = (currency, address,)
-			)
-			thread.start()
-			threads.append(thread)
+			# Crawl Blockchair
+			with Request().request("https://blockchair.com/{0}/address/{1}".format(currency["blockchair_request_name"], address), False) as response:
+				if response.status_code == 200:
+					if HtmlResponse(response.text).select(".address-aside-wrap > .transaction-costs .transaction-costs__value .wb-ba")[0].text != "–":
+						currency_id = currency["currency_id"]
+						break
 		
-		# Join threads
-		for thread in threads:
-			thread.join()
-		
-		return self.__currency_id
+		return currency_id
 	
-	def __add_addresses_from_text(self, db_connection, addresses_text, detect_address_currency=False):
+	def __add_addresses_from_text(self, db_connection, source_label_url, addresses_text, detect_address_currency=False):
+		currency_id = source_label_url["new_addresses_currency_id"]
+		source_label_id = source_label_url["source_label_id"]
+		
 		addresses = []
-
+		
 		if detect_address_currency:
 			for address in addresses_text:
 				currency_id = self.__get_currency_from_address(address.strip())
-				addresses.append([currency_id, address.strip()])
-			AddressMapper().insert(db_connection, ["currency_id", "address"], addresses)
+				addresses.append([currency_id, source_label_id, address.strip()])
 		else:
 			for address in addresses_text:
-				addresses.append([address.strip()])
-			AddressMapper().insert(db_connection, ["address"], addresses)
+				addresses.append([currency_id, source_label_id, address.strip()])
+		
+		AddressMapper().insert(db_connection, ["currency_id", "source_label_id", "address"], addresses)
 	
-	def __add_last_address_from_text(self, db_connection, prev_text, detect_address_currency=False):
+	def __add_last_address_from_text(self, db_connection, source_label_url, prev_text, detect_address_currency=False):
 		if len(prev_text) > 0:
+			currency_id = source_label_url["new_addresses_currency_id"]
+			source_label_id = source_label_url["source_label_id"]
+
 			if detect_address_currency:
 				currency_id = self.__get_currency_from_address(prev_text.strip())
-				AddressMapper().insert(db_connection, ["currency_id", "address"], [[currency_id, prev_text.strip()]])
-			else:
-				AddressMapper().insert(db_connection, ["address"], [[prev_text.strip()]])
+			address = [currency_id, source_label_id, prev_text.strip()]
+
+			AddressMapper().insert(db_connection, ["currency_id", "source_label_id", "address"], [address])
 	
 	def __add_addresses_from_response(self, db_connection, response, source_label_url, source_label_url_depth, file, add_address_option=0, chunk_decode_option=0, detect_address_currency=False):
 		# LoyceV / All BTC Addresses - Weekly update
@@ -346,11 +313,11 @@ class Crawler:
 						
 						# Add addresses
 						for text_line in text_lines[:-1]:
-							db_copy.copy_row([text_line.strip()])
+							db_copy.copy_row([source_label_url["new_addresses_currency_id"], source_label_url["source_label_id"], text_line.strip()])
 					
 					# Add last address
 					if len(prev_text) > 0:
-						db_copy.copy_row([prev_text.strip()])
+						db_copy.copy_row([source_label_url["new_addresses_currency_id"], source_label_url["source_label_id"], prev_text.strip()])
 			else:
 				# Decompress object
 				decompress_obj = isal_zlib.decompressobj(32 + isal_zlib.MAX_WBITS)
@@ -368,10 +335,10 @@ class Crawler:
 					(prev_text, text_lines) = self.__get_text_from_chunk(prev_text, chunk)
 					
 					# Add addresses
-					self.__add_addresses_from_text(db_connection, text_lines[:-1], detect_address_currency)
+					self.__add_addresses_from_text(db_connection, source_label_url, text_lines[:-1], detect_address_currency)
 				
 				# Add last address
-				self.__add_last_address_from_text(db_connection, prev_text, detect_address_currency)
+				self.__add_last_address_from_text(db_connection, source_label_url, prev_text, detect_address_currency)
 		# LoyceV / All BTC Addresses - Daily update
 		# Bitcoin Generator Scam / Scam Non-BTC Addresses
 		elif add_address_option == 1:
@@ -385,10 +352,10 @@ class Crawler:
 				(prev_text, text_lines) = self.__get_text_from_chunk(prev_text, chunk, chunk_decode_option)
 				
 				# Add addresses
-				self.__add_addresses_from_text(db_connection, text_lines[:-1], detect_address_currency)
+				self.__add_addresses_from_text(db_connection, source_label_url, text_lines[:-1], detect_address_currency)
 			
 			# Add last address
-			self.__add_last_address_from_text(db_connection, prev_text, detect_address_currency)
+			self.__add_last_address_from_text(db_connection, source_label_url, prev_text, detect_address_currency)
 		# BitcoinAbuse / Reported Addresses
 		elif add_address_option == 2:
 			if source_label_url_depth >= 0:
@@ -400,13 +367,13 @@ class Crawler:
 				)
 				
 				# Save file from response
-				self.__save_file_from_response(response, file)
+				Response(response).save(file)
 			else:
 				# Save file from response
-				self.__save_file_from_response(response, file)
+				Response(response).save(file)
 
 				# Add last address
-				self.__add_last_address_from_text(db_connection, response.url.split("/")[-1].strip(), detect_address_currency)
+				self.__add_last_address_from_text(db_connection, source_label_url, response.url.split("/")[-1].strip(), detect_address_currency)
 		# CheckBitcoinAddress / Reported Addresses
 		elif add_address_option == 3:
 			if source_label_url_depth >= 0:
@@ -418,13 +385,13 @@ class Crawler:
 				)
 
 				# Save file from response
-				self.__save_file_from_response(response, file)
+				Response(response).save(file)
 			else:
 				# Save file from response
-				self.__save_file_from_response(response, file)
+				Response(response).save(file)
 
 				# Add last address
-				self.__add_last_address_from_text(db_connection, response.url.split("?address=")[1].strip(), detect_address_currency)
+				self.__add_last_address_from_text(db_connection, source_label_url, response.url.split("?address=")[1].strip(), detect_address_currency)
 		# CryptoBlacklist / Last Reported Ethereum Addresses
 		elif add_address_option == 4:
 			if source_label_url_depth == 0:
@@ -436,13 +403,13 @@ class Crawler:
 				)
 				
 				# Save file from response
-				self.__save_file_from_response(response, file)
+				Response(response).save(file)
 			elif source_label_url_depth == 1:
 				# Save file from response
-				self.__save_file_from_response(response, file)
+				Response(response).save(file)
 
 				# Add last address
-				self.__add_last_address_from_text(db_connection, response.url.split("/")[-2].strip())
+				self.__add_last_address_from_text(db_connection, source_label_url, response.url.split("/")[-2].strip())
 		# BitcoinAIS / Reported Addresses
 		elif add_address_option == 5:
 			if source_label_url_depth >= 0:
@@ -457,27 +424,27 @@ class Crawler:
 
 				if len(response_links) > 0:
 					# Crawl response
-					with self.__request(response_links[0].strip(), False) as r:
+					with Request().request(response_links[0].strip(), False) as r:
 						self.__crawl_response(db_connection, r, source_label_url, source_label_url_depth + 1)
 				
 				# Save file from response
-				self.__save_file_from_response(response, file)
+				Response(response).save(file)
 			else:
 				# Save file from response
-				self.__save_file_from_response(response, file)
+				Response(response).save(file)
 
 				# Add last address
-				self.__add_last_address_from_text(db_connection, response.url.split("/")[-1].strip(), detect_address_currency)
+				self.__add_last_address_from_text(db_connection, source_label_url, response.url.split("/")[-1].strip(), detect_address_currency)
 		# CryptoScamDB / Reported Addresses
 		elif add_address_option == 6:
 			# Save file from response
-			chunks = self.__save_file_from_response(response, file, True)
+			chunks = Response(response).save(file, True)
 
 			text = b"".join(chunks)
 			text_json = json.loads(text)
 
 			# Add addresses
-			self.__add_addresses_from_text(db_connection, text_json["result"].keys(), detect_address_currency)
+			self.__add_addresses_from_text(db_connection, source_label_url, text_json["result"].keys(), detect_address_currency)
 		# Cryptscam / Last Reported Addresses
 		elif add_address_option == 7:
 			if source_label_url_depth < 50:
@@ -486,11 +453,11 @@ class Crawler:
 
 				# Crawl response
 				if (page_id + 1) < 50:
-					with self.__request("{0}/en?page={1}".format(response_url_parts[0].strip(), str(page_id + 1)), False) as response:
+					with Request().request("{0}/en?page={1}".format(response_url_parts[0].strip(), str(page_id + 1)), False) as response:
 						self.__crawl_response(db_connection, response, source_label_url, page_id)
 
 				# Save file from response
-				self.__save_file_from_response(response, file)
+				Response(response).save(file)
 
 				self.__crawl_responses_in_threads(
 					db_connection,
@@ -500,10 +467,10 @@ class Crawler:
 				)
 			else:
 				# Save file from response
-				self.__save_file_from_response(response, file)
+				Response(response).save(file)
 
 				# Add last address
-				self.__add_last_address_from_text(db_connection, response.url.split("/")[-1].strip(), detect_address_currency)
+				self.__add_last_address_from_text(db_connection, source_label_url, response.url.split("/")[-1].strip(), detect_address_currency)
 	
 	def __add_addresses(self, db_connection, response, source_label_url, source_label_url_depth, file):
 		# LoyceV / All BTC Addresses - Weekly update
@@ -595,7 +562,7 @@ class Crawler:
 		
 		for response_link in response_links:
 			# Crawl response
-			with self.__request(response_link.strip(), False) as response:
+			with Request().request(response_link.strip(), False) as response:
 				thread = threading.Thread(
 					target = self.__crawl_response,
 					args = (db_connection, response, source_label_url, source_label_url_depth,)
@@ -657,57 +624,11 @@ class Crawler:
 
 							if len(response_links) > 0:
 								# Crawl response
-								with self.__request(response_links[0].strip(), False) as r:
+								with Request().request(response_links[0].strip(), False) as r:
 									self.__crawl_response(db_connection, r, source_label_url, source_label_url_depth + 1)
 				# Add local file & addresses
 				else:
-					if((source_label_url_depth == 0)
-					or (source_label_url_depth == 1 and source_label_url["source_label_url_id"] == 1)):
-						db_connection.alter_table(
-							"address", [
-								"ALTER source_label_id DROP NOT NULL",
-								"ALTER address DROP NOT NULL",
-								"ALTER source_label_id SET DEFAULT {}".format(source_label_url["source_label_id"]),
-								"DROP CONSTRAINT address_address_id_pkey",
-								"DROP CONSTRAINT address_currency_id_fkey",
-								"DROP CONSTRAINT address_source_label_id_fkey",
-								"DROP CONSTRAINT address_currency_id_check",
-								"DROP CONSTRAINT address_source_label_id_check"
-							]
-						)
-
-						# Single currency addresses
-						if source_label_url["new_addresses_currency_id"] != 2:
-							db_connection.alter_table("address", ["ALTER currency_id SET DEFAULT {}".format(source_label_url["new_addresses_currency_id"])])
-
-							# LoyceV / All BTC Addresses - Weekly update
-							if source_label_url["source_label_url_id"] == 1 and source_label_url_depth == 0:
-								db_connection.alter_table("address", ["DROP CONSTRAINT address_address_key"])
-					
 					self.__add_addresses(db_connection, response, source_label_url, source_label_url_depth, file)
-
-					if((source_label_url_depth == 0)
-					or (source_label_url_depth == 1 and source_label_url["source_label_url_id"] == 1)):
-						db_connection.alter_table(
-							"address", [
-								"ALTER source_label_id SET NOT NULL",
-								"ALTER address SET NOT NULL",
-								"ALTER source_label_id DROP DEFAULT",
-								"ADD CONSTRAINT address_address_id_pkey PRIMARY KEY (address_id)",
-								"ADD CONSTRAINT address_currency_id_fkey FOREIGN KEY (currency_id) REFERENCES currency (currency_id)",
-								"ADD CONSTRAINT address_source_label_id_fkey FOREIGN KEY (source_label_id) REFERENCES source_label (source_label_id)",
-								"ADD CONSTRAINT address_currency_id_check CHECK (currency_id > 0)",
-								"ADD CONSTRAINT address_source_label_id_check CHECK (source_label_id > 0)"
-							]
-						)
-
-						# Single currency addresses
-						if source_label_url["new_addresses_currency_id"] != 2:
-							db_connection.alter_table("address", ["ALTER currency_id DROP DEFAULT"])
-							
-							# LoyceV / All BTC Addresses - Weekly update
-							if source_label_url["source_label_url_id"] == 1 and source_label_url_depth == 0:
-								db_connection.alter_table("address", ["ADD CONSTRAINT address_address_key UNIQUE (address)"])
 
 			# Add url
 			UrlMapper().insert(db_connection, ["address"], [[response.url]])
