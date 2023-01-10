@@ -16,9 +16,9 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
     - :heavy_check_mark: Weekly updates with all BTC addresses (GZIP)
     - :heavy_check_mark: Daily updates (TXT)
   - :hammer: [BitcoinAbuse](https://www.bitcoinabuse.com/reports "BitcoinAbuse")
-    - :hammer: Reported addresses (HTML) *- recursion error*
+    - :hammer: Reported addresses (HTML)[^altcoins] *- recursion error*
   - :hammer: [CheckBitcoinAddress](https://checkbitcoinaddress.com/abuse-reports-to-bitcoin-address "CheckBitcoinAddress")
-    - :hammer: Reported addresses (HTML) *- recursion error*
+    - :hammer: Reported addresses (HTML)[^altcoins] *- recursion error*
   - :hammer: [CryptoBlacklist](https://www.cryptoblacklist.io "CryptoBlacklist")
     - :heavy_check_mark: Searched reported BTC addresses (HTML)
     - :hammer: Last reported ETH addresses (HTML) *- recursion error*
@@ -26,12 +26,12 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
     - :heavy_check_mark: Scam BTC addresses (TXT)
     - :heavy_check_mark: Scam non-BTC addresses (TXT)[^altcoins]
   - :hammer: [BitcoinAIS](https://bitcoinais.com "BitcoinAIS")
-    - :hammer: Reported addresses (HTML) *- recursion error*
+    - :hammer: Reported addresses (HTML)[^altcoins] *- recursion error*
   - :heavy_check_mark: [CryptoScamDB](https://cryptoscamdb.org "CryptoScamDB")
     - :heavy_check_mark: Reported addresses (JSON)[^altcoins]
-  - :heavy_check_mark: [Cryptscam](https://cryptscam.com "Cryptscam")
+  - :hammer: [Cryptscam](https://cryptscam.com "Cryptscam")
     - :heavy_check_mark: Searched reported BTC addresses (HTML)
-    - :heavy_check_mark: Last reported addresses (HTML)[^altcoins]
+    - :hammer: Last reported addresses (HTML)[^altcoins] *- recursion error*
   - :hammer: [SeeKoin](https://www.seekoin.com/address.php "SeeKoin")
     - :hammer: Reported BTC addresses (HTML) *- recursion error*
   - :heavy_check_mark: [BitcoinWhosWho](https://www.bitcoinwhoswho.com "BitcoinWhosWho")
