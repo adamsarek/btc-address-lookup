@@ -25,8 +25,8 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   - :heavy_check_mark: [Bitcoin Generator Scam](http://ssrg.site.uottawa.ca/bgsieeesb2020/#urls "Bitcoin Generator Scam")
     - :heavy_check_mark: Scam BTC addresses (TXT)
     - :heavy_check_mark: Scam non-BTC addresses (TXT)[^altcoins]
-  - :hammer: [BitcoinAIS](https://bitcoinais.com "BitcoinAIS")
-    - :hammer: Reported addresses (HTML)[^altcoins] *- recursion error*
+  - :heavy_check_mark: [BitcoinAIS](https://bitcoinais.com "BitcoinAIS")
+    - :heavy_check_mark: Reported addresses (HTML)[^altcoins]
   - :heavy_check_mark: [CryptoScamDB](https://cryptoscamdb.org "CryptoScamDB")
     - :heavy_check_mark: Reported addresses (JSON)[^altcoins]
   - :hammer: [Cryptscam](https://cryptscam.com "Cryptscam")
