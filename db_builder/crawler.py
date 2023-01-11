@@ -149,8 +149,10 @@ class Crawler:
 					self.__crawl_response(db_connection, response, source_label_url)
 		# BitcoinAbuse / Reported Addresses
 		# CheckBitcoinAddress / Reported Addresses
+		# Cryptscam / Last Reported Addresses
 		elif(source_label_url["source_label_url_id"] == 3
-		or   source_label_url["source_label_url_id"] == 4):
+		or   source_label_url["source_label_url_id"] == 4
+		or   source_label_url["source_label_url_id"] == 13):
 			# Get html response
 			with Request().request(source_label_url["address"], False) as response:
 				response_links = [node.get("href") for node in HtmlResponse(response.text).select(".pagination a")]
@@ -184,6 +186,14 @@ class Crawler:
 								self.__crawl_responses_in_threads(
 									db_connection,
 									["https://checkbitcoinaddress.com/" + node.get("href") for node in HtmlResponse(response.text).select(".ml-3 > a")],
+									source_label_url,
+									-1
+								)
+							# Cryptscam / Last Reported Addresses
+							elif source_label_url["source_label_url_id"] == 13:
+								self.__crawl_responses_in_threads(
+									db_connection,
+									[response.url.split("/en?page=")[0].strip() + node.get("href") for node in HtmlResponse(response.text).select("div.font-weight-bold a[href]")],
 									source_label_url,
 									-1
 								)
@@ -280,11 +290,6 @@ class Crawler:
 						source_label_url_depth += 1
 					else:
 						break
-		# Cryptscam / Last Reported Addresses
-		elif source_label_url["source_label_url_id"] == 13:
-			# Crawl response
-			with Request().request(source_label_url["address"], False) as response:
-				self.__crawl_response(db_connection, response, source_label_url)
 		# SeeKoin / Reported BTC Addresses
 		elif source_label_url["source_label_url_id"] == 14:
 			# Crawl response
@@ -476,36 +481,17 @@ class Crawler:
 			self.__add_addresses_from_text(db_connection, source_label_url, text_json["result"].keys(), detect_address_currency)
 		# Cryptscam / Last Reported Addresses
 		elif add_address_option == 7:
-			if source_label_url_depth < 50:
-				response_url_parts = response.url.split("/en?page=")
-				page_id = int(response_url_parts[1].strip())
-
-				# Crawl response
-				if (page_id + 1) < 50:
-					with Request().request("{0}/en?page={1}".format(response_url_parts[0].strip(), str(page_id + 1)), False) as response:
-						self.__crawl_response(db_connection, response, source_label_url, page_id)
-
-				# Save file from response
-				Response(response).save(file)
-
-				self.__crawl_responses_in_threads(
-					db_connection,
-					[response_url_parts[0].strip() + node.get("href") for node in HtmlResponse(response.text).select("div.font-weight-bold a[href]")],
-					source_label_url,
-					50
-				)
-			else:
-				# Save file from response
-				Response(response).save(file)
-
+			# Save file from response
+			Response(response).save(file)
+			
+			if source_label_url_depth < 0:
 				# Add last address
 				self.__add_last_address_from_text(db_connection, source_label_url, response.url.split("/")[-1].strip(), detect_address_currency)
 	
 	def __add_addresses(self, db_connection, response, source_label_url, source_label_url_depth, file):
 		# LoyceV / All BTC Addresses - Weekly update
 		if source_label_url["source_label_url_id"] == 1:
-			#self.__add_addresses_from_response(db_connection, response, source_label_url, source_label_url_depth, file, 0, None, False)
-			pass
+			self.__add_addresses_from_response(db_connection, response, source_label_url, source_label_url_depth, file, 0, None, False)
 		# LoyceV / All BTC Addresses - Daily update
 		elif source_label_url["source_label_url_id"] == 2:
 			self.__add_addresses_from_response(db_connection, response, source_label_url, source_label_url_depth, file, 1, 0, False)
@@ -573,7 +559,7 @@ class Crawler:
 			data_file_name = "reported_addresses.json"
 		# Cryptscam / Last Reported Addresses
 		elif source_label_url["source_label_url_id"] == 13:
-			if source_label_url_depth < 50:
+			if source_label_url_depth >= 0:
 				data_file_name = "last_reported_addresses_{0}.html".format(str(source_label_url_depth + 1))
 			else:
 				data_file_name += ".html"
