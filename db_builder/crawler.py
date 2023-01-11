@@ -243,10 +243,20 @@ class Crawler:
 				for thread in threads:
 					thread.join()
 		# CryptoBlacklist / Last Reported Ethereum Addresses
+		elif source_label_url["source_label_url_id"] == 6:
+			# Crawl response
+			with Request().request(source_label_url["address"], False) as response:
+				self.__crawl_response(db_connection, response, source_label_url)
+
+				self.__crawl_responses_in_threads(
+					db_connection,
+					[node.get("href") for node in HtmlResponse(response.text).get_links(class_="wp-block-latest-posts__post-title")],
+					source_label_url,
+					-1
+				)
 		# BitcoinAIS / Reported Addresses
 		# Cryptscam / Last Reported Addresses
-		elif(source_label_url["source_label_url_id"] == 6
-		or   source_label_url["source_label_url_id"] == 10
+		elif(source_label_url["source_label_url_id"] == 10
 		or   source_label_url["source_label_url_id"] == 13):
 			# Crawl response
 			with Request().request(source_label_url["address"], False) as response:
@@ -416,20 +426,10 @@ class Crawler:
 				self.__add_last_address_from_text(db_connection, source_label_url, response.url.split("?address=")[1].strip(), detect_address_currency)
 		# CryptoBlacklist / Last Reported Ethereum Addresses
 		elif add_address_option == 4:
-			if source_label_url_depth == 0:
-				self.__crawl_responses_in_threads(
-					db_connection,
-					[node.get("href") for node in HtmlResponse(response.text).get_links(class_="wp-block-latest-posts__post-title")],
-					source_label_url,
-					1
-				)
-				
-				# Save file from response
-				Response(response).save(file)
-			elif source_label_url_depth == 1:
-				# Save file from response
-				Response(response).save(file)
+			# Save file from response
+			Response(response).save(file)
 
+			if source_label_url_depth < 0:
 				# Add last address
 				self.__add_last_address_from_text(db_connection, source_label_url, response.url.split("/")[-2].strip())
 		# BitcoinAIS / Reported Addresses
@@ -557,9 +557,9 @@ class Crawler:
 			data_file_name += ".html"
 		# CryptoBlacklist / Last Reported Ethereum Addresses
 		elif source_label_url["source_label_url_id"] == 6:
-			if source_label_url_depth == 0:
+			if source_label_url_depth >= 0:
 				data_file_name = "last_reported_eth_addresses.html"
-			elif source_label_url_depth == 1:
+			else:
 				data_file_name = response.url.split("/")[-2].strip() + ".html"
 		# CryptoScamDB / Reported Addresses
 		elif source_label_url["source_label_url_id"] == 11:
