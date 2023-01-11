@@ -53,7 +53,6 @@
 							["Dash", "DASH", "/src/img/DASH.svg", "dash"],
 							["Dogecoin", "DOGE", "/src/img/DOGE.svg", "dogecoin"],
 							["Polkadot", "DOT", "/src/img/DOT.svg", "polkadot"],
-							["EOS", "EOS", "/src/img/EOS.svg", "eos"],
 							["Groestlcoin", "GRS", "/src/img/GRS.svg", "groestlcoin"],
 							["Kusama", "KSM", "/src/img/KSM.svg", "kusama"],
 							["Litecoin", "LTC", "/src/img/LTC.svg", "litecoin"],

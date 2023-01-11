@@ -53,7 +53,7 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   Once the new data are available, it downloads and stores them in the database and on the disk.\
   The program never stops unless it is terminated by the user or the operating system.
 [^robots_txt]: The Crawler respects robots.txt rules of each source.
-[^altcoins]: The Crawler is able to find out the cryptocurrency of a given address from the 18 blockchains available on [Blockchair](https://blockchair.com/ "Blockchair").
+[^altcoins]: The Crawler is able to find out the cryptocurrency of a given address from all of the blockchains available on [Blockchair](https://blockchair.com/ "Blockchair").
 [^connecting_addresses_and_data]: The Crawler connects the crawled addresses and data.
 
 ### Requirements:
