@@ -227,14 +227,38 @@ class Crawler:
 		# CryptoBlacklist / Last Reported Ethereum Addresses
 		# BitcoinAIS / Reported Addresses
 		# Cryptscam / Last Reported Addresses
-		# SeeKoin / Reported BTC Addresses
 		elif(source_label_url["source_label_url_id"] == 6
 		or   source_label_url["source_label_url_id"] == 10
-		or   source_label_url["source_label_url_id"] == 13
-		or   source_label_url["source_label_url_id"] == 14):
+		or   source_label_url["source_label_url_id"] == 13):
 			# Crawl response
 			with Request().request(source_label_url["address"], False) as response:
 				self.__crawl_response(db_connection, response, source_label_url)
+		# SeeKoin / Reported BTC Addresses
+		elif source_label_url["source_label_url_id"] == 14:
+			# Crawl response
+			with Request().request(source_label_url["address"], False) as response:
+				self.__crawl_response(db_connection, response, source_label_url)
+
+				source_label_url_depth = 0
+				
+				while(True):
+					self.__crawl_responses_in_threads(
+						db_connection,
+						[node.get("href") for node in HtmlResponse(response.text).select("a[href*=\"addr-\"]")],
+						source_label_url,
+						-1
+					)
+
+					response_links = [node.get("href") for node in HtmlResponse(response.text).select("a[href*=\"?d=\"]")]
+
+					if len(response_links) > 0:
+						# Crawl response
+						with Request().request(response_links[0].strip(), False) as response:
+							self.__crawl_response(db_connection, response, source_label_url, source_label_url_depth + 1)
+						
+						source_label_url_depth += 1
+					else:
+						break
 
 	def __get_text_from_chunk(self, prev_text, chunk, chunk_decode_option=0):
 		# Decode chunk
@@ -609,23 +633,6 @@ class Crawler:
 					for chunk in response:
 						# Write file
 						file.write(chunk)
-					
-					# SeeKoin / Reported BTC Addresses
-					if source_label_url["source_label_url_id"] == 14:
-						if source_label_url_depth >= 0:
-							self.__crawl_responses_in_threads(
-								db_connection,
-								[node.get("href") for node in HtmlResponse(response.text).select("a[href*=\"addr-\"]")],
-								source_label_url,
-								-1
-							)
-
-							response_links = [node.get("href") for node in HtmlResponse(response.text).select("a[href*=\"?d=\"]")]
-
-							if len(response_links) > 0:
-								# Crawl response
-								with Request().request(response_links[0].strip(), False) as r:
-									self.__crawl_response(db_connection, r, source_label_url, source_label_url_depth + 1)
 				# Add local file & addresses
 				else:
 					self.__add_addresses(db_connection, response, source_label_url, source_label_url_depth, file)
