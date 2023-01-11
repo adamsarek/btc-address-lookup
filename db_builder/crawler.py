@@ -70,6 +70,7 @@ class Crawler:
 					source_label_urls_with_unknown_new_addresses.append(source_label_url)
 				elif source_label_url["source_label_url_id"] != 1:
 					source_label_urls_with_known_new_addresses.append(source_label_url)
+				# LoyceV / All BTC Addresses - Weekly update
 				else:
 					self.__crawl_source_label_url(db_connection, source_label_url)
 			
@@ -170,6 +171,23 @@ class Crawler:
 
 						# Crawl response
 						with Request().request(response.url.split("?page=")[0] + "?page=" + str(page_id + 1), False) as response:
+							# BitcoinAbuse / Reported Addresses
+							if source_label_url["source_label_url_id"] == 3:
+								self.__crawl_responses_in_threads(
+									db_connection,
+									["https://www.bitcoinabuse.com" + node.get("href") for node in HtmlResponse(response.text).select(".row div > a")],
+									source_label_url,
+									-1
+								)
+							# CheckBitcoinAddress / Reported Addresses
+							elif source_label_url["source_label_url_id"] == 4:
+								self.__crawl_responses_in_threads(
+									db_connection,
+									["https://checkbitcoinaddress.com/" + node.get("href") for node in HtmlResponse(response.text).select(".ml-3 > a")],
+									source_label_url,
+									-1
+								)
+							
 							thread = threading.Thread(
 								target = self.__crawl_response,
 								args = (db_connection, response, source_label_url, page_id,)
@@ -382,38 +400,18 @@ class Crawler:
 			self.__add_last_address_from_text(db_connection, source_label_url, prev_text, detect_address_currency)
 		# BitcoinAbuse / Reported Addresses
 		elif add_address_option == 2:
-			if source_label_url_depth >= 0:
-				self.__crawl_responses_in_threads(
-					db_connection,
-					["https://www.bitcoinabuse.com" + node.get("href") for node in HtmlResponse(response.text).select(".row div > a")],
-					source_label_url,
-					-1
-				)
-				
-				# Save file from response
-				Response(response).save(file)
-			else:
-				# Save file from response
-				Response(response).save(file)
-
+			# Save file from response
+			Response(response).save(file)
+			
+			if source_label_url_depth < 0:
 				# Add last address
 				self.__add_last_address_from_text(db_connection, source_label_url, response.url.split("/")[-1].strip(), detect_address_currency)
 		# CheckBitcoinAddress / Reported Addresses
 		elif add_address_option == 3:
-			if source_label_url_depth >= 0:
-				self.__crawl_responses_in_threads(
-					db_connection,
-					["https://checkbitcoinaddress.com/" + node.get("href") for node in HtmlResponse(response.text).select(".ml-3 > a")],
-					source_label_url,
-					-1
-				)
-
-				# Save file from response
-				Response(response).save(file)
-			else:
-				# Save file from response
-				Response(response).save(file)
-
+			# Save file from response
+			Response(response).save(file)
+			
+			if source_label_url_depth < 0:
 				# Add last address
 				self.__add_last_address_from_text(db_connection, source_label_url, response.url.split("?address=")[1].strip(), detect_address_currency)
 		# CryptoBlacklist / Last Reported Ethereum Addresses
@@ -499,7 +497,8 @@ class Crawler:
 	def __add_addresses(self, db_connection, response, source_label_url, source_label_url_depth, file):
 		# LoyceV / All BTC Addresses - Weekly update
 		if source_label_url["source_label_url_id"] == 1:
-			self.__add_addresses_from_response(db_connection, response, source_label_url, source_label_url_depth, file, 0, None, False)
+			#self.__add_addresses_from_response(db_connection, response, source_label_url, source_label_url_depth, file, 0, None, False)
+			pass
 		# LoyceV / All BTC Addresses - Daily update
 		elif source_label_url["source_label_url_id"] == 2:
 			self.__add_addresses_from_response(db_connection, response, source_label_url, source_label_url_depth, file, 1, 0, False)

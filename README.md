@@ -15,10 +15,10 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   - :heavy_check_mark: [LoyceV](http://alladdresses.loyce.club "LoyceV")
     - :heavy_check_mark: Weekly updates with all BTC addresses (GZIP)
     - :heavy_check_mark: Daily updates (TXT)
-  - :hammer: [BitcoinAbuse](https://www.bitcoinabuse.com/reports "BitcoinAbuse")
-    - :hammer: Reported addresses (HTML)[^altcoins] *- recursion error*
-  - :hammer: [CheckBitcoinAddress](https://checkbitcoinaddress.com/abuse-reports-to-bitcoin-address "CheckBitcoinAddress")
-    - :hammer: Reported addresses (HTML)[^altcoins] *- recursion error*
+  - :heavy_check_mark: [BitcoinAbuse](https://www.bitcoinabuse.com/reports "BitcoinAbuse")
+    - :heavy_check_mark: Reported addresses (HTML)[^altcoins]
+  - :heavy_check_mark: [CheckBitcoinAddress](https://checkbitcoinaddress.com/abuse-reports-to-bitcoin-address "CheckBitcoinAddress")
+    - :heavy_check_mark: Reported addresses (HTML)[^altcoins]
   - :hammer: [CryptoBlacklist](https://www.cryptoblacklist.io "CryptoBlacklist")
     - :heavy_check_mark: Searched reported BTC addresses (HTML)
     - :hammer: Last reported ETH addresses (HTML) *- recursion error*
