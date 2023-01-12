@@ -46,26 +46,21 @@
 
 # Data (table) - add column: new version - if NULL (it's latest version), else (there's ID of newer version)
 
-# Searched reported BTC addresses - do not save file unless it's useful
-
 # ---------- Problems ----------
-# 3 BitcoinAbuse
-# - all crypto
-# 4 CheckBitcoinAddress
-# - all crypto
-# 10 BitcoinAIS
-# - all crypto
-# 14
+# 14 SeeKoin
 # - only 1st page? - Your IP was blacklisted
 # - all crypto or BTC only?
-# - RecursionError: maximum recursion depth exceeded while calling a Python object
 # ---------- Problems ----------
 
 # ---------- TODO ----------
+# - 1 DB Connection for thread?
+# - Connect data & address (after getting all important data)
+# - Roles
+
 # - Check new addresses sources
 # - Check searched BTC sources
 # - Save file only when useful data inside
-#   - SeeKoin: Your IP was blacklisted
+# - Roles
 # - Add to Run/RunOnce
 # ---------- TODO ----------
 

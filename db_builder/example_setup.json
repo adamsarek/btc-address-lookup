@@ -69,24 +69,24 @@
 					"table_name": "source",
 					"create": [
 						"source_id SMALLSERIAL NOT NULL",
-						"roles SMALLINT[] NOT NULL",
+						"roles SMALLINT[] NOT NULL DEFAULT ARRAY[]::SMALLINT[]",
 						"name TEXT NOT NULL",
 						"CONSTRAINT source_source_id_pkey PRIMARY KEY (source_id)",
 						"CONSTRAINT source_name_key UNIQUE (name)"
 					],
 					"insert": [
-						["roles", "name"],
+						["name"],
 						[
-							["{}", "LoyceV"],
-							["{}", "BitcoinAbuse"],
-							["{}", "CheckBitcoinAddress"],
-							["{}", "CryptoBlacklist"],
-							["{}", "Bitcoin Generator Scam"],
-							["{}", "BitcoinAIS"],
-							["{}", "CryptoScamDB"],
-							["{}", "Cryptscam"],
-							["{}", "SeeKoin"],
-							["{}", "BitcoinWhosWho"]
+							["LoyceV"],
+							["BitcoinAbuse"],
+							["CheckBitcoinAddress"],
+							["CryptoBlacklist"],
+							["Bitcoin Generator Scam"],
+							["BitcoinAIS"],
+							["CryptoScamDB"],
+							["Cryptscam"],
+							["SeeKoin"],
+							["BitcoinWhosWho"]
 						]
 					]
 				},
@@ -96,7 +96,8 @@
 						"source_label_id SMALLSERIAL",
 						"source_id SMALLINT NOT NULL",
 						"new_addresses_currency_id SMALLINT",
-						"roles SMALLINT[] NOT NULL",
+						"search_data_by_address BOOLEAN NOT NULL",
+						"roles SMALLINT[] NOT NULL DEFAULT ARRAY[]::SMALLINT[]",
 						"name TEXT NOT NULL",
 						"CONSTRAINT source_label_source_label_id_pkey PRIMARY KEY (source_label_id)",
 						"CONSTRAINT source_label_source_id_fkey FOREIGN KEY (source_id) REFERENCES source (source_id)",
@@ -106,21 +107,21 @@
 						"CONSTRAINT source_label_new_addresses_currency_id_check CHECK (new_addresses_currency_id > 0)"
 					],
 					"insert": [
-						["source_id", "new_addresses_currency_id", "roles", "name"],
+						["source_id", "new_addresses_currency_id", "search_data_by_address", "name"],
 						[
-							["1", 1, "{}", "All BTC Addresses"],
-							["2", 2, "{}", "Reported Addresses"],
-							["3", 2, "{}", "Reported Addresses"],
-							["4", null, "{}", "Searched Reported BTC Addresses"],
-							["4", 3, "{}", "Last Reported Ethereum Addresses"],
-							["5", null, "{}", "Scam BTC Addresses"],
-							["5", 2, "{}", "Scam Non-BTC Addresses"],
-							["6", 2, "{}", "Reported Addresses"],
-							["7", 2, "{}", "Reported Addresses"],
-							["8", null, "{}", "Searched Reported BTC Addresses"],
-							["8", 2, "{}", "Last Reported Addresses"],
-							["9", null, "{}", "Reported BTC Addresses"],
-							["10", null, "{}", "Searched Reported BTC Addresses"]
+							["1", 1, false, "All BTC Addresses"],
+							["2", 2, false, "Reported Addresses"],
+							["3", 2, false, "Reported Addresses"],
+							["4", null, true, "Searched Reported BTC Addresses"],
+							["4", 3, false, "Last Reported Ethereum Addresses"],
+							["5", null, false, "Scam BTC Addresses"],
+							["5", 2, false, "Scam Non-BTC Addresses"],
+							["6", 2, false, "Reported Addresses"],
+							["7", 2, false, "Reported Addresses"],
+							["8", null, true, "Searched Reported BTC Addresses"],
+							["8", 2, false, "Last Reported Addresses"],
+							["9", null, false, "Reported BTC Addresses"],
+							["10", null, true, "Searched Reported BTC Addresses"]
 						]
 					]
 				},
@@ -130,6 +131,7 @@
 						"address_id BIGSERIAL",
 						"currency_id SMALLINT",
 						"source_label_id SMALLINT NOT NULL",
+						"roles SMALLINT[] NOT NULL DEFAULT ARRAY[]::SMALLINT[]",
 						"address TEXT NOT NULL",
 						"CONSTRAINT address_address_id_pkey PRIMARY KEY (address_id)",
 						"CONSTRAINT address_currency_id_fkey FOREIGN KEY (currency_id) REFERENCES currency (currency_id)",
@@ -174,7 +176,7 @@
 						"source_label_url_id SMALLSERIAL",
 						"source_label_id SMALLINT NOT NULL",
 						"url_id BIGINT NOT NULL",
-						"roles SMALLINT[] NOT NULL",
+						"roles SMALLINT[] NOT NULL DEFAULT ARRAY[]::SMALLINT[]",
 						"last_crawled_at TIMESTAMP",
 						"CONSTRAINT source_label_url_id_pkey PRIMARY KEY (source_label_url_id)",
 						"CONSTRAINT source_label_url_source_label_id_fkey FOREIGN KEY (source_label_id) REFERENCES source_label (source_label_id)",
@@ -184,23 +186,23 @@
 						"CONSTRAINT source_label_url_url_id_check CHECK (url_id > 0)"
 					],
 					"insert": [
-						["source_label_id", "url_id", "roles"],
+						["source_label_id", "url_id"],
 						[
-							[1, 1, "{}"],
-							[1, 2, "{}"],
-							[2, 3, "{}"],
-							[3, 4, "{}"],
-							[4, 5, "{}"],
-							[5, 6, "{}"],
-							[6, 7, "{}"],
-							[6, 8, "{}"],
-							[7, 9, "{}"],
-							[8, 10, "{}"],
-							[9, 11, "{}"],
-							[10, 12, "{}"],
-							[11, 13, "{}"],
-							[12, 14, "{}"],
-							[13, 15, "{}"]
+							[1, 1],
+							[1, 2],
+							[2, 3],
+							[3, 4],
+							[4, 5],
+							[5, 6],
+							[6, 7],
+							[6, 8],
+							[7, 9],
+							[8, 10],
+							[9, 11],
+							[10, 12],
+							[11, 13],
+							[12, 14],
+							[13, 15]
 						]
 					]
 				},
@@ -210,7 +212,7 @@
 						"data_id BIGSERIAL",
 						"source_label_url_id SMALLINT NOT NULL",
 						"url_id BIGINT NOT NULL",
-						"roles SMALLINT[] NOT NULL",
+						"roles SMALLINT[] NOT NULL DEFAULT ARRAY[]::SMALLINT[]",
 						"path TEXT NOT NULL",
 						"crawled_at TIMESTAMP",
 						"CONSTRAINT data_data_id_pkey PRIMARY KEY (data_id)",

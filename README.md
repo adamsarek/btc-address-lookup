@@ -20,7 +20,7 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   - :heavy_check_mark: [CheckBitcoinAddress](https://checkbitcoinaddress.com/abuse-reports-to-bitcoin-address "CheckBitcoinAddress")
     - :heavy_check_mark: Reported addresses (HTML)[^altcoins]
   - :heavy_check_mark: [CryptoBlacklist](https://www.cryptoblacklist.io "CryptoBlacklist")
-    - :heavy_check_mark: Searched reported BTC addresses (HTML)
+    - :heavy_check_mark: Searched reported BTC addresses (HTML)[^useful_data]
     - :heavy_check_mark: Last reported ETH addresses (HTML)
   - :heavy_check_mark: [Bitcoin Generator Scam](http://ssrg.site.uottawa.ca/bgsieeesb2020/#urls "Bitcoin Generator Scam")
     - :heavy_check_mark: Scam BTC addresses (TXT)
@@ -30,12 +30,12 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   - :heavy_check_mark: [CryptoScamDB](https://cryptoscamdb.org "CryptoScamDB")
     - :heavy_check_mark: Reported addresses (JSON)[^altcoins]
   - :heavy_check_mark: [Cryptscam](https://cryptscam.com "Cryptscam")
-    - :heavy_check_mark: Searched reported BTC addresses (HTML)
+    - :heavy_check_mark: Searched reported BTC addresses (HTML)[^useful_data]
     - :heavy_check_mark: Last reported addresses (HTML)[^altcoins]
   - :heavy_check_mark: [SeeKoin](https://www.seekoin.com/address.php "SeeKoin")
-    - :heavy_check_mark: Reported BTC addresses (HTML)
+    - :heavy_check_mark: Reported BTC addresses (HTML)[^useful_data]
   - :heavy_check_mark: [BitcoinWhosWho](https://www.bitcoinwhoswho.com "BitcoinWhosWho")
-    - :heavy_check_mark: Searched reported BTC addresses (HTML)
+    - :heavy_check_mark: Searched reported BTC addresses (HTML)[^useful_data]
   - :x: [WalletExplorer](https://www.walletexplorer.com "WalletExplorer")
     - :x: Labeled BTC addresses (JSON + HTML)
 - :x: Connecting the crawled addresses and data[^connecting_addresses_and_data]
@@ -54,6 +54,7 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   The program never stops unless it is terminated by the user or the operating system.
 [^robots_txt]: The Crawler respects robots.txt rules of each source.
 [^altcoins]: The Crawler is able to find out the cryptocurrency of a given address from all of the blockchains available on [Blockchair](https://blockchair.com/ "Blockchair").
+[^useful_data]: The Crawler saves only the data that contains useful information about certain BTC address.
 [^connecting_addresses_and_data]: The Crawler connects the crawled addresses and data.
 
 ### Requirements:

@@ -7,8 +7,8 @@
 		"exception": 10
 	},
 	"request": {
-		"count": 6,
-		"timeout": 10,
+		"count": 120,
+		"timeout": 30,
 		"wait": 0.2,
 		"headers": {
 			"Accept-Encoding": "gzip, deflate",
