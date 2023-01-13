@@ -17,6 +17,8 @@ class Request(object):
 			cls.instance.__config_data = JsonFile("config.json").load()
 			cls.instance.__session = requests.Session()
 			cls.instance.__robots = {}
+			cls.instance.__thread_lock = threading.Lock()
+			cls.instance.__last_request_at = datetime.datetime.now().timestamp()
 		return cls.instance
 	
 	def __get_robots_url(self, url):
@@ -28,7 +30,34 @@ class Request(object):
 
 	def __get_robots(self, robots_url):
 		if robots_url not in self.__robots:
-			robots_txt = self.__session.get(robots_url)
+			robots_txt = None
+			
+			for _ in range(self.__config_data["request"]["count"]):
+				try:
+					with self.__thread_lock:
+						wait = self.__last_request_at + self.__config_data["request"]["wait"] - datetime.datetime.now().timestamp()
+						if wait > 0:
+							time.sleep(wait)
+						
+						self.__last_request_at = datetime.datetime.now().timestamp()
+					
+					robots_txt = self.__session.get(robots_url, headers=self.__config_data["request"]["headers"], timeout=self.__config_data["request"]["timeout"])
+					break
+				except (
+					Exception,
+					ConnectionError,
+					ConnectionAbortedError,
+					ConnectionRefusedError,
+					ConnectionResetError,
+					TimeoutError,
+					requests.exceptions.ConnectionError,
+					requests.exceptions.ConnectTimeout,
+					requests.exceptions.ReadTimeout,
+					requests.exceptions.RetryError,
+					requests.exceptions.Timeout,
+					requests.exceptions.TooManyRedirects
+				) as error:
+					Console().print_error(str(error))
 
 			# Robots.txt exists
 			if robots_txt.status_code == 200 and len(robots_txt.text) > 0:

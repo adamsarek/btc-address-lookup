@@ -78,14 +78,16 @@ class Crawler:
 			source_label_urls_with_listed_data = []
 			source_label_urls_with_searched_data = []
 			for source_label_url in source_label_urls:
-				if source_label_url["source_label_url_id"] == 1:
-					# Crawl source label url
-					self.__crawl_source_label_url(db_connection, source_label_url)
-				elif(source_label_url["new_addresses_currency_id"] is not None
-				or   source_label_url["search_data_by_address"] == False):
-					source_label_urls_with_listed_data.append(source_label_url)
-				else:
-					source_label_urls_with_searched_data.append(source_label_url)
+				if source_label_url["source_label_url_id"] == 11:
+					if source_label_url["source_label_url_id"] == 1:
+						# Crawl source label url
+						#self.__crawl_source_label_url(db_connection, source_label_url)
+						pass
+					elif(source_label_url["new_addresses_currency_id"] is not None
+					or   source_label_url["search_data_by_address"] == False):
+						source_label_urls_with_listed_data.append(source_label_url)
+					else:
+						source_label_urls_with_searched_data.append(source_label_url)
 				
 			db_connection.alter_table("address", ["ADD CONSTRAINT address_address_key UNIQUE (address)"])
 			
