@@ -61,6 +61,11 @@ class Crawler:
 			)
 
 			db_connection.alter_table(
+				"address_data", [
+					"DROP CONSTRAINT address_data_address_id_fkey"
+				]
+			)
+			db_connection.alter_table(
 				"address", [
 					"ALTER source_label_id DROP NOT NULL",
 					"ALTER roles DROP NOT NULL",
@@ -78,16 +83,14 @@ class Crawler:
 			source_label_urls_with_listed_data = []
 			source_label_urls_with_searched_data = []
 			for source_label_url in source_label_urls:
-				if source_label_url["source_label_url_id"] == 11:
-					if source_label_url["source_label_url_id"] == 1:
-						# Crawl source label url
-						#self.__crawl_source_label_url(db_connection, source_label_url)
-						pass
-					elif(source_label_url["new_addresses_currency_id"] is not None
-					or   source_label_url["search_data_by_address"] == False):
-						source_label_urls_with_listed_data.append(source_label_url)
-					else:
-						source_label_urls_with_searched_data.append(source_label_url)
+				if source_label_url["source_label_url_id"] == 1:
+					# Crawl source label url
+					self.__crawl_source_label_url(db_connection, source_label_url)
+				elif(source_label_url["new_addresses_currency_id"] is not None
+				or   source_label_url["search_data_by_address"] == False):
+					source_label_urls_with_listed_data.append(source_label_url)
+				else:
+					source_label_urls_with_searched_data.append(source_label_url)
 				
 			db_connection.alter_table("address", ["ADD CONSTRAINT address_address_key UNIQUE (address)"])
 			
@@ -104,6 +107,11 @@ class Crawler:
 					"ADD CONSTRAINT address_source_label_id_fkey FOREIGN KEY (source_label_id) REFERENCES source_label (source_label_id)",
 					"ADD CONSTRAINT address_currency_id_check CHECK (currency_id > 0)",
 					"ADD CONSTRAINT address_source_label_id_check CHECK (source_label_id > 0)"
+				]
+			)
+			db_connection.alter_table(
+				"address_data", [
+					"ADD CONSTRAINT address_data_address_id_fkey FOREIGN KEY (address_id) REFERENCES address (address_id)"
 				]
 			)
 

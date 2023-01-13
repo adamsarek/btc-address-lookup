@@ -28,6 +28,31 @@
 			"owner": "builder",
 			"tables": [
 				{
+					"table_name": "source",
+					"create": [
+						"source_id SMALLSERIAL NOT NULL",
+						"roles SMALLINT[] NOT NULL DEFAULT ARRAY[]::SMALLINT[]",
+						"name TEXT NOT NULL",
+						"CONSTRAINT source_source_id_pkey PRIMARY KEY (source_id)",
+						"CONSTRAINT source_name_key UNIQUE (name)"
+					],
+					"insert": [
+						["name"],
+						[
+							["LoyceV"],
+							["BitcoinAbuse"],
+							["CheckBitcoinAddress"],
+							["CryptoBlacklist"],
+							["Bitcoin Generator Scam"],
+							["BitcoinAIS"],
+							["CryptoScamDB"],
+							["Cryptscam"],
+							["SeeKoin"],
+							["BitcoinWhosWho"]
+						]
+					]
+				},
+				{
 					"table_name": "currency",
 					"create": [
 						"currency_id SMALLSERIAL NOT NULL",
@@ -66,27 +91,19 @@
 					]
 				},
 				{
-					"table_name": "source",
+					"table_name": "role",
 					"create": [
-						"source_id SMALLSERIAL NOT NULL",
-						"roles SMALLINT[] NOT NULL DEFAULT ARRAY[]::SMALLINT[]",
+						"role_id SMALLSERIAL NOT NULL",
 						"name TEXT NOT NULL",
-						"CONSTRAINT source_source_id_pkey PRIMARY KEY (source_id)",
-						"CONSTRAINT source_name_key UNIQUE (name)"
+						"CONSTRAINT role_role_id_pkey PRIMARY KEY (role_id)",
+						"CONSTRAINT role_name_key UNIQUE (name)"
 					],
 					"insert": [
 						["name"],
 						[
-							["LoyceV"],
-							["BitcoinAbuse"],
-							["CheckBitcoinAddress"],
-							["CryptoBlacklist"],
-							["Bitcoin Generator Scam"],
-							["BitcoinAIS"],
-							["CryptoScamDB"],
-							["Cryptscam"],
-							["SeeKoin"],
-							["BitcoinWhosWho"]
+							["Guest"],
+							["User"],
+							["Admin"]
 						]
 					]
 				},
@@ -96,8 +113,8 @@
 						"source_label_id SMALLSERIAL",
 						"source_id SMALLINT NOT NULL",
 						"new_addresses_currency_id SMALLINT",
-						"search_data_by_address BOOLEAN NOT NULL",
 						"roles SMALLINT[] NOT NULL DEFAULT ARRAY[]::SMALLINT[]",
+						"search_data_by_address BOOLEAN NOT NULL",
 						"name TEXT NOT NULL",
 						"CONSTRAINT source_label_source_label_id_pkey PRIMARY KEY (source_label_id)",
 						"CONSTRAINT source_label_source_id_fkey FOREIGN KEY (source_id) REFERENCES source (source_id)",
@@ -220,6 +237,19 @@
 						"CONSTRAINT data_url_id_fkey FOREIGN KEY (url_id) REFERENCES url (url_id)",
 						"CONSTRAINT data_source_label_url_id_check CHECK (source_label_url_id > 0)",
 						"CONSTRAINT data_url_id_check CHECK (url_id > 0)"
+					]
+				},
+				{
+					"table_name": "address_data",
+					"create": [
+						"address_data_id BIGSERIAL",
+						"address_id BIGINT NOT NULL",
+						"data_id BIGINT NOT NULL",
+						"CONSTRAINT address_data_address_data_id_pkey PRIMARY KEY (address_data_id)",
+						"CONSTRAINT address_data_address_id_fkey FOREIGN KEY (address_id) REFERENCES address (address_id)",
+						"CONSTRAINT address_data_data_id_fkey FOREIGN KEY (data_id) REFERENCES data (data_id)",
+						"CONSTRAINT address_data_address_id_check CHECK (address_id > 0)",
+						"CONSTRAINT address_data_data_id_check CHECK (data_id > 0)"
 					]
 				}
 			]

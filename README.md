@@ -10,7 +10,16 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
 - :heavy_check_mark: Multi-threaded downloading and processing[^multi_threaded]
 - :heavy_check_mark: Automated run[^automated_run]
 - :heavy_check_mark: Fulfilling the robots.txt rules[^robots_txt]
-- :x: Complete database schema
+- :heavy_check_mark: Complete database schema
+  - :heavy_check_mark: **source** *- contains names of the sources of addresses and reports*
+  - :heavy_check_mark: **currency** *- contains all of the available blockchains from [Blockchair](https://blockchair.com/ "Blockchair")*
+  - :heavy_check_mark: **role** *- contains user roles with various levels of access to the crawled data*
+  - :heavy_check_mark: **source_label** *- contains labels of the sources (subcategory of the sources)*
+  - :heavy_check_mark: **address** *- contains BTC and other cryptocurrency addresses*
+  - :heavy_check_mark: **url** *- contains unique urls gathered during crawling*
+  - :heavy_check_mark: **source_label_url** *- contains starting urls for the labels of the sources (each label can have multiple starting urls)*
+  - :heavy_check_mark: **data** *- contains relative links to the crawled data*
+  - :heavy_check_mark: **address_data** *- contains connection between cryptocurrency addresses and their respective crawled data*
 - :hammer: Crawling all addresses / reports from the following sources[^robots_txt]:
   - :heavy_check_mark: [LoyceV](http://alladdresses.loyce.club "LoyceV")
     - :heavy_check_mark: Weekly updates with all BTC addresses (GZIP)
@@ -38,7 +47,7 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
     - :heavy_check_mark: Searched reported BTC addresses (HTML)[^useful_data]
   - :x: [WalletExplorer](https://www.walletexplorer.com "WalletExplorer")
     - :x: Labeled BTC addresses (JSON + HTML)
-- :x: Connecting the crawled addresses and data[^connecting_addresses_and_data]
+- :hammer: Connecting the crawled addresses and data[^connecting_addresses_and_data]
 - :hammer: Exception handling
 
 [^setup]: Creates PostgreSQL users, database and its tables.\
