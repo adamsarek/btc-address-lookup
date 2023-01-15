@@ -248,6 +248,7 @@
 						"CONSTRAINT address_data_address_data_id_pkey PRIMARY KEY (address_data_id)",
 						"CONSTRAINT address_data_address_id_fkey FOREIGN KEY (address_id) REFERENCES address (address_id)",
 						"CONSTRAINT address_data_data_id_fkey FOREIGN KEY (data_id) REFERENCES data (data_id)",
+						"CONSTRAINT address_data_address_id_address_data_data_id_key UNIQUE (address_id, data_id)",
 						"CONSTRAINT address_data_address_id_check CHECK (address_id > 0)",
 						"CONSTRAINT address_data_data_id_check CHECK (data_id > 0)"
 					]

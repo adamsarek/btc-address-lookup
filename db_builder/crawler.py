@@ -13,6 +13,7 @@ from database.database_copy import DatabaseCopy
 from file.file import File
 from file.json_file import JsonFile
 from mapper.address_mapper import AddressMapper
+from mapper.address_data_mapper import AddressDataMapper
 from mapper.currency_mapper import CurrencyMapper
 from mapper.data_mapper import DataMapper
 from mapper.source_label_url_mapper import SourceLabelUrlMapper
@@ -117,8 +118,6 @@ class Crawler:
 
 			# Crawl source label urls
 			self.__crawl_source_label_urls_in_threads(db_connection, source_label_urls_with_searched_data)
-
-			# TODO - Connect all data with addresses
 
 			# Get addresses without currency
 			address_count = AddressMapper().select_count(
@@ -386,8 +385,6 @@ class Crawler:
 	def __crawl_to_get_currency_from_address(self, db_connection, currencies, address):
 		currency_id = self.__get_currency_from_address(currencies, address["address"])
 
-		print(str(address["address_id"]) + " - " + str(currency_id) + " - " + address["address"])
-
 		# currency_id != None or 2
 		if currency_id != address["currency_id"]:
 			AddressMapper().update(
@@ -597,7 +594,7 @@ class Crawler:
 			if source_label_url_depth >= 0:
 				data_file_name = "reported_btc_addresses_{0}.html".format(str(source_label_url_depth + 1))
 			else:
-				data_file_name = response.url.split("/addr-")[1].strip() + ".html"
+				data_file_name = response.url.split("/addr-")[-1].strip() + ".html"
 		
 		return data_file_name
 	
@@ -664,9 +661,8 @@ class Crawler:
 				with File(local_data_file_path_parts).open("wb") as file:
 					# Only add local file
 					if source_label_url["new_addresses_currency_id"] is None:
-						for chunk in response:
-							# Write file
-							file.write(chunk)
+						# Save file from response
+						Response(response).save(file)
 					# Add local file & addresses
 					else:
 						self.__add_addresses(db_connection, response, source_label_url, source_label_url_depth, file)
@@ -693,6 +689,65 @@ class Crawler:
 						]
 					]
 				)
+				data = DataMapper().select(db_connection, ["data_id"], [], "source_label_url_id = {} AND url_id = {}".format(source_label_url["source_label_url_id"], url["url_id"]), "crawled_at DESC", "1")[0]
+
+				# Get address data
+				address_datas = []
+				if(source_label_url_depth < 0
+				or source_label_url["source_label_url_id"] == 5
+				or source_label_url["source_label_url_id"] == 12
+				or source_label_url["source_label_url_id"] == 15):
+					address_id = AddressMapper().select(db_connection, ["address_id"], [], "address = '{}'".format(data_file_name.split(".")[-2]))[0]["address_id"]
+					address_datas.append([
+						address_id,
+						data["data_id"]
+					])
+				elif(source_label_url["source_label_url_id"] == 7
+				or   source_label_url["source_label_url_id"] == 8
+				or   source_label_url["source_label_url_id"] == 9):
+					with File(local_data_file_path_parts).open("rb") as file:
+						prev_text = ""
+
+						for chunk in file:
+							# Decode chunk
+							chunk = chunk.decode("ASCII").replace("{'", "").replace("{ '", "").replace(" '", "").replace("',", "").replace("'}", "").replace("'", "")
+
+							# Get text
+							text = prev_text + chunk
+							text_lines = text.splitlines(True)
+
+							prev_text = text_lines[-1]
+
+							for address_text in text_lines[:-1]:
+								address_id = AddressMapper().select(db_connection, ["address_id"], [], "address = '{}'".format(address_text.strip()))[0]["address_id"]
+								address_datas.append([
+									address_id,
+									data["data_id"]
+								])
+						
+						address_id = AddressMapper().select(db_connection, ["address_id"], [], "address = '{}'".format(prev_text.strip()))[0]["address_id"]
+						address_datas.append([
+							address_id,
+							data["data_id"]
+						])
+				elif source_label_url["source_label_url_id"] == 11:
+					text_json = JsonFile(local_data_file_path_parts).load()
+					for address_text in text_json["result"].keys():
+						address_id = AddressMapper().select(db_connection, ["address_id"], [], "address = '{}'".format(address_text.strip()))[0]["address_id"]
+						address_datas.append([
+							address_id,
+							data["data_id"]
+						])
+
+				# Add address data
+				if len(address_datas) > 0:
+					AddressDataMapper().insert(
+						db_connection, [
+							"address_id",
+							"data_id"
+						],
+						address_datas
+					)
 
 				# Add source label url
 				SourceLabelUrlMapper().update(

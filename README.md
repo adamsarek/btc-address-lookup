@@ -47,7 +47,7 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
     - :heavy_check_mark: Searched reported BTC addresses (HTML)[^useful_data]
   - :x: [WalletExplorer](https://www.walletexplorer.com "WalletExplorer")
     - :x: Labeled BTC addresses (JSON + HTML)
-- :hammer: Connecting the crawled addresses and data[^connecting_addresses_and_data]
+- :heavy_check_mark: Connecting the crawled addresses and data[^connecting_addresses_and_data]
 - :hammer: Exception handling
 
 [^setup]: Creates PostgreSQL users, database and its tables.\

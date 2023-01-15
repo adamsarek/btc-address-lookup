@@ -5,7 +5,7 @@
 -- Dumped from database version 15.1
 -- Dumped by pg_dump version 15.0
 
--- Started on 2023-01-13 03:50:37
+-- Started on 2023-01-15 23:24:19
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -23,7 +23,7 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- TOC entry 223 (class 1259 OID 186374)
+-- TOC entry 223 (class 1259 OID 199679)
 -- Name: address; Type: TABLE; Schema: public; Owner: builder
 --
 
@@ -41,7 +41,7 @@ CREATE TABLE public.address (
 ALTER TABLE public.address OWNER TO builder;
 
 --
--- TOC entry 222 (class 1259 OID 186373)
+-- TOC entry 222 (class 1259 OID 199678)
 -- Name: address_address_id_seq; Type: SEQUENCE; Schema: public; Owner: builder
 --
 
@@ -56,7 +56,7 @@ CREATE SEQUENCE public.address_address_id_seq
 ALTER TABLE public.address_address_id_seq OWNER TO builder;
 
 --
--- TOC entry 3432 (class 0 OID 0)
+-- TOC entry 3434 (class 0 OID 0)
 -- Dependencies: 222
 -- Name: address_address_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: builder
 --
@@ -65,7 +65,7 @@ ALTER SEQUENCE public.address_address_id_seq OWNED BY public.address.address_id;
 
 
 --
--- TOC entry 231 (class 1259 OID 186455)
+-- TOC entry 231 (class 1259 OID 199760)
 -- Name: address_data; Type: TABLE; Schema: public; Owner: builder
 --
 
@@ -81,7 +81,7 @@ CREATE TABLE public.address_data (
 ALTER TABLE public.address_data OWNER TO builder;
 
 --
--- TOC entry 230 (class 1259 OID 186454)
+-- TOC entry 230 (class 1259 OID 199759)
 -- Name: address_data_address_data_id_seq; Type: SEQUENCE; Schema: public; Owner: builder
 --
 
@@ -96,7 +96,7 @@ CREATE SEQUENCE public.address_data_address_data_id_seq
 ALTER TABLE public.address_data_address_data_id_seq OWNER TO builder;
 
 --
--- TOC entry 3433 (class 0 OID 0)
+-- TOC entry 3435 (class 0 OID 0)
 -- Dependencies: 230
 -- Name: address_data_address_data_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: builder
 --
@@ -105,7 +105,7 @@ ALTER SEQUENCE public.address_data_address_data_id_seq OWNED BY public.address_d
 
 
 --
--- TOC entry 217 (class 1259 OID 186322)
+-- TOC entry 217 (class 1259 OID 199627)
 -- Name: currency; Type: TABLE; Schema: public; Owner: builder
 --
 
@@ -121,7 +121,7 @@ CREATE TABLE public.currency (
 ALTER TABLE public.currency OWNER TO builder;
 
 --
--- TOC entry 216 (class 1259 OID 186321)
+-- TOC entry 216 (class 1259 OID 199626)
 -- Name: currency_currency_id_seq; Type: SEQUENCE; Schema: public; Owner: builder
 --
 
@@ -137,7 +137,7 @@ CREATE SEQUENCE public.currency_currency_id_seq
 ALTER TABLE public.currency_currency_id_seq OWNER TO builder;
 
 --
--- TOC entry 3434 (class 0 OID 0)
+-- TOC entry 3436 (class 0 OID 0)
 -- Dependencies: 216
 -- Name: currency_currency_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: builder
 --
@@ -146,7 +146,7 @@ ALTER SEQUENCE public.currency_currency_id_seq OWNED BY public.currency.currency
 
 
 --
--- TOC entry 229 (class 1259 OID 186433)
+-- TOC entry 229 (class 1259 OID 199738)
 -- Name: data; Type: TABLE; Schema: public; Owner: builder
 --
 
@@ -165,7 +165,7 @@ CREATE TABLE public.data (
 ALTER TABLE public.data OWNER TO builder;
 
 --
--- TOC entry 228 (class 1259 OID 186432)
+-- TOC entry 228 (class 1259 OID 199737)
 -- Name: data_data_id_seq; Type: SEQUENCE; Schema: public; Owner: builder
 --
 
@@ -180,7 +180,7 @@ CREATE SEQUENCE public.data_data_id_seq
 ALTER TABLE public.data_data_id_seq OWNER TO builder;
 
 --
--- TOC entry 3435 (class 0 OID 0)
+-- TOC entry 3437 (class 0 OID 0)
 -- Dependencies: 228
 -- Name: data_data_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: builder
 --
@@ -189,7 +189,7 @@ ALTER SEQUENCE public.data_data_id_seq OWNED BY public.data.data_id;
 
 
 --
--- TOC entry 219 (class 1259 OID 186339)
+-- TOC entry 219 (class 1259 OID 199644)
 -- Name: role; Type: TABLE; Schema: public; Owner: builder
 --
 
@@ -202,7 +202,7 @@ CREATE TABLE public.role (
 ALTER TABLE public.role OWNER TO builder;
 
 --
--- TOC entry 218 (class 1259 OID 186338)
+-- TOC entry 218 (class 1259 OID 199643)
 -- Name: role_role_id_seq; Type: SEQUENCE; Schema: public; Owner: builder
 --
 
@@ -218,7 +218,7 @@ CREATE SEQUENCE public.role_role_id_seq
 ALTER TABLE public.role_role_id_seq OWNER TO builder;
 
 --
--- TOC entry 3436 (class 0 OID 0)
+-- TOC entry 3438 (class 0 OID 0)
 -- Dependencies: 218
 -- Name: role_role_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: builder
 --
@@ -227,7 +227,7 @@ ALTER SEQUENCE public.role_role_id_seq OWNED BY public.role.role_id;
 
 
 --
--- TOC entry 215 (class 1259 OID 186310)
+-- TOC entry 215 (class 1259 OID 199615)
 -- Name: source; Type: TABLE; Schema: public; Owner: builder
 --
 
@@ -241,7 +241,7 @@ CREATE TABLE public.source (
 ALTER TABLE public.source OWNER TO builder;
 
 --
--- TOC entry 221 (class 1259 OID 186350)
+-- TOC entry 221 (class 1259 OID 199655)
 -- Name: source_label; Type: TABLE; Schema: public; Owner: builder
 --
 
@@ -260,7 +260,7 @@ CREATE TABLE public.source_label (
 ALTER TABLE public.source_label OWNER TO builder;
 
 --
--- TOC entry 220 (class 1259 OID 186349)
+-- TOC entry 220 (class 1259 OID 199654)
 -- Name: source_label_source_label_id_seq; Type: SEQUENCE; Schema: public; Owner: builder
 --
 
@@ -276,7 +276,7 @@ CREATE SEQUENCE public.source_label_source_label_id_seq
 ALTER TABLE public.source_label_source_label_id_seq OWNER TO builder;
 
 --
--- TOC entry 3437 (class 0 OID 0)
+-- TOC entry 3439 (class 0 OID 0)
 -- Dependencies: 220
 -- Name: source_label_source_label_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: builder
 --
@@ -285,7 +285,7 @@ ALTER SEQUENCE public.source_label_source_label_id_seq OWNED BY public.source_la
 
 
 --
--- TOC entry 227 (class 1259 OID 186409)
+-- TOC entry 227 (class 1259 OID 199714)
 -- Name: source_label_url; Type: TABLE; Schema: public; Owner: builder
 --
 
@@ -303,7 +303,7 @@ CREATE TABLE public.source_label_url (
 ALTER TABLE public.source_label_url OWNER TO builder;
 
 --
--- TOC entry 226 (class 1259 OID 186408)
+-- TOC entry 226 (class 1259 OID 199713)
 -- Name: source_label_url_source_label_url_id_seq; Type: SEQUENCE; Schema: public; Owner: builder
 --
 
@@ -319,7 +319,7 @@ CREATE SEQUENCE public.source_label_url_source_label_url_id_seq
 ALTER TABLE public.source_label_url_source_label_url_id_seq OWNER TO builder;
 
 --
--- TOC entry 3438 (class 0 OID 0)
+-- TOC entry 3440 (class 0 OID 0)
 -- Dependencies: 226
 -- Name: source_label_url_source_label_url_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: builder
 --
@@ -328,7 +328,7 @@ ALTER SEQUENCE public.source_label_url_source_label_url_id_seq OWNED BY public.s
 
 
 --
--- TOC entry 214 (class 1259 OID 186309)
+-- TOC entry 214 (class 1259 OID 199614)
 -- Name: source_source_id_seq; Type: SEQUENCE; Schema: public; Owner: builder
 --
 
@@ -344,7 +344,7 @@ CREATE SEQUENCE public.source_source_id_seq
 ALTER TABLE public.source_source_id_seq OWNER TO builder;
 
 --
--- TOC entry 3439 (class 0 OID 0)
+-- TOC entry 3441 (class 0 OID 0)
 -- Dependencies: 214
 -- Name: source_source_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: builder
 --
@@ -353,7 +353,7 @@ ALTER SEQUENCE public.source_source_id_seq OWNED BY public.source.source_id;
 
 
 --
--- TOC entry 225 (class 1259 OID 186398)
+-- TOC entry 225 (class 1259 OID 199703)
 -- Name: url; Type: TABLE; Schema: public; Owner: builder
 --
 
@@ -366,7 +366,7 @@ CREATE TABLE public.url (
 ALTER TABLE public.url OWNER TO builder;
 
 --
--- TOC entry 224 (class 1259 OID 186397)
+-- TOC entry 224 (class 1259 OID 199702)
 -- Name: url_url_id_seq; Type: SEQUENCE; Schema: public; Owner: builder
 --
 
@@ -381,7 +381,7 @@ CREATE SEQUENCE public.url_url_id_seq
 ALTER TABLE public.url_url_id_seq OWNER TO builder;
 
 --
--- TOC entry 3440 (class 0 OID 0)
+-- TOC entry 3442 (class 0 OID 0)
 -- Dependencies: 224
 -- Name: url_url_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: builder
 --
@@ -390,7 +390,7 @@ ALTER SEQUENCE public.url_url_id_seq OWNED BY public.url.url_id;
 
 
 --
--- TOC entry 3219 (class 2604 OID 186377)
+-- TOC entry 3219 (class 2604 OID 199682)
 -- Name: address address_id; Type: DEFAULT; Schema: public; Owner: builder
 --
 
@@ -398,7 +398,7 @@ ALTER TABLE ONLY public.address ALTER COLUMN address_id SET DEFAULT nextval('pub
 
 
 --
--- TOC entry 3226 (class 2604 OID 186458)
+-- TOC entry 3226 (class 2604 OID 199763)
 -- Name: address_data address_data_id; Type: DEFAULT; Schema: public; Owner: builder
 --
 
@@ -406,7 +406,7 @@ ALTER TABLE ONLY public.address_data ALTER COLUMN address_data_id SET DEFAULT ne
 
 
 --
--- TOC entry 3215 (class 2604 OID 186325)
+-- TOC entry 3215 (class 2604 OID 199630)
 -- Name: currency currency_id; Type: DEFAULT; Schema: public; Owner: builder
 --
 
@@ -414,7 +414,7 @@ ALTER TABLE ONLY public.currency ALTER COLUMN currency_id SET DEFAULT nextval('p
 
 
 --
--- TOC entry 3224 (class 2604 OID 186436)
+-- TOC entry 3224 (class 2604 OID 199741)
 -- Name: data data_id; Type: DEFAULT; Schema: public; Owner: builder
 --
 
@@ -422,7 +422,7 @@ ALTER TABLE ONLY public.data ALTER COLUMN data_id SET DEFAULT nextval('public.da
 
 
 --
--- TOC entry 3216 (class 2604 OID 186342)
+-- TOC entry 3216 (class 2604 OID 199647)
 -- Name: role role_id; Type: DEFAULT; Schema: public; Owner: builder
 --
 
@@ -430,7 +430,7 @@ ALTER TABLE ONLY public.role ALTER COLUMN role_id SET DEFAULT nextval('public.ro
 
 
 --
--- TOC entry 3213 (class 2604 OID 186313)
+-- TOC entry 3213 (class 2604 OID 199618)
 -- Name: source source_id; Type: DEFAULT; Schema: public; Owner: builder
 --
 
@@ -438,7 +438,7 @@ ALTER TABLE ONLY public.source ALTER COLUMN source_id SET DEFAULT nextval('publi
 
 
 --
--- TOC entry 3217 (class 2604 OID 186353)
+-- TOC entry 3217 (class 2604 OID 199658)
 -- Name: source_label source_label_id; Type: DEFAULT; Schema: public; Owner: builder
 --
 
@@ -446,7 +446,7 @@ ALTER TABLE ONLY public.source_label ALTER COLUMN source_label_id SET DEFAULT ne
 
 
 --
--- TOC entry 3222 (class 2604 OID 186412)
+-- TOC entry 3222 (class 2604 OID 199717)
 -- Name: source_label_url source_label_url_id; Type: DEFAULT; Schema: public; Owner: builder
 --
 
@@ -454,7 +454,7 @@ ALTER TABLE ONLY public.source_label_url ALTER COLUMN source_label_url_id SET DE
 
 
 --
--- TOC entry 3221 (class 2604 OID 186401)
+-- TOC entry 3221 (class 2604 OID 199706)
 -- Name: url url_id; Type: DEFAULT; Schema: public; Owner: builder
 --
 
@@ -462,7 +462,7 @@ ALTER TABLE ONLY public.url ALTER COLUMN url_id SET DEFAULT nextval('public.url_
 
 
 --
--- TOC entry 3260 (class 2606 OID 186384)
+-- TOC entry 3260 (class 2606 OID 199689)
 -- Name: address address_address_id_pkey; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -471,7 +471,7 @@ ALTER TABLE ONLY public.address
 
 
 --
--- TOC entry 3262 (class 2606 OID 186386)
+-- TOC entry 3262 (class 2606 OID 199691)
 -- Name: address address_address_key; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -480,7 +480,7 @@ ALTER TABLE ONLY public.address
 
 
 --
--- TOC entry 3274 (class 2606 OID 186462)
+-- TOC entry 3274 (class 2606 OID 199767)
 -- Name: address_data address_data_address_data_id_pkey; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -489,7 +489,16 @@ ALTER TABLE ONLY public.address_data
 
 
 --
--- TOC entry 3242 (class 2606 OID 186337)
+-- TOC entry 3276 (class 2606 OID 199769)
+-- Name: address_data address_data_address_id_address_data_data_id_key; Type: CONSTRAINT; Schema: public; Owner: builder
+--
+
+ALTER TABLE ONLY public.address_data
+    ADD CONSTRAINT address_data_address_id_address_data_data_id_key UNIQUE (address_id, data_id);
+
+
+--
+-- TOC entry 3242 (class 2606 OID 199642)
 -- Name: currency blockchair_request_name_key; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -498,7 +507,7 @@ ALTER TABLE ONLY public.currency
 
 
 --
--- TOC entry 3244 (class 2606 OID 186333)
+-- TOC entry 3244 (class 2606 OID 199638)
 -- Name: currency currency_code_key; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -507,7 +516,7 @@ ALTER TABLE ONLY public.currency
 
 
 --
--- TOC entry 3246 (class 2606 OID 186329)
+-- TOC entry 3246 (class 2606 OID 199634)
 -- Name: currency currency_currency_id_pkey; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -516,7 +525,7 @@ ALTER TABLE ONLY public.currency
 
 
 --
--- TOC entry 3248 (class 2606 OID 186335)
+-- TOC entry 3248 (class 2606 OID 199640)
 -- Name: currency currency_logo_key; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -525,7 +534,7 @@ ALTER TABLE ONLY public.currency
 
 
 --
--- TOC entry 3250 (class 2606 OID 186331)
+-- TOC entry 3250 (class 2606 OID 199636)
 -- Name: currency currency_name_key; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -534,7 +543,7 @@ ALTER TABLE ONLY public.currency
 
 
 --
--- TOC entry 3272 (class 2606 OID 186443)
+-- TOC entry 3272 (class 2606 OID 199748)
 -- Name: data data_data_id_pkey; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -543,7 +552,7 @@ ALTER TABLE ONLY public.data
 
 
 --
--- TOC entry 3252 (class 2606 OID 186348)
+-- TOC entry 3252 (class 2606 OID 199653)
 -- Name: role role_name_key; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -552,7 +561,7 @@ ALTER TABLE ONLY public.role
 
 
 --
--- TOC entry 3254 (class 2606 OID 186346)
+-- TOC entry 3254 (class 2606 OID 199651)
 -- Name: role role_role_id_pkey; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -561,7 +570,7 @@ ALTER TABLE ONLY public.role
 
 
 --
--- TOC entry 3256 (class 2606 OID 186362)
+-- TOC entry 3256 (class 2606 OID 199667)
 -- Name: source_label source_label_source_id_name_key; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -570,7 +579,7 @@ ALTER TABLE ONLY public.source_label
 
 
 --
--- TOC entry 3258 (class 2606 OID 186360)
+-- TOC entry 3258 (class 2606 OID 199665)
 -- Name: source_label source_label_source_label_id_pkey; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -579,7 +588,7 @@ ALTER TABLE ONLY public.source_label
 
 
 --
--- TOC entry 3268 (class 2606 OID 186419)
+-- TOC entry 3268 (class 2606 OID 199724)
 -- Name: source_label_url source_label_url_id_pkey; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -588,7 +597,7 @@ ALTER TABLE ONLY public.source_label_url
 
 
 --
--- TOC entry 3270 (class 2606 OID 186421)
+-- TOC entry 3270 (class 2606 OID 199726)
 -- Name: source_label_url source_label_url_source_label_id_url_id_key; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -597,7 +606,7 @@ ALTER TABLE ONLY public.source_label_url
 
 
 --
--- TOC entry 3238 (class 2606 OID 186320)
+-- TOC entry 3238 (class 2606 OID 199625)
 -- Name: source source_name_key; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -606,7 +615,7 @@ ALTER TABLE ONLY public.source
 
 
 --
--- TOC entry 3240 (class 2606 OID 186318)
+-- TOC entry 3240 (class 2606 OID 199623)
 -- Name: source source_source_id_pkey; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -615,7 +624,7 @@ ALTER TABLE ONLY public.source
 
 
 --
--- TOC entry 3264 (class 2606 OID 186407)
+-- TOC entry 3264 (class 2606 OID 199712)
 -- Name: url url_address_key; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -624,7 +633,7 @@ ALTER TABLE ONLY public.url
 
 
 --
--- TOC entry 3266 (class 2606 OID 186405)
+-- TOC entry 3266 (class 2606 OID 199710)
 -- Name: url url_url_id_pkey; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -633,7 +642,7 @@ ALTER TABLE ONLY public.url
 
 
 --
--- TOC entry 3277 (class 2606 OID 186387)
+-- TOC entry 3279 (class 2606 OID 199692)
 -- Name: address address_currency_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -642,7 +651,7 @@ ALTER TABLE ONLY public.address
 
 
 --
--- TOC entry 3283 (class 2606 OID 186463)
+-- TOC entry 3285 (class 2606 OID 199770)
 -- Name: address_data address_data_address_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -651,7 +660,7 @@ ALTER TABLE ONLY public.address_data
 
 
 --
--- TOC entry 3284 (class 2606 OID 186468)
+-- TOC entry 3286 (class 2606 OID 199775)
 -- Name: address_data address_data_data_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -660,7 +669,7 @@ ALTER TABLE ONLY public.address_data
 
 
 --
--- TOC entry 3278 (class 2606 OID 186392)
+-- TOC entry 3280 (class 2606 OID 199697)
 -- Name: address address_source_label_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -669,7 +678,7 @@ ALTER TABLE ONLY public.address
 
 
 --
--- TOC entry 3281 (class 2606 OID 186444)
+-- TOC entry 3283 (class 2606 OID 199749)
 -- Name: data data_source_label_url_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -678,7 +687,7 @@ ALTER TABLE ONLY public.data
 
 
 --
--- TOC entry 3282 (class 2606 OID 186449)
+-- TOC entry 3284 (class 2606 OID 199754)
 -- Name: data data_url_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -687,7 +696,7 @@ ALTER TABLE ONLY public.data
 
 
 --
--- TOC entry 3275 (class 2606 OID 186368)
+-- TOC entry 3277 (class 2606 OID 199673)
 -- Name: source_label source_label_new_addresses_currency_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -696,7 +705,7 @@ ALTER TABLE ONLY public.source_label
 
 
 --
--- TOC entry 3276 (class 2606 OID 186363)
+-- TOC entry 3278 (class 2606 OID 199668)
 -- Name: source_label source_label_source_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -705,7 +714,7 @@ ALTER TABLE ONLY public.source_label
 
 
 --
--- TOC entry 3279 (class 2606 OID 186422)
+-- TOC entry 3281 (class 2606 OID 199727)
 -- Name: source_label_url source_label_url_source_label_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -714,7 +723,7 @@ ALTER TABLE ONLY public.source_label_url
 
 
 --
--- TOC entry 3280 (class 2606 OID 186427)
+-- TOC entry 3282 (class 2606 OID 199732)
 -- Name: source_label_url source_label_url_url_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -722,7 +731,7 @@ ALTER TABLE ONLY public.source_label_url
     ADD CONSTRAINT source_label_url_url_id_fkey FOREIGN KEY (url_id) REFERENCES public.url(url_id);
 
 
--- Completed on 2023-01-13 03:50:37
+-- Completed on 2023-01-15 23:24:19
 
 --
 -- PostgreSQL database dump complete

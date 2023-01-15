@@ -5,15 +5,27 @@ class Response:
 	def save(self, file, return_chunks=False):
 		if return_chunks:
 			chunks = []
-			
-			for chunk in self.__response.iter_content(chunk_size=4096):
-				# Write file
-				file.write(chunk)
 
-				chunks.append(chunk)
-			
+			if self.__response.headers.get("transfer-encoding") == "chunked":
+				for chunk in self.__response:
+					# Write file
+					file.write(chunk)
+
+					chunks.append(chunk)
+			else:
+				for chunk in self.__response.iter_content(chunk_size=4096):
+					# Write file
+					file.write(chunk)
+
+					chunks.append(chunk)
+
 			return chunks
 		else:
-			for chunk in self.__response.iter_content(chunk_size=4096):
-				# Write file
-				file.write(chunk)
+			if self.__response.headers.get("transfer-encoding") == "chunked":
+				for chunk in self.__response:
+					# Write file
+					file.write(chunk)
+			else:
+				for chunk in self.__response.iter_content(chunk_size=4096):
+					# Write file
+					file.write(chunk)
