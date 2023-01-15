@@ -111,7 +111,7 @@ def main():
 
 	ARGS = {
 		"reset": False,
-		"restart_db": False,
+		"restart_db": True,
 		"delete_setup_config": False
 	}
 

@@ -41,10 +41,13 @@ class Setup:
 			self.__restart_db(restart_db)
 	
 	def __restart_db(self, restart_db):
-		# Restart PostgreSQL database service
-		if restart_db:
-			subprocess.run(["net", "stop", self.__setup_config_data["service"]["postgresql"]])
-			subprocess.run(["net", "start", self.__setup_config_data["service"]["postgresql"]])
+		for service in list(psutil.win_service_iter()):
+			if service.name().startswith("postgresql"):
+				# Restart PostgreSQL database service
+				if restart_db:
+					subprocess.run(["net", "stop", service.name()])
+					subprocess.run(["net", "start", service.name()])
+				break
 
 	def __setup_users_and_databases(self, db_connection):
 		# Alter & create users

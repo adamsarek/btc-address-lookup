@@ -7,9 +7,6 @@
 		"dbname": "postgres",
 		"autocommit": true
 	},
-	"service": {
-		"postgresql": "postgresql-x64-15"
-	},
 	"users": [
 		{
 			"user": "builder",
