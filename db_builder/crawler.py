@@ -395,6 +395,7 @@ class Crawler:
 				],
 				"t.address_id = '{}'".format(address["address_id"])
 			)
+			db_connection.commit()
 	
 	def __add_addresses_from_text(self, db_connection, source_label_url, addresses_text, detect_address_currency=False):
 		currency_id = None if detect_address_currency else source_label_url["new_addresses_currency_id"]
@@ -405,6 +406,7 @@ class Crawler:
 			addresses.append([currency_id, source_label_id, address.strip()])
 		
 		AddressMapper().insert(db_connection, ["currency_id", "source_label_id", "address"], addresses)
+		db_connection.commit()
 	
 	def __add_address_from_text(self, db_connection, source_label_url, prev_text, detect_address_currency=False):
 		if len(prev_text) > 0:
@@ -414,6 +416,7 @@ class Crawler:
 			address = [currency_id, source_label_id, prev_text.strip()]
 
 			AddressMapper().insert(db_connection, ["currency_id", "source_label_id", "address"], [address])
+			db_connection.commit()
 	
 	def __add_addresses_from_response(self, db_connection, response, source_label_url, source_label_url_depth, file, add_address_option=0, chunk_decode_option=0, detect_address_currency=False):
 		# LoyceV / All BTC Addresses - Weekly update
@@ -444,6 +447,7 @@ class Crawler:
 					# Add last address
 					if len(prev_text) > 0:
 						db_copy.copy_row([source_label_url["new_addresses_currency_id"], source_label_url["source_label_id"], prev_text.strip()])
+				db_connection.commit()
 			else:
 				# Decompress object
 				decompress_obj = isal_zlib.decompressobj(32 + isal_zlib.MAX_WBITS)
@@ -647,6 +651,7 @@ class Crawler:
 			if useful_file:
 				# Add url
 				UrlMapper().insert(db_connection, ["address"], [[response.url]])
+				db_connection.commit()
 				url = UrlMapper().select(db_connection, ["url_id"], [], "address = '{}'".format(response.url))[0]
 
 				# Get data
@@ -705,6 +710,7 @@ class Crawler:
 							],
 							"t.source_label_url_id = {} AND t.url_id = {}".format(source_label_url["source_label_url_id"], url["url_id"])
 						)
+						db_connection.commit()
 					else:
 						DataMapper().insert(
 							db_connection, [
@@ -723,6 +729,7 @@ class Crawler:
 								]
 							]
 						)
+						db_connection.commit()
 						data = DataMapper().select(db_connection, ["data_id"], [], "source_label_url_id = {} AND url_id = {}".format(source_label_url["source_label_url_id"], url["url_id"]), "crawled_at DESC", "1")
 
 					# Get address data
@@ -782,6 +789,7 @@ class Crawler:
 							],
 							address_datas
 						)
+						db_connection.commit()
 
 					# Add source label url
 					SourceLabelUrlMapper().update(
@@ -792,3 +800,4 @@ class Crawler:
 						],
 						"t.source_label_url_id = {}".format(source_label_url["source_label_url_id"])
 					)
+					db_connection.commit()

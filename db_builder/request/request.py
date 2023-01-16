@@ -11,6 +11,22 @@ from console.console import Console
 from file.json_file import JsonFile
 
 class Request(object):
+	def __init__(self):
+		if "__config_data" not in dir(self):
+			self.__config_data = JsonFile("config.json").load()
+
+		if "__session" not in dir(self):
+			self.__session = requests.Session()
+
+		if "__robots" not in dir(self):
+			self.__robots = {}
+		
+		if "__thread_lock" not in dir(self):
+			self.__thread_lock = threading.Lock()
+		
+		if "__last_request_at" not in dir(self):
+			self.__last_request_at = datetime.datetime.now().timestamp()
+
 	def __new__(cls):
 		if not hasattr(cls, "instance"):
 			cls.instance = super(Request, cls).__new__(cls)
