@@ -44,22 +44,11 @@
 # Crawl known address labels - Binance, Coinbase, etc.
 # https://www.walletexplorer.com/
 
-# Data (table) - add column: new version - if NULL (it's latest version), else (there's ID of newer version)
-
-# ---------- Problems ----------
-# 14 SeeKoin
-# - only 1st page? - Your IP was blacklisted
-# - all crypto or BTC only?
-# ---------- Problems ----------
-
 # ---------- TODO ----------
-# - 1 DB Connection for thread?
-# - Connect data & address (after getting all important data)
-# - Roles
+# 14 SeeKoin
+# - all crypto or BTC only?
 
-# - Check new addresses sources
-# - Check searched BTC sources
-# - Save file only when useful data inside
+# - 1 DB Connection for thread?
 # - Roles
 # - Add to Run/RunOnce
 # ---------- TODO ----------
@@ -111,7 +100,7 @@ def main():
 
 	ARGS = {
 		"reset": False,
-		"restart_db": True,
+		"restart_db": False,
 		"delete_setup_config": False
 	}
 

@@ -228,12 +228,14 @@
 						"url_id BIGINT NOT NULL",
 						"roles SMALLINT[] NOT NULL DEFAULT ARRAY[]::SMALLINT[]",
 						"path TEXT NOT NULL",
+						"content_length BIGINT NOT NULL",
 						"crawled_at TIMESTAMP",
 						"CONSTRAINT data_data_id_pkey PRIMARY KEY (data_id)",
 						"CONSTRAINT data_source_label_url_id_fkey FOREIGN KEY (source_label_url_id) REFERENCES source_label_url (source_label_url_id)",
 						"CONSTRAINT data_url_id_fkey FOREIGN KEY (url_id) REFERENCES url (url_id)",
 						"CONSTRAINT data_source_label_url_id_check CHECK (source_label_url_id > 0)",
-						"CONSTRAINT data_url_id_check CHECK (url_id > 0)"
+						"CONSTRAINT data_url_id_check CHECK (url_id > 0)",
+						"CONSTRAINT data_content_length_check CHECK (content_length > 0)"
 					]
 				},
 				{
