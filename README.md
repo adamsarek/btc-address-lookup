@@ -11,9 +11,9 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
 - :heavy_check_mark: Automated run[^automated_run]
 - :heavy_check_mark: Fulfilling the robots.txt rules[^robots_txt]
 - :heavy_check_mark: Complete database schema
+  - :heavy_check_mark: **role** *- contains user roles with various levels of access to the crawled data*
   - :heavy_check_mark: **source** *- contains names of the sources of addresses and reports*
   - :heavy_check_mark: **currency** *- contains all of the available blockchains from [Blockchair](https://blockchair.com/ "Blockchair")*
-  - :heavy_check_mark: **role** *- contains user roles with various levels of access to the crawled data*
   - :heavy_check_mark: **source_label** *- contains labels of the sources (subcategory of the sources)*
   - :heavy_check_mark: **address** *- contains BTC and other cryptocurrency addresses*
   - :heavy_check_mark: **url** *- contains unique urls gathered during crawling*
