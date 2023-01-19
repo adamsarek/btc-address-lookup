@@ -226,6 +226,22 @@ class DatabaseConnection:
 				psycopg.sql.SQL(".").join(table_name_parts)
 			)
 		)
+	
+	def grant(self, table_name, users=[]):
+		table_name_parts = []
+		for table_name_part in table_name.split("."):
+			table_name_parts.append(psycopg.sql.Identifier(table_name_part))
+
+		for user in users:
+			self.__execute(
+				psycopg.sql.SQL(
+					"GRANT {} ON {} TO {}"
+				).format(
+					psycopg.sql.SQL(user["privilege"]),
+					psycopg.sql.SQL(".").join(table_name_parts),
+					psycopg.sql.Identifier(user["user"])
+				)
+			)
 
 	def select(self, table_name, column_names, joins=[], where="", order_by="", limit=""):
 		query = "SELECT "

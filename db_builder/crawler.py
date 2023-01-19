@@ -69,7 +69,6 @@ class Crawler:
 			db_connection.alter_table(
 				"address", [
 					"ALTER source_label_id DROP NOT NULL",
-					"ALTER roles DROP NOT NULL",
 					"ALTER address DROP NOT NULL",
 					"DROP CONSTRAINT address_address_id_pkey",
 					"DROP CONSTRAINT address_currency_id_fkey",
@@ -101,7 +100,6 @@ class Crawler:
 			db_connection.alter_table(
 				"address", [
 					"ALTER source_label_id SET NOT NULL",
-					"ALTER roles SET NOT NULL",
 					"ALTER address SET NOT NULL",
 					"ADD CONSTRAINT address_address_id_pkey PRIMARY KEY (address_id)",
 					"ADD CONSTRAINT address_currency_id_fkey FOREIGN KEY (currency_id) REFERENCES currency (currency_id)",

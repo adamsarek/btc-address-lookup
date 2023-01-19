@@ -25,27 +25,9 @@
 			"owner": "builder",
 			"tables": [
 				{
-					"table_name": "role",
-					"create": [
-						"role_id SMALLSERIAL NOT NULL",
-						"name TEXT NOT NULL",
-						"CONSTRAINT role_role_id_pkey PRIMARY KEY (role_id)",
-						"CONSTRAINT role_name_key UNIQUE (name)"
-					],
-					"insert": [
-						["name"],
-						[
-							["Guest"],
-							["User"],
-							["Admin"]
-						]
-					]
-				},
-				{
 					"table_name": "source",
 					"create": [
 						"source_id SMALLSERIAL NOT NULL",
-						"roles SMALLINT[] NOT NULL DEFAULT '{{1,2,3}}'",
 						"name TEXT NOT NULL",
 						"CONSTRAINT source_source_id_pkey PRIMARY KEY (source_id)",
 						"CONSTRAINT source_name_key UNIQUE (name)"
@@ -64,6 +46,9 @@
 							["SeeKoin"],
 							["BitcoinWhosWho"]
 						]
+					],
+					"grant": [
+						{"user": "client", "privilege": "SELECT"}
 					]
 				},
 				{
@@ -102,6 +87,9 @@
 							["Ripple", "XRP", "/src/img/XRP.svg", "ripple"],
 							["Zcash", "ZEC", "/src/img/ZEC.svg", "zcash"]
 						]
+					],
+					"grant": [
+						{"user": "client", "privilege": "SELECT"}
 					]
 				},
 				{
@@ -110,7 +98,6 @@
 						"source_label_id SMALLSERIAL",
 						"source_id SMALLINT NOT NULL",
 						"new_addresses_currency_id SMALLINT",
-						"roles SMALLINT[] NOT NULL DEFAULT '{{1,2,3}}'",
 						"search_data_by_address BOOLEAN NOT NULL",
 						"name TEXT NOT NULL",
 						"CONSTRAINT source_label_source_label_id_pkey PRIMARY KEY (source_label_id)",
@@ -137,6 +124,9 @@
 							["9", null, false, "Reported BTC Addresses"],
 							["10", null, true, "Searched Reported BTC Addresses"]
 						]
+					],
+					"grant": [
+						{"user": "client", "privilege": "SELECT"}
 					]
 				},
 				{
@@ -145,7 +135,6 @@
 						"address_id BIGSERIAL",
 						"currency_id SMALLINT",
 						"source_label_id SMALLINT NOT NULL",
-						"roles SMALLINT[] NOT NULL DEFAULT '{{1,2,3}}'",
 						"address TEXT NOT NULL",
 						"CONSTRAINT address_address_id_pkey PRIMARY KEY (address_id)",
 						"CONSTRAINT address_currency_id_fkey FOREIGN KEY (currency_id) REFERENCES currency (currency_id)",
@@ -153,6 +142,9 @@
 						"CONSTRAINT address_address_key UNIQUE (address)",
 						"CONSTRAINT address_currency_id_check CHECK (currency_id > 0)",
 						"CONSTRAINT address_source_label_id_check CHECK (source_label_id > 0)"
+					],
+					"grant": [
+						{"user": "client", "privilege": "SELECT"}
 					]
 				},
 				{
@@ -182,6 +174,9 @@
 							["https://www.seekoin.com/address.php?f=1537094941"],
 							["https://www.bitcoinwhoswho.com/address/"]
 						]
+					],
+					"grant": [
+						{"user": "client", "privilege": "SELECT"}
 					]
 				},
 				{
@@ -190,7 +185,6 @@
 						"source_label_url_id SMALLSERIAL",
 						"source_label_id SMALLINT NOT NULL",
 						"url_id BIGINT NOT NULL",
-						"roles SMALLINT[] NOT NULL DEFAULT '{{1,2,3}}'",
 						"last_crawled_at TIMESTAMP",
 						"CONSTRAINT source_label_url_id_pkey PRIMARY KEY (source_label_url_id)",
 						"CONSTRAINT source_label_url_source_label_id_fkey FOREIGN KEY (source_label_id) REFERENCES source_label (source_label_id)",
@@ -218,6 +212,9 @@
 							[12, 14],
 							[13, 15]
 						]
+					],
+					"grant": [
+						{"user": "client", "privilege": "SELECT"}
 					]
 				},
 				{
@@ -226,7 +223,6 @@
 						"data_id BIGSERIAL",
 						"source_label_url_id SMALLINT NOT NULL",
 						"url_id BIGINT NOT NULL",
-						"roles SMALLINT[] NOT NULL DEFAULT '{{1,2,3}}'",
 						"path TEXT NOT NULL",
 						"content_length BIGINT NOT NULL",
 						"crawled_at TIMESTAMP",
@@ -236,6 +232,29 @@
 						"CONSTRAINT data_source_label_url_id_check CHECK (source_label_url_id > 0)",
 						"CONSTRAINT data_url_id_check CHECK (url_id > 0)",
 						"CONSTRAINT data_content_length_check CHECK (content_length > 0)"
+					],
+					"grant": [
+						{"user": "client", "privilege": "SELECT"}
+					]
+				},
+				{
+					"table_name": "role",
+					"create": [
+						"role_id SMALLSERIAL NOT NULL",
+						"name TEXT NOT NULL",
+						"CONSTRAINT role_role_id_pkey PRIMARY KEY (role_id)",
+						"CONSTRAINT role_name_key UNIQUE (name)"
+					],
+					"insert": [
+						["name"],
+						[
+							["Guest"],
+							["User"],
+							["Admin"]
+						]
+					],
+					"grant": [
+						{"user": "client", "privilege": "SELECT"}
 					]
 				},
 				{
@@ -244,12 +263,16 @@
 						"address_data_id BIGSERIAL",
 						"address_id BIGINT NOT NULL",
 						"data_id BIGINT NOT NULL",
+						"roles SMALLINT[] NOT NULL DEFAULT '{{1,2,3}}'",
 						"CONSTRAINT address_data_address_data_id_pkey PRIMARY KEY (address_data_id)",
 						"CONSTRAINT address_data_address_id_fkey FOREIGN KEY (address_id) REFERENCES address (address_id)",
 						"CONSTRAINT address_data_data_id_fkey FOREIGN KEY (data_id) REFERENCES data (data_id)",
 						"CONSTRAINT address_data_address_id_address_data_data_id_key UNIQUE (address_id, data_id)",
 						"CONSTRAINT address_data_address_id_check CHECK (address_id > 0)",
 						"CONSTRAINT address_data_data_id_check CHECK (data_id > 0)"
+					],
+					"grant": [
+						{"user": "client", "privilege": "SELECT"}
 					]
 				}
 			]
