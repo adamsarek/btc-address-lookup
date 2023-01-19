@@ -1,0 +1,8 @@
+{
+	"program": {
+		"title": "Client [client]"
+	},
+	"crawler": {
+		"data_path": "../db_builder/crawled_data"
+	}
+}

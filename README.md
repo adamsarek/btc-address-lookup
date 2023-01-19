@@ -6,12 +6,10 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
 - :heavy_check_mark: The PostgreSQL database initializer
   - :heavy_check_mark: Setup[^setup]
   - :heavy_check_mark: Reset[^reset]
-- :heavy_check_mark: CRUD operations with the PostgreSQL database
 - :heavy_check_mark: Multi-threaded downloading and processing[^multi_threaded]
 - :heavy_check_mark: Automated run[^automated_run]
 - :heavy_check_mark: Fulfilling the robots.txt rules[^robots_txt]
 - :heavy_check_mark: Complete database schema
-  - :heavy_check_mark: **role** *- contains user roles with various levels of access to the crawled data*
   - :heavy_check_mark: **source** *- contains names of the sources of addresses and reports*
   - :heavy_check_mark: **currency** *- contains all of the available blockchains from [Blockchair](https://blockchair.com/ "Blockchair")*
   - :heavy_check_mark: **source_label** *- contains labels of the sources (subcategory of the sources)*
@@ -19,6 +17,7 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   - :heavy_check_mark: **url** *- contains unique urls gathered during crawling*
   - :heavy_check_mark: **source_label_url** *- contains starting urls for the labels of the sources (each label can have multiple starting urls)*
   - :heavy_check_mark: **data** *- contains relative links to the crawled data*
+  - :heavy_check_mark: **role** *- contains user roles with various levels of access to the crawled data*
   - :heavy_check_mark: **address_data** *- contains connection between cryptocurrency addresses and their respective crawled data*
 - :hammer: Crawling all addresses / reports from the following sources[^robots_txt]:
   - :heavy_check_mark: [LoyceV](http://alladdresses.loyce.club "LoyceV")
@@ -95,12 +94,36 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
 
 ## :earth_americas: Web Client [[client](client "Web Client")]
 ### Features:
-- :x: Searching of BTC address
-- :x: Searching of BTC address reports
-- :x: Searching of BTC address owners
+- :hammer: REST API
+  - :x: Get list of addresses (which have some data)
+  - :x: Get list of address data files
+  - :x: Get content of address data file
+  - :x: Limit access to address data by user roles
 - :x: Account system
-  - :x: Sign up / Sign in
-  - :x: Roles
+  - :x: Sign up
+  - :x: Sign in
+  - :x: Forgotten password
+  - :x: REST API token generation (internal for account use, external - anyone can generate token)
+- :x: Search by address
+- :x: List of reports
+
+### Requirements:
+- [Node.js 18.13.0 LTS for Windows (64-bit)](https://nodejs.org/en/download/ "Node.js 18.13.0 LTS for Windows (64-bit)")
+
+### Installation:
+1. Download and install Node.js
+2. Restart computer
+3. Go to the program directory `client`
+4. Rename the file `example_db.json` to `db.json`
+5. Change password of connection in `db.json`
+6. Open a command prompt
+7. Change the current working directory to `client`
+8. Install packages using the command `npm i -g npm-check-updates && ncu -u && npm i`
+
+### Running:
+1. Open a command prompt
+2. Change the current working directory to `client`
+3. Run the program using the command `node main.js`
 
 ## :printer: Documentation [[documentation](documentation "Documentation")]
 ### Content:
