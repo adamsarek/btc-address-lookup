@@ -559,13 +559,13 @@ class Crawler:
 		if(source_label_url["source_label_url_id"] == 3
 		or   source_label_url["source_label_url_id"] == 10):
 			if source_label_url_depth >= 0:
-				data_file_name = "reported_btc_addresses_{0}.html".format(str(source_label_url_depth + 1))
+				data_file_name = "reported_addresses_{0}.html".format(str(source_label_url_depth + 1))
 			else:
 				data_file_name += ".html"
 		# CheckBitcoinAddress / Reported Addresses
 		elif source_label_url["source_label_url_id"] == 4:
 			if source_label_url_depth >= 0:
-				data_file_name = "abuse_reports_to_bitcoin_address_{0}.html".format(str(source_label_url_depth + 1))
+				data_file_name = "reported_addresses_{0}.html".format(str(source_label_url_depth + 1))
 			else:
 				data_file_name = response.url.split("?address=")[1].strip() + ".html"
 		# CryptoBlacklist / Searched Reported BTC Addresses
