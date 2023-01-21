@@ -4,31 +4,85 @@
 const express = require('express');
 
 // Internal imports
-const Database = require("./database/database.js");
-const DatabaseConnection = require("./database/database_connection.js");
+const Database = require('./database/database.js');
+const DatabaseConnection = require('./database/database_connection.js');
 
-const database = new Database();
+const config = require('./config.json');
 const db = require('./db.json');
-//console.log(db.connection);
-const c = database.getConnection(db.connection);
-const databaseConnection = new DatabaseConnection(c);
-databaseConnection.select("table", ["columns"]);
-c.query("SELECT * FROM source").then((t) => {
-	console.log(t.rows);
-});
+const databaseConnection = new DatabaseConnection(new Database().getConnection(db.connection));
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-app.get("/api/addresses", (req, res) => {
-	return res.send(`#0 GET addresses, limit: ${req.query.limit}, offset: ${req.query.offset}, token: ${req.query.token}`);
+app.get('/api/addresses', async (req, res) => {
+	let token;
+	
+	// Token is not set
+	if(!req.query.hasOwnProperty('token') || req.query.token.length == 0) {
+		return res.status(400).json({error: 'Token has to be set!'});
+	}
+	else {
+		token = req.query.token;
+	}
+
+	const role = databaseConnection.getRoleFromToken(token);
+
+	// Token does not exist
+	if(role == null) {
+		return res.status(400).json({error: 'Token does not exist!'});
+	}
+	
+	let offset;
+	
+	// Offset is not set
+	if(!req.query.hasOwnProperty('offset') || req.query.offset.length == 0) {
+		offset = 0;
+	}
+	else {
+		offset = parseInt(req.query.offset);
+
+		// Offset does not have a numeric value
+		if(isNaN(offset)) {
+			return res.status(400).json({error: 'Offset has to have a numeric value!'});
+		}
+		// Offset is too low
+		else if(offset <= -1) {
+			return res.status(400).json({error: 'Offset has to be at least 0!'});
+		}
+	}
+
+	let limit;
+	
+	// Limit is not set
+	if(!req.query.hasOwnProperty('limit') || req.query.limit.length == 0) {
+		return res.status(400).json({error: 'Limit has to be set!'});
+	}
+	else {
+		limit = parseInt(req.query.limit);
+
+		// Limit does not have a numeric value
+		if(isNaN(limit)) {
+			return res.status(400).json({error: 'Limit has to have a numeric value!'});
+		}
+		// Limit is too low
+		else if(limit <= 0) {
+			return res.status(400).json({error: 'Limit has to be at least 1!'});
+		}
+		// Limit is too high
+		else if(limit > 100) {
+			return res.status(400).json({error: 'Limit has to be at most 100!'});
+		}
+	}
+
+	const addresses = await databaseConnection.selectAddresses(role, limit, offset);
+
+	return res.json(addresses.rows);
 });
 
 /*app.get("/api/addresses/:addressId([0-9]{1,})", (req, res) => {
 	return res.send(`#1 GET addresses, addressId: ${req.params.addressId}, token: ${req.query.token}`);
 });*/
 
-app.get("/api/addresses/:address([a-zA-Z0-9]{1,})", (req, res) => {
+/*app.get("/api/addresses/:address([a-zA-Z0-9]{1,})", (req, res) => {
 	return res.send(`#2 GET addresses, address: ${req.params.address}, token: ${req.query.token}`);
 });
 
@@ -73,8 +127,8 @@ app.get("/api/reports", (req, res) => {
 	else if(req.query.source_label_url) {
 		return res.send(`#3 GET reports, source_label_url: ${req.query.source_label_url}, token: ${req.query.token}`);
 	}
-});
+});*/
 
-app.listen(PORT, () => {
-	console.log(`Example app listening on port ${PORT}!`);
+app.listen(config.connection.port, () => {
+	console.log(`Example app listening on port ${config.connection.port}!`);
 });
