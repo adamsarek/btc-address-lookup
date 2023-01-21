@@ -73,10 +73,133 @@ app.get('/api/addresses', async (req, res) => {
 		}
 	}
 
-	const addresses = await databaseConnection.selectAddresses(role, limit, offset);
+	const addresses = await databaseConnection.getAddresses(role, limit, offset);
 
-	return res.json(addresses.rows);
+	// No address found
+	if(addresses.rows.length == 0) {
+		return res.status(404).json({error: 'No address has been found!'});
+	}
+	else {
+		return res.json(addresses.rows);
+	}
 });
+
+app.get("/api/addresses/:address([a-zA-Z0-9]{1,})", async (req, res) => {
+	let token;
+	
+	// Token is not set
+	if(!req.query.hasOwnProperty('token') || req.query.token.length == 0) {
+		return res.status(400).json({error: 'Token has to be set!'});
+	}
+	else {
+		token = req.query.token;
+	}
+
+	const role = databaseConnection.getRoleFromToken(token);
+
+	// Token does not exist
+	if(role == null) {
+		return res.status(400).json({error: 'Token does not exist!'});
+	}
+
+	let address;
+	
+	// Offset is not set
+	if(!req.params.hasOwnProperty('address') || req.params.address.length == 0) {
+		return res.status(400).json({error: 'Address has to be set!'});
+	}
+	else {
+		address = req.params.address;
+	}
+
+	address = await databaseConnection.getAddress(role, address);
+
+	// Address not found
+	if(address.rows.length == 0) {
+		return res.status(404).json({error: 'Address has not been found!'});
+	}
+	else {
+		return res.json(address.rows[0]);
+	}
+});
+
+app.get("/api/data/:data_id([0-9]{1,})", async (req, res) => {
+	let token;
+	
+	// Token is not set
+	if(!req.query.hasOwnProperty('token') || req.query.token.length == 0) {
+		return res.status(400).json({error: 'Token has to be set!'});
+	}
+	else {
+		token = req.query.token;
+	}
+
+	const role = databaseConnection.getRoleFromToken(token);
+
+	// Token does not exist
+	if(role == null) {
+		return res.status(400).json({error: 'Token does not exist!'});
+	}
+
+	let dataId;
+	
+	// Offset is not set
+	if(!req.params.hasOwnProperty('data_id') || req.params.data_id.length == 0) {
+		return res.status(400).json({error: 'Data ID has to be set!'});
+	}
+	else {
+		dataId = req.params.data_id;
+	}
+
+	data = await databaseConnection.getData(role, dataId);
+
+	// Data not found
+	if(data.rows.length == 0) {
+		return res.status(404).json({error: 'Data has not been found!'});
+	}
+	else {
+		return res.json(data.rows[0]);
+	}
+});
+
+/*app.get("/api/addresses/:address([a-zA-Z0-9]{1,})/data", async (req, res) => {
+	let token;
+	
+	// Token is not set
+	if(!req.query.hasOwnProperty('token') || req.query.token.length == 0) {
+		return res.status(400).json({error: 'Token has to be set!'});
+	}
+	else {
+		token = req.query.token;
+	}
+
+	const role = databaseConnection.getRoleFromToken(token);
+
+	// Token does not exist
+	if(role == null) {
+		return res.status(400).json({error: 'Token does not exist!'});
+	}
+
+	let address;
+	
+	// Offset is not set
+	if(!req.params.hasOwnProperty('address') || req.params.address.length == 0) {
+		return res.status(400).json({error: 'Address has to be set!'});
+	}
+	else {
+		address = req.params.address;
+	}
+
+	addressData = await databaseConnection.getAddressData(role, address);
+
+	// Address data not found
+	if(addressData.rows.length == 0) {
+		return res.status(404).json({error: 'Address data has not been found!'});
+	}
+	else {
+		return res.json(address.rows[0]);
+	}
+});*/
 
 /*app.get("/api/addresses/:addressId([0-9]{1,})", (req, res) => {
 	return res.send(`#1 GET addresses, addressId: ${req.params.addressId}, token: ${req.query.token}`);

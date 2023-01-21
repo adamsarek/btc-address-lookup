@@ -95,10 +95,11 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
 ## :earth_americas: Web Client [[client](client "Web Client")]
 ### Features:
 - :hammer: REST API
-  - :heavy_check_mark: Get list of addresses (which have some data)
-  - :x: Get list of address data files
-  - :x: Get content of address data file
-  - :x: Limit access to address data by user roles
+  - :heavy_check_mark: Get list of addresses
+  - :heavy_check_mark: Get single address
+  - :hammer: Get address data
+  - :heavy_check_mark: Limit access by user roles
+  - :x: Get role from token
 - :x: Account system
   - :x: Sign up
   - :x: Sign in
