@@ -1,7 +1,9 @@
 'use strict';
 
 // External imports
-const express = require('express');
+const EXPRESS = require('express');
+const FS = require('fs');
+const PATH = require('path');
 
 // Internal imports
 const Database = require('./database/database.js');
@@ -11,7 +13,7 @@ const config = require('./config.json');
 const db = require('./db.json');
 const databaseConnection = new DatabaseConnection(new Database().getConnection(db.connection));
 
-const app = express();
+const app = EXPRESS();
 
 app.get('/api/addresses', async (req, res) => {
 	let token;
@@ -124,6 +126,7 @@ app.get("/api/addresses/:address([a-zA-Z0-9]{1,})", async (req, res) => {
 });
 
 app.get("/api/data/:data_id([0-9]{1,})", async (req, res) => {
+//app.get("/api/addresses/:address([a-zA-Z0-9]{1,})/data/:data_id([0-9]{1,})", async (req, res) => {
 	let token;
 	
 	// Token is not set
@@ -141,6 +144,16 @@ app.get("/api/data/:data_id([0-9]{1,})", async (req, res) => {
 		return res.status(400).json({error: 'Token does not exist!'});
 	}
 
+	/*let address;
+	
+	// Offset is not set
+	if(!req.params.hasOwnProperty('address') || req.params.address.length == 0) {
+		return res.status(400).json({error: 'Address has to be set!'});
+	}
+	else {
+		address = req.params.address;
+	}*/
+
 	let dataId;
 	
 	// Offset is not set
@@ -151,14 +164,23 @@ app.get("/api/data/:data_id([0-9]{1,})", async (req, res) => {
 		dataId = req.params.data_id;
 	}
 
-	data = await databaseConnection.getData(role, dataId);
+	let data = await databaseConnection.getData(role, /*address, */dataId);
 
 	// Data not found
 	if(data.rows.length == 0) {
 		return res.status(404).json({error: 'Data has not been found!'});
 	}
 	else {
-		return res.json(data.rows[0]);
+		data = data.rows[0];
+		const path = PATH.join(config.crawler.data_path, data.path);
+		
+		if(!FS.existsSync(path)) {
+			return res.status(404).json({error: 'Data file is missing!'});
+		}
+		else {
+			data.content = FS.readFileSync(path, { encoding: 'utf-8' });
+			return res.json(data);
+		}
 	}
 });
 

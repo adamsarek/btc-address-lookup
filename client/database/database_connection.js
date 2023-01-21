@@ -38,7 +38,7 @@ class DatabaseConnection {
 					FROM address_data
 					WHERE address_id = address.address_id AND '${role}' = ANY(roles)
 				) > 0 THEN TRUE ELSE FALSE END AS has_data,
-				ARRAY_REMOVE(ARRAY_AGG(data_id ORDER BY data_id), NULL) AS data_ids
+				ARRAY_REMOVE(ARRAY_AGG(CAST(data_id AS INT) ORDER BY CAST(data_id AS INT)), NULL) AS data_ids
 			FROM address
 			LEFT JOIN address_data ON address_data.address_id = address.address_id AND '${role}' = ANY(roles)
 			GROUP BY address.address_id, currency_id, address
@@ -61,17 +61,83 @@ class DatabaseConnection {
 					FROM address_data
 					WHERE address_id = address.address_id AND '${role}' = ANY(roles)
 				) > 0 THEN TRUE ELSE FALSE END AS has_data,
-				ARRAY_REMOVE(ARRAY_AGG(data_id ORDER BY data_id), NULL) AS data_ids
+				ARRAY_REMOVE(ARRAY_AGG(CAST(data_id AS INT) ORDER BY CAST(data_id AS INT)), NULL) AS data_ids
 			FROM address
 			LEFT JOIN address_data ON address_data.address_id = address.address_id AND '${role}' = ANY(roles)
 			WHERE address = '${address}'
 			GROUP BY address.address_id, currency_id, address
 		`);
 	}
-	
-	getData(role, dataId) {
 
+	getData(role, dataId) {
+		return this.#execute(`
+			SELECT
+				CAST(data_id AS INT),
+				(
+					SELECT source.name
+					FROM source_label_url
+					JOIN source_label ON source_label.source_label_id = source_label_url.source_label_id
+					JOIN source ON source.source_id = source_label.source_id
+					WHERE source_label_url.source_label_url_id = data.source_label_url_id
+				) AS source,
+				(
+					SELECT source_label.name
+					FROM source_label_url
+					JOIN source_label ON source_label.source_label_id = source_label_url.source_label_id
+					WHERE source_label_url.source_label_url_id = data.source_label_url_id
+				) AS source_label,
+				(
+					SELECT address
+					FROM url
+					WHERE url.url_id = data.url_id
+				) AS url,
+				path,
+				CAST(content_length AS INT),
+				crawled_at
+			FROM data
+			WHERE data_id = ${dataId} AND EXISTS (
+				SELECT 1
+				FROM address_data
+				WHERE data_id = ${dataId} AND '${role}' = ANY(roles)
+			)
+		`);
 	}
+	
+	/*getData(role, address, dataId) {
+		return this.#execute(`
+			SELECT
+				'${address}' AS address,
+				CAST(data_id AS INT),
+				(
+					SELECT source.name
+					FROM source_label_url
+					JOIN source_label ON source_label.source_label_id = source_label_url.source_label_id
+					JOIN source ON source.source_id = source_label.source_id
+					WHERE source_label_url.source_label_url_id = data.source_label_url_id
+				) AS source,
+				(
+					SELECT source_label.name
+					FROM source_label_url
+					JOIN source_label ON source_label.source_label_id = source_label_url.source_label_id
+					WHERE source_label_url.source_label_url_id = data.source_label_url_id
+				) AS source_label,
+				(
+					SELECT address
+					FROM url
+					WHERE url.url_id = data.url_id
+				) AS url,
+				path,
+				CAST(content_length AS INT),
+				crawled_at
+			FROM data
+			WHERE data_id = ${dataId} AND EXISTS (
+				SELECT 1
+				FROM address
+				JOIN address_data ON address_data.address_id = address.address_id AND address_data.data_id = data.data_id AND '${role}' = ANY(roles)
+				WHERE address = '${address}'
+			)
+		`);
+	}*/
 }
 
 // Export
