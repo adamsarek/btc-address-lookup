@@ -74,18 +74,31 @@ class DatabaseConnection {
 			SELECT
 				CAST(data_id AS INT),
 				(
+					SELECT source.source_id
+					FROM source_label_url
+					JOIN source_label ON source_label.source_label_id = source_label_url.source_label_id
+					JOIN source ON source.source_id = source_label.source_id
+					WHERE source_label_url.source_label_url_id = data.source_label_url_id
+				) AS source_id,
+				(
 					SELECT source.name
 					FROM source_label_url
 					JOIN source_label ON source_label.source_label_id = source_label_url.source_label_id
 					JOIN source ON source.source_id = source_label.source_id
 					WHERE source_label_url.source_label_url_id = data.source_label_url_id
-				) AS source,
+				) AS source_name,
+				(
+					SELECT source_label.source_label_id
+					FROM source_label_url
+					JOIN source_label ON source_label.source_label_id = source_label_url.source_label_id
+					WHERE source_label_url.source_label_url_id = data.source_label_url_id
+				) AS source_label_id,
 				(
 					SELECT source_label.name
 					FROM source_label_url
 					JOIN source_label ON source_label.source_label_id = source_label_url.source_label_id
 					WHERE source_label_url.source_label_url_id = data.source_label_url_id
-				) AS source_label,
+				) AS source_label_name,
 				(
 					SELECT address
 					FROM url
@@ -102,42 +115,22 @@ class DatabaseConnection {
 			)
 		`);
 	}
-	
-	/*getData(role, address, dataId) {
+
+	getSources() {
 		return this.#execute(`
 			SELECT
-				'${address}' AS address,
-				CAST(data_id AS INT),
-				(
-					SELECT source.name
-					FROM source_label_url
-					JOIN source_label ON source_label.source_label_id = source_label_url.source_label_id
-					JOIN source ON source.source_id = source_label.source_id
-					WHERE source_label_url.source_label_url_id = data.source_label_url_id
-				) AS source,
-				(
-					SELECT source_label.name
-					FROM source_label_url
-					JOIN source_label ON source_label.source_label_id = source_label_url.source_label_id
-					WHERE source_label_url.source_label_url_id = data.source_label_url_id
-				) AS source_label,
-				(
-					SELECT address
-					FROM url
-					WHERE url.url_id = data.url_id
-				) AS url,
-				path,
-				CAST(content_length AS INT),
-				crawled_at
-			FROM data
-			WHERE data_id = ${dataId} AND EXISTS (
-				SELECT 1
-				FROM address
-				JOIN address_data ON address_data.address_id = address.address_id AND address_data.data_id = data.data_id AND '${role}' = ANY(roles)
-				WHERE address = '${address}'
-			)
+				CAST(source.source_id AS INT),
+				source.name,
+				ARRAY_REMOVE(ARRAY_AGG(CAST(source_label_id AS INT) ORDER BY CAST(source_label_id AS INT)), NULL) AS source_label_ids
+			FROM source
+			LEFT JOIN source_label ON source_label.source_id = source.source_id
+			GROUP BY source.source_id
 		`);
-	}*/
+	}
+
+	getSource(sourceId) {
+		
+	}
 }
 
 // Export

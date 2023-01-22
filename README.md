@@ -98,8 +98,8 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   - :heavy_check_mark: Get list of addresses
   - :heavy_check_mark: Get single address
   - :heavy_check_mark: Get data
-  - :x: Get list of sources
-  - :x: Get single source
+  - :heavy_check_mark: Get list of sources
+  - :hammer: Get single source
   - :x: Get list of source labels
   - :x: Get single source label
   - :heavy_check_mark: Limit access by user roles

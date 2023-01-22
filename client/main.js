@@ -106,7 +106,7 @@ app.get("/api/addresses/:address([a-zA-Z0-9]{1,})", async (req, res) => {
 
 	let address;
 	
-	// Offset is not set
+	// Address is not set
 	if(!req.params.hasOwnProperty('address') || req.params.address.length == 0) {
 		return res.status(400).json({error: 'Address has to be set!'});
 	}
@@ -126,7 +126,6 @@ app.get("/api/addresses/:address([a-zA-Z0-9]{1,})", async (req, res) => {
 });
 
 app.get("/api/data/:data_id([0-9]{1,})", async (req, res) => {
-//app.get("/api/addresses/:address([a-zA-Z0-9]{1,})/data/:data_id([0-9]{1,})", async (req, res) => {
 	let token;
 	
 	// Token is not set
@@ -144,19 +143,9 @@ app.get("/api/data/:data_id([0-9]{1,})", async (req, res) => {
 		return res.status(400).json({error: 'Token does not exist!'});
 	}
 
-	/*let address;
-	
-	// Offset is not set
-	if(!req.params.hasOwnProperty('address') || req.params.address.length == 0) {
-		return res.status(400).json({error: 'Address has to be set!'});
-	}
-	else {
-		address = req.params.address;
-	}*/
-
 	let dataId;
 	
-	// Offset is not set
+	// Data ID is not set
 	if(!req.params.hasOwnProperty('data_id') || req.params.data_id.length == 0) {
 		return res.status(400).json({error: 'Data ID has to be set!'});
 	}
@@ -164,7 +153,7 @@ app.get("/api/data/:data_id([0-9]{1,})", async (req, res) => {
 		dataId = req.params.data_id;
 	}
 
-	let data = await databaseConnection.getData(role, /*address, */dataId);
+	let data = await databaseConnection.getData(role, dataId);
 
 	// Data not found
 	if(data.rows.length == 0) {
@@ -181,6 +170,40 @@ app.get("/api/data/:data_id([0-9]{1,})", async (req, res) => {
 			data.content = FS.readFileSync(path, { encoding: 'utf-8' });
 			return res.json(data);
 		}
+	}
+});
+
+app.get("/api/sources", async (req, res) => {
+	let sources = await databaseConnection.getSources();
+
+	// No source found
+	if(sources.rows.length == 0) {
+		return res.status(404).json({error: 'No source has been found!'});
+	}
+	else {
+		return res.json(sources.rows);
+	}
+});
+
+app.get("/api/sources/:source_id([0-9]{1,})", async (req, res) => {
+	let sourceId;
+	
+	// Source ID is not set
+	if(!req.params.hasOwnProperty('source_id') || req.params.source_id.length == 0) {
+		return res.status(400).json({error: 'Source ID has to be set!'});
+	}
+	else {
+		sourceId = req.params.source_id;
+	}
+
+	let source = await databaseConnection.getSource(sourceId);
+
+	// Source not found
+	if(source.rows.length == 0) {
+		return res.status(404).json({error: 'Source has not been found!'});
+	}
+	else {
+		return res.json(source.rows[0]);
 	}
 });
 
