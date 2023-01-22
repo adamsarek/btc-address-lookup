@@ -129,7 +129,16 @@ class DatabaseConnection {
 	}
 
 	getSource(sourceId) {
-		
+		return this.#execute(`
+			SELECT
+				CAST(source.source_id AS INT),
+				source.name,
+				ARRAY_REMOVE(ARRAY_AGG(CAST(source_label_id AS INT) ORDER BY CAST(source_label_id AS INT)), NULL) AS source_label_ids
+			FROM source
+			LEFT JOIN source_label ON source_label.source_id = source.source_id
+			WHERE source.source_id = ${sourceId}
+			GROUP BY source.source_id
+		`);
 	}
 }
 
