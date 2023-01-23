@@ -100,17 +100,21 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   - :heavy_check_mark: Get data
   - :heavy_check_mark: Get list of sources
   - :heavy_check_mark: Get single source
-  - :x: Get list of source labels
-  - :x: Get single source label
+  - :heavy_check_mark: Get source label
   - :heavy_check_mark: Limit access by user roles
   - :x: Get role from token
-- :x: Account system
+  - :x: Generate token (internal for account use, external - anyone can generate token)
+  - :x: Caching data
+- :x: Web pages
   - :x: Sign up
   - :x: Sign in
   - :x: Forgotten password
-  - :x: REST API token generation (internal for account use, external - anyone can generate token)
-- :x: Search by address
-- :x: List of reports
+  - :x: Search by address
+  - :x: List of addresses (independent on source label)
+  - :x: Source - list of source labels
+  - :x: Source / source label - list of addresses
+  - :x: API docs
+  - :x: FAQ
 
 ### Requirements:
 - [Node.js 18.13.0 LTS for Windows (64-bit)](https://nodejs.org/en/download/ "Node.js 18.13.0 LTS for Windows (64-bit)")

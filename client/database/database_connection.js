@@ -42,7 +42,7 @@ class DatabaseConnection {
 			FROM address
 			LEFT JOIN address_data ON address_data.address_id = address.address_id AND '${role}' = ANY(roles)
 			GROUP BY address.address_id, currency_id, address
-			ORDER BY address.address_id
+			ORDER BY CAST(address.address_id AS INT)
 			LIMIT ${limit} OFFSET ${offset}
 		`);
 	}
@@ -120,11 +120,12 @@ class DatabaseConnection {
 		return this.#execute(`
 			SELECT
 				CAST(source.source_id AS INT),
-				source.name,
+				source.name AS source_name,
 				ARRAY_REMOVE(ARRAY_AGG(CAST(source_label_id AS INT) ORDER BY CAST(source_label_id AS INT)), NULL) AS source_label_ids
 			FROM source
 			LEFT JOIN source_label ON source_label.source_id = source.source_id
 			GROUP BY source.source_id
+			ORDER BY CAST(source.source_id AS INT)
 		`);
 	}
 
@@ -132,12 +133,42 @@ class DatabaseConnection {
 		return this.#execute(`
 			SELECT
 				CAST(source.source_id AS INT),
-				source.name,
+				source.name AS source_name,
 				ARRAY_REMOVE(ARRAY_AGG(CAST(source_label_id AS INT) ORDER BY CAST(source_label_id AS INT)), NULL) AS source_label_ids
 			FROM source
 			LEFT JOIN source_label ON source_label.source_id = source.source_id
 			WHERE source.source_id = ${sourceId}
 			GROUP BY source.source_id
+		`);
+	}
+
+	getSourceLabel(role, sourceLabelId, addressLimit, addressOffset) {
+		return this.#execute(`
+			SELECT
+				(
+					SELECT CAST(source_id AS INT)
+					FROM source
+					WHERE source.source_id = source_label.source_id
+				) AS source_id,
+				(
+					SELECT name
+					FROM source
+					WHERE source.source_id = source_label.source_id
+				) AS source_name,
+				CAST(source_label_id AS INT),
+				name AS source_label_name,
+				ARRAY (
+					SELECT address
+					FROM address
+					JOIN address_data ON address_data.address_id = address.address_id AND '${role}' = ANY(roles)
+					JOIN data ON data.data_id = address_data.data_id
+					JOIN source_label_url ON source_label_url.source_label_url_id = data.source_label_url_id AND source_label_url.source_label_id = ${sourceLabelId}
+					GROUP BY address.address_id, address
+					ORDER BY CAST(address.address_id AS INT)
+					LIMIT ${addressLimit} OFFSET ${addressOffset}
+				) AS addresses
+			FROM source_label
+			WHERE source_label_id = ${sourceLabelId}
 		`);
 	}
 }
