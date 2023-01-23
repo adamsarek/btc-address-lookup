@@ -12,12 +12,7 @@ from database.database_connection import DatabaseConnection
 from database.database_copy import DatabaseCopy
 from file.file import File
 from file.json_file import JsonFile
-from mapper.address_mapper import AddressMapper
-from mapper.address_data_mapper import AddressDataMapper
-from mapper.currency_mapper import CurrencyMapper
-from mapper.data_mapper import DataMapper
-from mapper.source_label_url_mapper import SourceLabelUrlMapper
-from mapper.url_mapper import UrlMapper
+from mapper.mapper import Mapper
 from request.request import Request
 from response.response import Response
 from response.html_response import HtmlResponse
@@ -31,7 +26,7 @@ class Crawler:
 			db_connection = DatabaseConnection(connection)
 
 			# Get currencies
-			currencies = CurrencyMapper().select(
+			currencies = Mapper("currency").select(
 				db_connection, [
 					"currency_id",
 					"name",
@@ -43,7 +38,7 @@ class Crawler:
 			)
 
 			# Get source label urls
-			source_label_urls = SourceLabelUrlMapper().select(
+			source_label_urls = Mapper("source_label_url").select(
 				db_connection, [
 					"source_label_url.source_label_url_id",
 					"source_label_url.last_crawled_at",
@@ -118,14 +113,14 @@ class Crawler:
 			self.__crawl_source_label_urls_in_threads(db_connection, source_label_urls_with_searched_data)
 
 			# Get addresses without currency
-			address_count = AddressMapper().select_count(
+			address_count = Mapper("address").select_count(
 				db_connection,
 				[],
 				"currency_id IS NULL OR currency_id = 2"
 			)[0]["count"]
 			
 			for i in range(math.ceil(address_count / self.__config_data["crawler"]["thread_count"])):
-				addresses = AddressMapper().select(
+				addresses = Mapper("address").select(
 					db_connection, [
 						"address_id",
 						"currency_id",
@@ -262,7 +257,7 @@ class Crawler:
 		or   source_label_url["source_label_url_id"] == 12
 		or   source_label_url["source_label_url_id"] == 15):
 			# Get BTC addresses
-			btc_address_count = AddressMapper().select_count(
+			btc_address_count = Mapper("address").select_count(
 				db_connection,
 				[],
 				"currency_id = 1"
@@ -272,7 +267,7 @@ class Crawler:
 				# Start threads
 				threads = []
 
-				btc_addresses = AddressMapper().select(
+				btc_addresses = Mapper("address").select(
 					db_connection, [
 						"address_id",
 						"address"
@@ -385,7 +380,7 @@ class Crawler:
 
 		# currency_id != None or 2
 		if currency_id != address["currency_id"]:
-			AddressMapper().update(
+			Mapper("address").update(
 				db_connection, [
 					"currency_id"
 				], [
@@ -403,7 +398,7 @@ class Crawler:
 		for address in addresses_text:
 			addresses.append([currency_id, source_label_id, address.strip()])
 		
-		AddressMapper().insert(db_connection, ["currency_id", "source_label_id", "address"], addresses)
+		Mapper("address").insert(db_connection, ["currency_id", "source_label_id", "address"], addresses)
 		db_connection.commit()
 	
 	def __add_address_from_text(self, db_connection, source_label_url, prev_text, detect_address_currency=False):
@@ -413,7 +408,7 @@ class Crawler:
 
 			address = [currency_id, source_label_id, prev_text.strip()]
 
-			AddressMapper().insert(db_connection, ["currency_id", "source_label_id", "address"], [address])
+			Mapper("address").insert(db_connection, ["currency_id", "source_label_id", "address"], [address])
 			db_connection.commit()
 	
 	def __add_addresses_from_response(self, db_connection, response, source_label_url, source_label_url_depth, file, add_address_option=0, chunk_decode_option=0, detect_address_currency=False):
@@ -648,12 +643,12 @@ class Crawler:
 			# Response has useful data
 			if useful_file:
 				# Add url
-				UrlMapper().insert(db_connection, ["address"], [[response.url]])
+				Mapper("url").insert(db_connection, ["address"], [[response.url]])
 				db_connection.commit()
-				url = UrlMapper().select(db_connection, ["url_id"], [], "address = '{}'".format(response.url))[0]
+				url = Mapper("url").select(db_connection, ["url_id"], [], "address = '{}'".format(response.url))[0]
 
 				# Get data
-				data = DataMapper().select(
+				data = Mapper("data").select(
 					db_connection, [
 						"data_id",
 						"content_length"
@@ -690,7 +685,7 @@ class Crawler:
 
 					# Add data
 					if len(data) > 0:
-						DataMapper().update(
+						Mapper("data").update(
 							db_connection, [
 								"source_label_url_id",
 								"url_id",
@@ -710,7 +705,7 @@ class Crawler:
 						)
 						db_connection.commit()
 					else:
-						DataMapper().insert(
+						Mapper("data").insert(
 							db_connection, [
 								"source_label_url_id",
 								"url_id",
@@ -726,7 +721,7 @@ class Crawler:
 							]
 						)
 						db_connection.commit()
-						data = DataMapper().select(db_connection, ["data_id"], [], "source_label_url_id = {} AND url_id = {}".format(source_label_url["source_label_url_id"], url["url_id"]), "crawled_at DESC", "1")
+						data = Mapper("data").select(db_connection, ["data_id"], [], "source_label_url_id = {} AND url_id = {}".format(source_label_url["source_label_url_id"], url["url_id"]), "crawled_at DESC", "1")
 
 					# Get address data
 					address_datas = []
@@ -734,7 +729,7 @@ class Crawler:
 					or source_label_url["source_label_url_id"] == 5
 					or source_label_url["source_label_url_id"] == 12
 					or source_label_url["source_label_url_id"] == 15):
-						address_id = AddressMapper().select(db_connection, ["address_id"], [], "address = '{}'".format(data_file_name.split(".")[-2]))[0]["address_id"]
+						address_id = Mapper("address").select(db_connection, ["address_id"], [], "address = '{}'".format(data_file_name.split(".")[-2]))[0]["address_id"]
 						address_datas.append([
 							address_id,
 							data[0]["data_id"]
@@ -756,13 +751,13 @@ class Crawler:
 								prev_text = text_lines[-1]
 
 								for address_text in text_lines[:-1]:
-									address_id = AddressMapper().select(db_connection, ["address_id"], [], "address = '{}'".format(address_text.strip()))[0]["address_id"]
+									address_id = Mapper("address").select(db_connection, ["address_id"], [], "address = '{}'".format(address_text.strip()))[0]["address_id"]
 									address_datas.append([
 										address_id,
 										data[0]["data_id"]
 									])
 							
-							address_id = AddressMapper().select(db_connection, ["address_id"], [], "address = '{}'".format(prev_text.strip()))[0]["address_id"]
+							address_id = Mapper("address").select(db_connection, ["address_id"], [], "address = '{}'".format(prev_text.strip()))[0]["address_id"]
 							address_datas.append([
 								address_id,
 								data[0]["data_id"]
@@ -770,7 +765,7 @@ class Crawler:
 					elif source_label_url["source_label_url_id"] == 11:
 						text_json = JsonFile(local_data_file_path_parts).load()
 						for address_text in text_json["result"].keys():
-							address_id = AddressMapper().select(db_connection, ["address_id"], [], "address = '{}'".format(address_text.strip()))[0]["address_id"]
+							address_id = Mapper("address").select(db_connection, ["address_id"], [], "address = '{}'".format(address_text.strip()))[0]["address_id"]
 							address_datas.append([
 								address_id,
 								data[0]["data_id"]
@@ -778,7 +773,7 @@ class Crawler:
 
 					# Add address data
 					if len(address_datas) > 0:
-						AddressDataMapper().insert(
+						Mapper("address_data").insert(
 							db_connection, [
 								"address_id",
 								"data_id"
@@ -788,7 +783,7 @@ class Crawler:
 						db_connection.commit()
 
 					# Add source label url
-					SourceLabelUrlMapper().update(
+					Mapper("source_label_url").update(
 						db_connection, [
 							"last_crawled_at"
 						], [
