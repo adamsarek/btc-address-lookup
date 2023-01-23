@@ -715,15 +715,13 @@ class Crawler:
 								"source_label_url_id",
 								"url_id",
 								"path",
-								"content_length",
-								"crawled_at"
+								"content_length"
 							], [
 								[
 									source_label_url["source_label_url_id"],
 									url["url_id"],
 									File(data_file_path_parts).get_file_path(),
-									response_content_length,
-									datetime.datetime.now()
+									response_content_length
 								]
 							]
 						)

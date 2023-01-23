@@ -18,6 +18,8 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   - :heavy_check_mark: **source_label_url** *- contains starting urls for the labels of the sources (each label can have multiple starting urls)*
   - :heavy_check_mark: **data** *- contains relative links to the crawled data*
   - :heavy_check_mark: **role** *- contains user roles with various levels of access to the crawled data*
+  - :heavy_check_mark: **account** *- contains information about the user account*
+  - :heavy_check_mark: **token** *- contains API tokens with various levels of access to the crawled data*
   - :heavy_check_mark: **address_data** *- contains connection between cryptocurrency addresses and their respective crawled data*
 - :hammer: Crawling all addresses / reports from the following sources[^robots_txt]:
   - :heavy_check_mark: [LoyceV](http://alladdresses.loyce.club "LoyceV")
@@ -103,7 +105,7 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   - :heavy_check_mark: Get source label
   - :heavy_check_mark: Limit access by user roles
   - :x: Get role from token
-  - :x: Generate token (internal for account use, external - anyone can generate token)
+  - :x: Generate token (linked with the account or IP address)
   - :x: Caching data
 - :x: Web pages
   - :x: Sign up

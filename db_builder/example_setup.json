@@ -27,7 +27,7 @@
 				{
 					"table_name": "source",
 					"create": [
-						"source_id SMALLSERIAL NOT NULL",
+						"source_id SMALLSERIAL",
 						"name TEXT NOT NULL",
 						"CONSTRAINT source_source_id_pkey PRIMARY KEY (source_id)",
 						"CONSTRAINT source_name_key UNIQUE (name)"
@@ -54,7 +54,7 @@
 				{
 					"table_name": "currency",
 					"create": [
-						"currency_id SMALLSERIAL NOT NULL",
+						"currency_id SMALLSERIAL",
 						"name TEXT NOT NULL",
 						"code TEXT NOT NULL",
 						"logo TEXT NOT NULL",
@@ -225,7 +225,7 @@
 						"url_id BIGINT NOT NULL",
 						"path TEXT NOT NULL",
 						"content_length BIGINT NOT NULL",
-						"crawled_at TIMESTAMP",
+						"crawled_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP",
 						"CONSTRAINT data_data_id_pkey PRIMARY KEY (data_id)",
 						"CONSTRAINT data_source_label_url_id_fkey FOREIGN KEY (source_label_url_id) REFERENCES source_label_url (source_label_url_id)",
 						"CONSTRAINT data_url_id_fkey FOREIGN KEY (url_id) REFERENCES url (url_id)",
@@ -241,7 +241,7 @@
 				{
 					"table_name": "role",
 					"create": [
-						"role_id SMALLSERIAL NOT NULL",
+						"role_id SMALLSERIAL",
 						"name TEXT NOT NULL",
 						"CONSTRAINT role_role_id_pkey PRIMARY KEY (role_id)",
 						"CONSTRAINT role_name_key UNIQUE (name)"
@@ -256,6 +256,56 @@
 					],
 					"grant": [
 						{"user": "client", "privilege": "SELECT"}
+					]
+				},
+				{
+					"table_name": "account",
+					"create": [
+						"account_id BIGSERIAL",
+						"role_id SMALLINT NOT NULL",
+						"email TEXT NOT NULL",
+						"password TEXT NOT NULL",
+						"salt TEXT NOT NULL",
+						"signed_up_by_ip TEXT NOT NULL",
+						"last_signed_in_by_ip TEXT",
+						"signed_up_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP",
+						"last_signed_in_at TIMESTAMP",
+						"CONSTRAINT account_account_id_pkey PRIMARY KEY (account_id)",
+						"CONSTRAINT account_role_id_fkey FOREIGN KEY (role_id) REFERENCES role (role_id)",
+						"CONSTRAINT account_email_key UNIQUE (email)",
+						"CONSTRAINT account_salt_key UNIQUE (salt)",
+						"CONSTRAINT account_role_id_check CHECK (role_id > 0)"
+					],
+					"grant": [
+						{"user": "client", "privilege": "SELECT, INSERT, UPDATE"}
+					]
+				},
+				{
+					"table_name": "token",
+					"create": [
+						"token_id BIGSERIAL",
+						"role_id SMALLINT NOT NULL",
+						"account_id BIGINT",
+						"token TEXT NOT NULL",
+						"use_count BIGINT NOT NULL DEFAULT 0",
+						"use_count_limit BIGINT NOT NULL",
+						"created_by_ip TEXT NOT NULL",
+						"last_used_by_ip TEXT",
+						"created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP",
+						"last_used_at TIMESTAMP",
+						"reset_use_count_at TIMESTAMP",
+						"CONSTRAINT token_token_id_pkey PRIMARY KEY (token_id)",
+						"CONSTRAINT token_role_id_fkey FOREIGN KEY (role_id) REFERENCES role (role_id)",
+						"CONSTRAINT token_account_id_fkey FOREIGN KEY (account_id) REFERENCES account (account_id)",
+						"CONSTRAINT token_token_key UNIQUE (token)",
+						"CONSTRAINT token_role_id_check CHECK (role_id > 0)",
+						"CONSTRAINT token_account_id_check CHECK (account_id > 0)",
+						"CONSTRAINT token_use_count_check CHECK (use_count >= 0)",
+						"CONSTRAINT token_use_count_limit_check CHECK (use_count_limit >= 0)",
+						"CONSTRAINT token_last_used_at_check CHECK (last_used_at < reset_use_count_at)"
+					],
+					"grant": [
+						{"user": "client", "privilege": "SELECT, INSERT, UPDATE"}
 					]
 				},
 				{

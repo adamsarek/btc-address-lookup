@@ -16,23 +16,6 @@ const databaseConnection = new DatabaseConnection(new Database().getConnection(d
 const app = EXPRESS();
 
 app.get('/api/addresses', async (req, res) => {
-	let token;
-	
-	// Token is not set
-	if(!req.query.hasOwnProperty('token') || req.query.token.length == 0) {
-		return res.status(400).json({error: 'Token has to be set!'});
-	}
-	else {
-		token = req.query.token;
-	}
-
-	const role = databaseConnection.getRoleFromToken(token);
-
-	// Token does not exist
-	if(role == null) {
-		return res.status(400).json({error: 'Token does not exist!'});
-	}
-	
 	let offset;
 	
 	// Offset is not set
@@ -75,6 +58,23 @@ app.get('/api/addresses', async (req, res) => {
 		}
 	}
 
+	let token;
+	
+	// Token is not set
+	if(!req.query.hasOwnProperty('token') || req.query.token.length == 0) {
+		return res.status(400).json({error: 'Token has to be set!'});
+	}
+	else {
+		token = req.query.token;
+	}
+
+	const role = databaseConnection.getRoleFromToken(token);
+
+	// Token does not exist
+	if(role == null) {
+		return res.status(400).json({error: 'Token does not exist!'});
+	}
+	
 	const addresses = await databaseConnection.getAddresses(role, limit, offset);
 
 	// No address found
@@ -87,6 +87,16 @@ app.get('/api/addresses', async (req, res) => {
 });
 
 app.get("/api/addresses/:address([a-zA-Z0-9]{1,})", async (req, res) => {
+	let address;
+	
+	// Address is not set
+	if(!req.params.hasOwnProperty('address') || req.params.address.length == 0) {
+		return res.status(400).json({error: 'Address has to be set!'});
+	}
+	else {
+		address = req.params.address;
+	}
+
 	let token;
 	
 	// Token is not set
@@ -103,17 +113,7 @@ app.get("/api/addresses/:address([a-zA-Z0-9]{1,})", async (req, res) => {
 	if(role == null) {
 		return res.status(400).json({error: 'Token does not exist!'});
 	}
-
-	let address;
 	
-	// Address is not set
-	if(!req.params.hasOwnProperty('address') || req.params.address.length == 0) {
-		return res.status(400).json({error: 'Address has to be set!'});
-	}
-	else {
-		address = req.params.address;
-	}
-
 	address = await databaseConnection.getAddress(role, address);
 
 	// Address not found
@@ -126,6 +126,16 @@ app.get("/api/addresses/:address([a-zA-Z0-9]{1,})", async (req, res) => {
 });
 
 app.get("/api/data/:data_id([0-9]{1,})", async (req, res) => {
+	let dataId;
+	
+	// Data ID is not set
+	if(!req.params.hasOwnProperty('data_id') || req.params.data_id.length == 0) {
+		return res.status(400).json({error: 'Data ID has to be set!'});
+	}
+	else {
+		dataId = req.params.data_id;
+	}
+
 	let token;
 	
 	// Token is not set
@@ -142,17 +152,7 @@ app.get("/api/data/:data_id([0-9]{1,})", async (req, res) => {
 	if(role == null) {
 		return res.status(400).json({error: 'Token does not exist!'});
 	}
-
-	let dataId;
 	
-	// Data ID is not set
-	if(!req.params.hasOwnProperty('data_id') || req.params.data_id.length == 0) {
-		return res.status(400).json({error: 'Data ID has to be set!'});
-	}
-	else {
-		dataId = req.params.data_id;
-	}
-
 	let data = await databaseConnection.getData(role, dataId);
 
 	// Data not found
@@ -208,23 +208,6 @@ app.get("/api/sources/:source_id([0-9]{1,})", async (req, res) => {
 });
 
 app.get("/api/source_labels/:source_label_id([0-9]{1,})", async (req, res) => {
-	let token;
-	
-	// Token is not set
-	if(!req.query.hasOwnProperty('token') || req.query.token.length == 0) {
-		return res.status(400).json({error: 'Token has to be set!'});
-	}
-	else {
-		token = req.query.token;
-	}
-
-	const role = databaseConnection.getRoleFromToken(token);
-
-	// Token does not exist
-	if(role == null) {
-		return res.status(400).json({error: 'Token does not exist!'});
-	}
-
 	let addressOffset;
 	
 	// Address offset is not set
@@ -275,6 +258,23 @@ app.get("/api/source_labels/:source_label_id([0-9]{1,})", async (req, res) => {
 	}
 	else {
 		sourceLabelId = req.params.source_label_id;
+	}
+
+	let token;
+	
+	// Token is not set
+	if(!req.query.hasOwnProperty('token') || req.query.token.length == 0) {
+		return res.status(400).json({error: 'Token has to be set!'});
+	}
+	else {
+		token = req.query.token;
+	}
+
+	const role = databaseConnection.getRoleFromToken(token);
+
+	// Token does not exist
+	if(role == null) {
+		return res.status(400).json({error: 'Token does not exist!'});
 	}
 
 	const sourceLabel = await databaseConnection.getSourceLabel(role, sourceLabelId, addressLimit, addressOffset);
