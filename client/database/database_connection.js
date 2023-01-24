@@ -20,11 +20,38 @@ class DatabaseConnection {
 		return cursor;
 	}
 
-	getRoleFromToken(token) {
-		return 1;
+	getToken(token) {
+		return this.#execute(`
+			SELECT
+				CAST(role_id AS INT),
+				(
+					SELECT name
+					FROM role
+					WHERE role_id = token.role_id
+				) AS role_name,
+				token,
+				CAST(use_count AS INT),
+				CAST(use_count_limit AS INT),
+				created_at,
+				last_used_at,
+				reset_use_count_at
+			FROM token
+			WHERE token = '${token}'
+		`);
 	}
 
-	getAddresses(role, limit, offset) {
+	setToken(token) {
+		return this.#execute(`
+			UPDATE token
+			SET
+				use_count = ${token.use_count},
+				last_used_at = TO_TIMESTAMP(${token.last_used_at / 1000}),
+				reset_use_count_at = TO_TIMESTAMP(${token.reset_use_count_at / 1000})
+			WHERE token = '${token.token}'
+		`);
+	}
+
+	getAddresses(roleId, limit, offset) {
 		return this.#execute(`
 			SELECT
 				address,
@@ -36,18 +63,18 @@ class DatabaseConnection {
 				CASE WHEN (
 					SELECT COUNT(*)
 					FROM address_data
-					WHERE address_id = address.address_id AND '${role}' = ANY(roles)
+					WHERE address_id = address.address_id AND '${roleId}' = ANY(roles)
 				) > 0 THEN TRUE ELSE FALSE END AS has_data,
 				ARRAY_REMOVE(ARRAY_AGG(CAST(data_id AS INT) ORDER BY CAST(data_id AS INT)), NULL) AS data_ids
 			FROM address
-			LEFT JOIN address_data ON address_data.address_id = address.address_id AND '${role}' = ANY(roles)
+			LEFT JOIN address_data ON address_data.address_id = address.address_id AND '${roleId}' = ANY(roles)
 			GROUP BY address.address_id, currency_id, address
 			ORDER BY CAST(address.address_id AS INT)
 			LIMIT ${limit} OFFSET ${offset}
 		`);
 	}
 
-	getAddress(role, address) {
+	getAddress(roleId, address) {
 		return this.#execute(`
 			SELECT
 				address,
@@ -59,17 +86,17 @@ class DatabaseConnection {
 				CASE WHEN (
 					SELECT COUNT(*)
 					FROM address_data
-					WHERE address_id = address.address_id AND '${role}' = ANY(roles)
+					WHERE address_id = address.address_id AND '${roleId}' = ANY(roles)
 				) > 0 THEN TRUE ELSE FALSE END AS has_data,
 				ARRAY_REMOVE(ARRAY_AGG(CAST(data_id AS INT) ORDER BY CAST(data_id AS INT)), NULL) AS data_ids
 			FROM address
-			LEFT JOIN address_data ON address_data.address_id = address.address_id AND '${role}' = ANY(roles)
+			LEFT JOIN address_data ON address_data.address_id = address.address_id AND '${roleId}' = ANY(roles)
 			WHERE address = '${address}'
 			GROUP BY address.address_id, currency_id, address
 		`);
 	}
 
-	getData(role, dataId) {
+	getData(roleId, dataId) {
 		return this.#execute(`
 			SELECT
 				CAST(data_id AS INT),
@@ -111,7 +138,7 @@ class DatabaseConnection {
 			WHERE data_id = ${dataId} AND EXISTS (
 				SELECT 1
 				FROM address_data
-				WHERE data_id = ${dataId} AND '${role}' = ANY(roles)
+				WHERE data_id = ${dataId} AND '${roleId}' = ANY(roles)
 			)
 		`);
 	}
@@ -142,7 +169,7 @@ class DatabaseConnection {
 		`);
 	}
 
-	getSourceLabel(role, sourceLabelId, addressLimit, addressOffset) {
+	getSourceLabel(roleId, sourceLabelId, addressLimit, addressOffset) {
 		return this.#execute(`
 			SELECT
 				(
@@ -160,7 +187,7 @@ class DatabaseConnection {
 				ARRAY (
 					SELECT address
 					FROM address
-					JOIN address_data ON address_data.address_id = address.address_id AND '${role}' = ANY(roles)
+					JOIN address_data ON address_data.address_id = address.address_id AND '${roleId}' = ANY(roles)
 					JOIN data ON data.data_id = address_data.data_id
 					JOIN source_label_url ON source_label_url.source_label_url_id = data.source_label_url_id AND source_label_url.source_label_id = ${sourceLabelId}
 					GROUP BY address.address_id, address

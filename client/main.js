@@ -15,6 +15,60 @@ const databaseConnection = new DatabaseConnection(new Database().getConnection(d
 
 const app = EXPRESS();
 
+app.get('/api/tokens/:token([a-zA-Z0-9]{1,})', async (req, res) => {
+	let token;
+	
+	// Token is not set
+	if(!req.params.hasOwnProperty('token') || req.params.token.length == 0) {
+		return res.status(400).json({error: 'Token has to be set!'});
+	}
+	else {
+		token = req.params.token;
+	}
+
+	token = await databaseConnection.getToken(token);
+
+	// Token does not exist
+	if(token.rows.length == 0) {
+		return res.status(400).json({error: 'Token does not exist!'});
+	}
+	else {
+		token = token.rows[0];
+		const now = Date.now();
+		const newResetUseCountAt = now + config.api.role[token.role_id].reset_use_count_after * 1000;
+		
+		if(token.reset_use_count_at != null) {
+			const resetUseCountAt = Date.parse(token.reset_use_count_at);
+			
+			if(now < resetUseCountAt) {
+				// Token use count limit reached
+				if(token.use_count >= token.use_count_limit) {
+					return res.status(400).json({error: 'Token use count limit reached!'});
+				}
+				else {
+					token.use_count++;
+				}
+			}
+			else {
+				token.use_count = 1;
+				token.reset_use_count_at = newResetUseCountAt;
+			}
+		}
+		else {
+			token.use_count = 1;
+			token.reset_use_count_at = newResetUseCountAt;
+		}
+		token.last_used_at = now;
+
+		await databaseConnection.setToken(token);
+
+		token.last_used_at = new Date(token.last_used_at).toISOString();
+		token.reset_use_count_at = new Date(token.reset_use_count_at).toISOString();
+
+		return res.json(token);
+	}
+});
+
 app.get('/api/addresses', async (req, res) => {
 	let offset;
 	
@@ -68,14 +122,44 @@ app.get('/api/addresses', async (req, res) => {
 		token = req.query.token;
 	}
 
-	const role = databaseConnection.getRoleFromToken(token);
+	token = await databaseConnection.getToken(token);
 
 	// Token does not exist
-	if(role == null) {
+	if(token.rows.length == 0) {
 		return res.status(400).json({error: 'Token does not exist!'});
 	}
+	else {
+		token = token.rows[0];
+		const now = Date.now();
+		const newResetUseCountAt = now + config.api.role[token.role_id].reset_use_count_after * 1000;
+		
+		if(token.reset_use_count_at != null) {
+			const resetUseCountAt = Date.parse(token.reset_use_count_at);
+			
+			if(now < resetUseCountAt) {
+				// Token use count limit reached
+				if(token.use_count >= token.use_count_limit) {
+					return res.status(400).json({error: 'Token use count limit reached!'});
+				}
+				else {
+					token.use_count++;
+				}
+			}
+			else {
+				token.use_count = 1;
+				token.reset_use_count_at = newResetUseCountAt;
+			}
+		}
+		else {
+			token.use_count = 1;
+			token.reset_use_count_at = newResetUseCountAt;
+		}
+		token.last_used_at = now;
+
+		await databaseConnection.setToken(token);
+	}
 	
-	const addresses = await databaseConnection.getAddresses(role, limit, offset);
+	const addresses = await databaseConnection.getAddresses(token.role_id, limit, offset);
 
 	// No address found
 	if(addresses.rows.length == 0) {
@@ -107,14 +191,44 @@ app.get("/api/addresses/:address([a-zA-Z0-9]{1,})", async (req, res) => {
 		token = req.query.token;
 	}
 
-	const role = databaseConnection.getRoleFromToken(token);
+	token = await databaseConnection.getToken(token);
 
 	// Token does not exist
-	if(role == null) {
+	if(token.rows.length == 0) {
 		return res.status(400).json({error: 'Token does not exist!'});
 	}
+	else {
+		token = token.rows[0];
+		const now = Date.now();
+		const newResetUseCountAt = now + config.api.role[token.role_id].reset_use_count_after * 1000;
+		
+		if(token.reset_use_count_at != null) {
+			const resetUseCountAt = Date.parse(token.reset_use_count_at);
+			
+			if(now < resetUseCountAt) {
+				// Token use count limit reached
+				if(token.use_count >= token.use_count_limit) {
+					return res.status(400).json({error: 'Token use count limit reached!'});
+				}
+				else {
+					token.use_count++;
+				}
+			}
+			else {
+				token.use_count = 1;
+				token.reset_use_count_at = newResetUseCountAt;
+			}
+		}
+		else {
+			token.use_count = 1;
+			token.reset_use_count_at = newResetUseCountAt;
+		}
+		token.last_used_at = now;
+
+		await databaseConnection.setToken(token);
+	}
 	
-	address = await databaseConnection.getAddress(role, address);
+	address = await databaseConnection.getAddress(token.role_id, address);
 
 	// Address not found
 	if(address.rows.length == 0) {
@@ -146,14 +260,44 @@ app.get("/api/data/:data_id([0-9]{1,})", async (req, res) => {
 		token = req.query.token;
 	}
 
-	const role = databaseConnection.getRoleFromToken(token);
+	token = await databaseConnection.getToken(token);
 
 	// Token does not exist
-	if(role == null) {
+	if(token.rows.length == 0) {
 		return res.status(400).json({error: 'Token does not exist!'});
 	}
+	else {
+		token = token.rows[0];
+		const now = Date.now();
+		const newResetUseCountAt = now + config.api.role[token.role_id].reset_use_count_after * 1000;
+		
+		if(token.reset_use_count_at != null) {
+			const resetUseCountAt = Date.parse(token.reset_use_count_at);
+			
+			if(now < resetUseCountAt) {
+				// Token use count limit reached
+				if(token.use_count >= token.use_count_limit) {
+					return res.status(400).json({error: 'Token use count limit reached!'});
+				}
+				else {
+					token.use_count++;
+				}
+			}
+			else {
+				token.use_count = 1;
+				token.reset_use_count_at = newResetUseCountAt;
+			}
+		}
+		else {
+			token.use_count = 1;
+			token.reset_use_count_at = newResetUseCountAt;
+		}
+		token.last_used_at = now;
+
+		await databaseConnection.setToken(token);
+	}
 	
-	let data = await databaseConnection.getData(role, dataId);
+	let data = await databaseConnection.getData(token.role_id, dataId);
 
 	// Data not found
 	if(data.rows.length == 0) {
@@ -270,14 +414,44 @@ app.get("/api/source_labels/:source_label_id([0-9]{1,})", async (req, res) => {
 		token = req.query.token;
 	}
 
-	const role = databaseConnection.getRoleFromToken(token);
+	token = await databaseConnection.getToken(token);
 
 	// Token does not exist
-	if(role == null) {
+	if(token.rows.length == 0) {
 		return res.status(400).json({error: 'Token does not exist!'});
 	}
+	else {
+		token = token.rows[0];
+		const now = Date.now();
+		const newResetUseCountAt = now + config.api.role[token.role_id].reset_use_count_after * 1000;
+		
+		if(token.reset_use_count_at != null) {
+			const resetUseCountAt = Date.parse(token.reset_use_count_at);
+			
+			if(now < resetUseCountAt) {
+				// Token use count limit reached
+				if(token.use_count >= token.use_count_limit) {
+					return res.status(400).json({error: 'Token use count limit reached!'});
+				}
+				else {
+					token.use_count++;
+				}
+			}
+			else {
+				token.use_count = 1;
+				token.reset_use_count_at = newResetUseCountAt;
+			}
+		}
+		else {
+			token.use_count = 1;
+			token.reset_use_count_at = newResetUseCountAt;
+		}
+		token.last_used_at = now;
 
-	const sourceLabel = await databaseConnection.getSourceLabel(role, sourceLabelId, addressLimit, addressOffset);
+		await databaseConnection.setToken(token);
+	}
+
+	const sourceLabel = await databaseConnection.getSourceLabel(token.role_id, sourceLabelId, addressLimit, addressOffset);
 
 	// Source label not found
 	if(sourceLabel.rows.length == 0) {

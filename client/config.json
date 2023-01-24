@@ -5,6 +5,13 @@
 	"connection": {
 		"port": 3000
 	},
+	"api": {
+		"role": {
+			"1": { "use_count_limit": 100, "reset_use_count_after": 86400 },
+			"2": { "use_count_limit": 3600, "reset_use_count_after": 3600 },
+			"3": { "use_count_limit": 300, "reset_use_count_after": 60 }
+		}
+	},
 	"crawler": {
 		"data_path": "../db_builder/crawled_data"
 	}
