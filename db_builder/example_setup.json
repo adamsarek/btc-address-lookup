@@ -274,7 +274,8 @@
 						"CONSTRAINT account_role_id_fkey FOREIGN KEY (role_id) REFERENCES role (role_id)",
 						"CONSTRAINT account_email_key UNIQUE (email)",
 						"CONSTRAINT account_salt_key UNIQUE (salt)",
-						"CONSTRAINT account_role_id_check CHECK (role_id > 0)"
+						"CONSTRAINT account_role_id_check CHECK (role_id > 0)",
+						"CONSTRAINT account_signed_up_at_account_last_signed_in_at_check CHECK (signed_up_at <= last_signed_in_at)"
 					],
 					"grant": [
 						{"user": "client", "privilege": "SELECT, INSERT, UPDATE"}
@@ -301,8 +302,11 @@
 						"CONSTRAINT token_role_id_check CHECK (role_id > 0)",
 						"CONSTRAINT token_account_id_check CHECK (account_id > 0)",
 						"CONSTRAINT token_use_count_check CHECK (use_count >= 0)",
+						"CONSTRAINT token_use_count_token_use_count_limit_check CHECK (use_count <= use_count_limit)",
 						"CONSTRAINT token_use_count_limit_check CHECK (use_count_limit >= 0)",
-						"CONSTRAINT token_last_used_at_check CHECK (last_used_at < reset_use_count_at)"
+						"CONSTRAINT token_created_at_token_last_used_at_check CHECK (created_at <= last_used_at)",
+						"CONSTRAINT token_created_at_token_reset_use_count_at_check CHECK (created_at < reset_use_count_at)",
+						"CONSTRAINT token_last_used_at_token_reset_use_count_at_check CHECK (last_used_at < reset_use_count_at)"
 					],
 					"grant": [
 						{"user": "client", "privilege": "SELECT, INSERT, UPDATE"}
