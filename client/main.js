@@ -1,5 +1,12 @@
 'use strict';
 
+// https://blog.bitsrc.io/server-side-caching-in-expressjs-24038daec102
+
+// https://remarkablemark.medium.com/server-side-rendering-with-react-46715f501651
+// https://www.digitalocean.com/community/tutorials/react-server-side-rendering
+// https://dev.to/juhanakristian/basics-of-react-server-side-rendering-with-expressjs-phd
+// https://www.digitalocean.com/community/tutorials/how-to-use-ejs-to-template-your-node-application
+
 // External imports
 const EXPRESS = require('express');
 const FS = require('fs');
@@ -11,6 +18,7 @@ const DatabaseConnection = require('./database/database_connection.js');
 
 const config = require('./config.json');
 const db = require('./db.json');
+const { render } = require('ejs');
 const databaseConnection = new DatabaseConnection(new Database().getConnection(db.connection));
 
 const app = EXPRESS();
@@ -170,7 +178,7 @@ app.get('/api/addresses', async (req, res) => {
 	}
 });
 
-app.get("/api/addresses/:address([a-zA-Z0-9]{1,})", async (req, res) => {
+app.get('/api/addresses/:address([a-zA-Z0-9]{1,})', async (req, res) => {
 	let address;
 	
 	// Address is not set
@@ -239,7 +247,7 @@ app.get("/api/addresses/:address([a-zA-Z0-9]{1,})", async (req, res) => {
 	}
 });
 
-app.get("/api/data/:data_id([0-9]{1,})", async (req, res) => {
+app.get('/api/data/:data_id([0-9]{1,})', async (req, res) => {
 	let dataId;
 	
 	// Data ID is not set
@@ -317,7 +325,7 @@ app.get("/api/data/:data_id([0-9]{1,})", async (req, res) => {
 	}
 });
 
-app.get("/api/sources", async (req, res) => {
+app.get('/api/sources', async (req, res) => {
 	const sources = await databaseConnection.getSources();
 
 	// No source found
@@ -329,7 +337,7 @@ app.get("/api/sources", async (req, res) => {
 	}
 });
 
-app.get("/api/sources/:source_id([0-9]{1,})", async (req, res) => {
+app.get('/api/sources/:source_id([0-9]{1,})', async (req, res) => {
 	let sourceId;
 	
 	// Source ID is not set
@@ -351,7 +359,7 @@ app.get("/api/sources/:source_id([0-9]{1,})", async (req, res) => {
 	}
 });
 
-app.get("/api/source_labels/:source_label_id([0-9]{1,})", async (req, res) => {
+app.get('/api/source_labels/:source_label_id([0-9]{1,})', async (req, res) => {
 	let addressOffset;
 	
 	// Address offset is not set
@@ -462,6 +470,29 @@ app.get("/api/source_labels/:source_label_id([0-9]{1,})", async (req, res) => {
 	}
 });
 
+function renderPage(res, page, data) {
+	// Set data
+	data.title = 'BTC Address Lookup';
+	
+	// Render page
+	res.render(`pages/${page}`, data);
+}
+
+app.use(EXPRESS.static('public'));
+
+app.set('view engine', 'ejs');
+
+app.get('', async (req, res) => {
+	renderPage(res, 'index', {
+		/*search: {
+			q: "x"
+		}*/
+		/*page: {
+			title: 'Index'
+		}*/
+	});
+});
+
 app.listen(config.connection.port, () => {
-	console.log(`Example app listening on port ${config.connection.port}!`);
+	console.log(`Client server started listening on port ${config.connection.port}!`);
 });
