@@ -107,14 +107,15 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   - :heavy_check_mark: Limit access by user roles
   - :x: Generate token (linked with the account or IP address)
   - :x: Caching data
-- :x: Web pages
+- :hammer: Web pages
+  - :hammer: Index - search bar, list of sources, statistics
   - :x: Sign up
   - :x: Sign in
   - :x: Forgotten password
   - :x: Search by address
-  - :x: List of addresses (independent on source label)
   - :x: Source - list of source labels
   - :x: Source / source label - list of addresses
+  - :x: Data - list of addresses (independent on source label)
   - :x: API docs
   - :x: FAQ
 
