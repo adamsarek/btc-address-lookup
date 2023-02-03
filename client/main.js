@@ -475,21 +475,74 @@ function renderPage(res, page, data) {
 	data.title = 'BTC Address Lookup';
 	
 	// Render page
-	res.render(`pages/${page}`, data);
+	res.render(`${page}`, data);
 }
 
 app.use(EXPRESS.static('public'));
 
 app.set('view engine', 'ejs');
 
-app.get('', async (req, res) => {
+app.get('/', async (req, res) => {
 	renderPage(res, 'index', {
+		page: {
+			file: 'index'
+		}
 		/*search: {
 			q: "x"
 		}*/
 		/*page: {
 			title: 'Index'
 		}*/
+	});
+});
+
+app.get('/sign-up', async (req, res) => {
+	renderPage(res, 'index', {
+		page: {
+			class: 'sign-form',
+			file: 'sign_up',
+			title: 'Sign up'
+		}
+	});
+});
+
+app.get('/sign-in', async (req, res) => {
+	renderPage(res, 'index', {
+		page: {
+			class: 'sign-form',
+			file: 'sign_in',
+			title: 'Sign in'
+		}
+	});
+});
+
+app.get('/forgotten-password', async (req, res) => {
+	renderPage(res, 'index', {
+		page: {
+			class: 'sign-form',
+			file: 'forgotten_password',
+			title: 'Reset password'
+		}
+	});
+});
+
+app.get('/reset-password', async (req, res) => {
+	renderPage(res, 'index', {
+		page: {
+			class: 'sign-form',
+			file: 'reset_password',
+			title: 'Reset password'
+		}
+	});
+});
+
+app.get('/change-password', async (req, res) => {
+	renderPage(res, 'index', {
+		page: {
+			class: 'sign-form',
+			file: 'change_password',
+			title: 'Change password'
+		}
 	});
 });
 

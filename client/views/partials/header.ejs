@@ -2,7 +2,7 @@
 	<a class="header-logo" href="/"></a>
 	<div class="search-panel"></div>
 	<form action="search" class="search-bar">
-		<div class="search-logo"><%= title %></div>
+		<a class="search-logo" href="/"><%= title %></a>
 		<input class="search-bar-input" name="q" type="search" placeholder="Search BTC address" value="<%= typeof search !== 'undefined' && typeof search.q !== 'undefined' ? search.q : '' %>" required <%= typeof search !== 'undefined' && typeof search.q !== 'undefined' ? '' : 'autofocus' %>>
 		<!--<input class="search-bar-submit" type="submit" value="🔍">-->
 	</form>

@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en">
+	<head><%- include('partials/head'); %></head>
+	<body class="<%- typeof page !== 'undefined' && typeof page.class !== 'undefined' ? page.class : ''; %>">
+		<div class="container <%= typeof page !== 'undefined' && typeof page.file !== 'undefined' && page.file != 'index' ? 'container-stable' : '' %>">
+			<%- include('partials/header'); %>
+			<main><%- typeof page !== 'undefined' && typeof page.file !== 'undefined' ? include('pages/' + page.file) : ''; %></main>
+		</div>
+	</body>
+</html>
