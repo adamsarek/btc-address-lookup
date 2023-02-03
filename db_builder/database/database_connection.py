@@ -227,7 +227,7 @@ class DatabaseConnection:
 			)
 		)
 	
-	def grant(self, table_name, users=[]):
+	def grant_table(self, table_name, users=[]):
 		table_name_parts = []
 		for table_name_part in table_name.split("."):
 			table_name_parts.append(psycopg.sql.Identifier(table_name_part))
@@ -239,6 +239,18 @@ class DatabaseConnection:
 				).format(
 					psycopg.sql.SQL(user["privilege"]),
 					psycopg.sql.SQL(".").join(table_name_parts),
+					psycopg.sql.Identifier(user["user"])
+				)
+			)
+	
+	def grant_sequence(self, sequence_name, users=[]):
+		for user in users:
+			self.__execute(
+				psycopg.sql.SQL(
+					"GRANT {} ON SEQUENCE {} TO {}"
+				).format(
+					psycopg.sql.SQL(user["privilege"]),
+					psycopg.sql.Identifier(sequence_name),
 					psycopg.sql.Identifier(user["user"])
 				)
 			)

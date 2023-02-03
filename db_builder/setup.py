@@ -218,6 +218,10 @@ class Setup:
 							
 							# Grant access into tables
 							if "grant" in setup_config_database_table:
-								db_connection.grant(setup_config_database_table["table_name"], setup_config_database_table["grant"])
+								db_connection.grant_table(setup_config_database_table["table_name"], setup_config_database_table["grant"])
+								
+								for i, grant in enumerate(setup_config_database_table["grant"]):
+									setup_config_database_table["grant"][i]["privilege"] = "USAGE, SELECT"
+								db_connection.grant_sequence(setup_config_database_table["table_name"] + "_" + setup_config_database_table["table_name"] + "_id_seq", setup_config_database_table["grant"])
 					
 					break

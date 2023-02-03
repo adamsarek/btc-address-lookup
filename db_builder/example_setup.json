@@ -265,7 +265,6 @@
 						"role_id SMALLINT NOT NULL",
 						"email TEXT NOT NULL",
 						"password TEXT NOT NULL",
-						"salt TEXT NOT NULL",
 						"signed_up_by_ip TEXT NOT NULL",
 						"last_signed_in_by_ip TEXT",
 						"signed_up_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP",
@@ -273,7 +272,6 @@
 						"CONSTRAINT account_account_id_pkey PRIMARY KEY (account_id)",
 						"CONSTRAINT account_role_id_fkey FOREIGN KEY (role_id) REFERENCES role (role_id)",
 						"CONSTRAINT account_email_key UNIQUE (email)",
-						"CONSTRAINT account_salt_key UNIQUE (salt)",
 						"CONSTRAINT account_role_id_check CHECK (role_id > 0)",
 						"CONSTRAINT account_signed_up_at_account_last_signed_in_at_check CHECK (signed_up_at <= last_signed_in_at)"
 					],
