@@ -222,6 +222,8 @@ class Setup:
 								
 								for i, grant in enumerate(setup_config_database_table["grant"]):
 									setup_config_database_table["grant"][i]["privilege"] = "USAGE, SELECT"
-								db_connection.grant_sequence(setup_config_database_table["table_name"] + "_" + setup_config_database_table["table_name"] + "_id_seq", setup_config_database_table["grant"])
+								
+								if setup_config_database_table["table_name"] != "session":
+									db_connection.grant_sequence(setup_config_database_table["table_name"] + "_" + setup_config_database_table["create"][0].split(" ")[0] + "_seq", setup_config_database_table["grant"])
 					
 					break

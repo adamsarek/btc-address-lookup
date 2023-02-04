@@ -327,6 +327,18 @@
 					"grant": [
 						{"user": "client", "privilege": "SELECT"}
 					]
+				},
+				{
+					"table_name": "session",
+					"create": [
+						"sid VARCHAR",
+						"sess JSON NOT NULL",
+						"expire TIMESTAMPTZ(6) NOT NULL",
+						"CONSTRAINT session_sid_pkey PRIMARY KEY (sid)"
+					],
+					"grant": [
+						{"user": "client", "privilege": "ALL PRIVILEGES"}
+					]
 				}
 			]
 		}

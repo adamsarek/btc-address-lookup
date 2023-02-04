@@ -5,7 +5,7 @@
 -- Dumped from database version 15.1
 -- Dumped by pg_dump version 15.0
 
--- Started on 2023-02-03 17:42:36
+-- Started on 2023-02-04 21:48:32
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -23,7 +23,7 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- TOC entry 231 (class 1259 OID 219980)
+-- TOC entry 231 (class 1259 OID 229303)
 -- Name: account; Type: TABLE; Schema: public; Owner: builder
 --
 
@@ -44,7 +44,7 @@ CREATE TABLE public.account (
 ALTER TABLE public.account OWNER TO builder;
 
 --
--- TOC entry 230 (class 1259 OID 219979)
+-- TOC entry 230 (class 1259 OID 229302)
 -- Name: account_account_id_seq; Type: SEQUENCE; Schema: public; Owner: builder
 --
 
@@ -59,7 +59,7 @@ CREATE SEQUENCE public.account_account_id_seq
 ALTER TABLE public.account_account_id_seq OWNER TO builder;
 
 --
--- TOC entry 3471 (class 0 OID 0)
+-- TOC entry 3477 (class 0 OID 0)
 -- Dependencies: 230
 -- Name: account_account_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: builder
 --
@@ -68,7 +68,7 @@ ALTER SEQUENCE public.account_account_id_seq OWNED BY public.account.account_id;
 
 
 --
--- TOC entry 221 (class 1259 OID 219889)
+-- TOC entry 221 (class 1259 OID 229212)
 -- Name: address; Type: TABLE; Schema: public; Owner: builder
 --
 
@@ -85,7 +85,7 @@ CREATE TABLE public.address (
 ALTER TABLE public.address OWNER TO builder;
 
 --
--- TOC entry 220 (class 1259 OID 219888)
+-- TOC entry 220 (class 1259 OID 229211)
 -- Name: address_address_id_seq; Type: SEQUENCE; Schema: public; Owner: builder
 --
 
@@ -100,7 +100,7 @@ CREATE SEQUENCE public.address_address_id_seq
 ALTER TABLE public.address_address_id_seq OWNER TO builder;
 
 --
--- TOC entry 3474 (class 0 OID 0)
+-- TOC entry 3480 (class 0 OID 0)
 -- Dependencies: 220
 -- Name: address_address_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: builder
 --
@@ -109,7 +109,7 @@ ALTER SEQUENCE public.address_address_id_seq OWNED BY public.address.address_id;
 
 
 --
--- TOC entry 235 (class 1259 OID 220030)
+-- TOC entry 235 (class 1259 OID 229353)
 -- Name: address_data; Type: TABLE; Schema: public; Owner: builder
 --
 
@@ -126,7 +126,7 @@ CREATE TABLE public.address_data (
 ALTER TABLE public.address_data OWNER TO builder;
 
 --
--- TOC entry 234 (class 1259 OID 220029)
+-- TOC entry 234 (class 1259 OID 229352)
 -- Name: address_data_address_data_id_seq; Type: SEQUENCE; Schema: public; Owner: builder
 --
 
@@ -141,7 +141,7 @@ CREATE SEQUENCE public.address_data_address_data_id_seq
 ALTER TABLE public.address_data_address_data_id_seq OWNER TO builder;
 
 --
--- TOC entry 3477 (class 0 OID 0)
+-- TOC entry 3483 (class 0 OID 0)
 -- Dependencies: 234
 -- Name: address_data_address_data_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: builder
 --
@@ -150,7 +150,7 @@ ALTER SEQUENCE public.address_data_address_data_id_seq OWNED BY public.address_d
 
 
 --
--- TOC entry 217 (class 1259 OID 219849)
+-- TOC entry 217 (class 1259 OID 229172)
 -- Name: currency; Type: TABLE; Schema: public; Owner: builder
 --
 
@@ -166,7 +166,7 @@ CREATE TABLE public.currency (
 ALTER TABLE public.currency OWNER TO builder;
 
 --
--- TOC entry 216 (class 1259 OID 219848)
+-- TOC entry 216 (class 1259 OID 229171)
 -- Name: currency_currency_id_seq; Type: SEQUENCE; Schema: public; Owner: builder
 --
 
@@ -182,7 +182,7 @@ CREATE SEQUENCE public.currency_currency_id_seq
 ALTER TABLE public.currency_currency_id_seq OWNER TO builder;
 
 --
--- TOC entry 3480 (class 0 OID 0)
+-- TOC entry 3486 (class 0 OID 0)
 -- Dependencies: 216
 -- Name: currency_currency_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: builder
 --
@@ -191,7 +191,7 @@ ALTER SEQUENCE public.currency_currency_id_seq OWNED BY public.currency.currency
 
 
 --
--- TOC entry 227 (class 1259 OID 219944)
+-- TOC entry 227 (class 1259 OID 229267)
 -- Name: data; Type: TABLE; Schema: public; Owner: builder
 --
 
@@ -211,7 +211,7 @@ CREATE TABLE public.data (
 ALTER TABLE public.data OWNER TO builder;
 
 --
--- TOC entry 226 (class 1259 OID 219943)
+-- TOC entry 226 (class 1259 OID 229266)
 -- Name: data_data_id_seq; Type: SEQUENCE; Schema: public; Owner: builder
 --
 
@@ -226,7 +226,7 @@ CREATE SEQUENCE public.data_data_id_seq
 ALTER TABLE public.data_data_id_seq OWNER TO builder;
 
 --
--- TOC entry 3483 (class 0 OID 0)
+-- TOC entry 3489 (class 0 OID 0)
 -- Dependencies: 226
 -- Name: data_data_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: builder
 --
@@ -235,7 +235,7 @@ ALTER SEQUENCE public.data_data_id_seq OWNED BY public.data.data_id;
 
 
 --
--- TOC entry 229 (class 1259 OID 219969)
+-- TOC entry 229 (class 1259 OID 229292)
 -- Name: role; Type: TABLE; Schema: public; Owner: builder
 --
 
@@ -248,7 +248,7 @@ CREATE TABLE public.role (
 ALTER TABLE public.role OWNER TO builder;
 
 --
--- TOC entry 228 (class 1259 OID 219968)
+-- TOC entry 228 (class 1259 OID 229291)
 -- Name: role_role_id_seq; Type: SEQUENCE; Schema: public; Owner: builder
 --
 
@@ -264,7 +264,7 @@ CREATE SEQUENCE public.role_role_id_seq
 ALTER TABLE public.role_role_id_seq OWNER TO builder;
 
 --
--- TOC entry 3486 (class 0 OID 0)
+-- TOC entry 3492 (class 0 OID 0)
 -- Dependencies: 228
 -- Name: role_role_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: builder
 --
@@ -273,7 +273,21 @@ ALTER SEQUENCE public.role_role_id_seq OWNED BY public.role.role_id;
 
 
 --
--- TOC entry 215 (class 1259 OID 219838)
+-- TOC entry 236 (class 1259 OID 229376)
+-- Name: session; Type: TABLE; Schema: public; Owner: builder
+--
+
+CREATE TABLE public.session (
+    sid character varying NOT NULL,
+    sess json NOT NULL,
+    expire timestamp(6) with time zone NOT NULL
+);
+
+
+ALTER TABLE public.session OWNER TO builder;
+
+--
+-- TOC entry 215 (class 1259 OID 229161)
 -- Name: source; Type: TABLE; Schema: public; Owner: builder
 --
 
@@ -286,7 +300,7 @@ CREATE TABLE public.source (
 ALTER TABLE public.source OWNER TO builder;
 
 --
--- TOC entry 219 (class 1259 OID 219866)
+-- TOC entry 219 (class 1259 OID 229189)
 -- Name: source_label; Type: TABLE; Schema: public; Owner: builder
 --
 
@@ -304,7 +318,7 @@ CREATE TABLE public.source_label (
 ALTER TABLE public.source_label OWNER TO builder;
 
 --
--- TOC entry 218 (class 1259 OID 219865)
+-- TOC entry 218 (class 1259 OID 229188)
 -- Name: source_label_source_label_id_seq; Type: SEQUENCE; Schema: public; Owner: builder
 --
 
@@ -320,7 +334,7 @@ CREATE SEQUENCE public.source_label_source_label_id_seq
 ALTER TABLE public.source_label_source_label_id_seq OWNER TO builder;
 
 --
--- TOC entry 3490 (class 0 OID 0)
+-- TOC entry 3497 (class 0 OID 0)
 -- Dependencies: 218
 -- Name: source_label_source_label_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: builder
 --
@@ -329,7 +343,7 @@ ALTER SEQUENCE public.source_label_source_label_id_seq OWNED BY public.source_la
 
 
 --
--- TOC entry 225 (class 1259 OID 219923)
+-- TOC entry 225 (class 1259 OID 229246)
 -- Name: source_label_url; Type: TABLE; Schema: public; Owner: builder
 --
 
@@ -346,7 +360,7 @@ CREATE TABLE public.source_label_url (
 ALTER TABLE public.source_label_url OWNER TO builder;
 
 --
--- TOC entry 224 (class 1259 OID 219922)
+-- TOC entry 224 (class 1259 OID 229245)
 -- Name: source_label_url_source_label_url_id_seq; Type: SEQUENCE; Schema: public; Owner: builder
 --
 
@@ -362,7 +376,7 @@ CREATE SEQUENCE public.source_label_url_source_label_url_id_seq
 ALTER TABLE public.source_label_url_source_label_url_id_seq OWNER TO builder;
 
 --
--- TOC entry 3493 (class 0 OID 0)
+-- TOC entry 3500 (class 0 OID 0)
 -- Dependencies: 224
 -- Name: source_label_url_source_label_url_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: builder
 --
@@ -371,7 +385,7 @@ ALTER SEQUENCE public.source_label_url_source_label_url_id_seq OWNED BY public.s
 
 
 --
--- TOC entry 214 (class 1259 OID 219837)
+-- TOC entry 214 (class 1259 OID 229160)
 -- Name: source_source_id_seq; Type: SEQUENCE; Schema: public; Owner: builder
 --
 
@@ -387,7 +401,7 @@ CREATE SEQUENCE public.source_source_id_seq
 ALTER TABLE public.source_source_id_seq OWNER TO builder;
 
 --
--- TOC entry 3495 (class 0 OID 0)
+-- TOC entry 3502 (class 0 OID 0)
 -- Dependencies: 214
 -- Name: source_source_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: builder
 --
@@ -396,7 +410,7 @@ ALTER SEQUENCE public.source_source_id_seq OWNED BY public.source.source_id;
 
 
 --
--- TOC entry 233 (class 1259 OID 219999)
+-- TOC entry 233 (class 1259 OID 229322)
 -- Name: token; Type: TABLE; Schema: public; Owner: builder
 --
 
@@ -426,7 +440,7 @@ CREATE TABLE public.token (
 ALTER TABLE public.token OWNER TO builder;
 
 --
--- TOC entry 232 (class 1259 OID 219998)
+-- TOC entry 232 (class 1259 OID 229321)
 -- Name: token_token_id_seq; Type: SEQUENCE; Schema: public; Owner: builder
 --
 
@@ -441,7 +455,7 @@ CREATE SEQUENCE public.token_token_id_seq
 ALTER TABLE public.token_token_id_seq OWNER TO builder;
 
 --
--- TOC entry 3498 (class 0 OID 0)
+-- TOC entry 3505 (class 0 OID 0)
 -- Dependencies: 232
 -- Name: token_token_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: builder
 --
@@ -450,7 +464,7 @@ ALTER SEQUENCE public.token_token_id_seq OWNED BY public.token.token_id;
 
 
 --
--- TOC entry 223 (class 1259 OID 219912)
+-- TOC entry 223 (class 1259 OID 229235)
 -- Name: url; Type: TABLE; Schema: public; Owner: builder
 --
 
@@ -463,7 +477,7 @@ CREATE TABLE public.url (
 ALTER TABLE public.url OWNER TO builder;
 
 --
--- TOC entry 222 (class 1259 OID 219911)
+-- TOC entry 222 (class 1259 OID 229234)
 -- Name: url_url_id_seq; Type: SEQUENCE; Schema: public; Owner: builder
 --
 
@@ -478,7 +492,7 @@ CREATE SEQUENCE public.url_url_id_seq
 ALTER TABLE public.url_url_id_seq OWNER TO builder;
 
 --
--- TOC entry 3501 (class 0 OID 0)
+-- TOC entry 3508 (class 0 OID 0)
 -- Dependencies: 222
 -- Name: url_url_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: builder
 --
@@ -487,7 +501,7 @@ ALTER SEQUENCE public.url_url_id_seq OWNED BY public.url.url_id;
 
 
 --
--- TOC entry 3232 (class 2604 OID 219983)
+-- TOC entry 3236 (class 2604 OID 229306)
 -- Name: account account_id; Type: DEFAULT; Schema: public; Owner: builder
 --
 
@@ -495,7 +509,7 @@ ALTER TABLE ONLY public.account ALTER COLUMN account_id SET DEFAULT nextval('pub
 
 
 --
--- TOC entry 3226 (class 2604 OID 219892)
+-- TOC entry 3230 (class 2604 OID 229215)
 -- Name: address address_id; Type: DEFAULT; Schema: public; Owner: builder
 --
 
@@ -503,7 +517,7 @@ ALTER TABLE ONLY public.address ALTER COLUMN address_id SET DEFAULT nextval('pub
 
 
 --
--- TOC entry 3237 (class 2604 OID 220033)
+-- TOC entry 3241 (class 2604 OID 229356)
 -- Name: address_data address_data_id; Type: DEFAULT; Schema: public; Owner: builder
 --
 
@@ -511,7 +525,7 @@ ALTER TABLE ONLY public.address_data ALTER COLUMN address_data_id SET DEFAULT ne
 
 
 --
--- TOC entry 3224 (class 2604 OID 219852)
+-- TOC entry 3228 (class 2604 OID 229175)
 -- Name: currency currency_id; Type: DEFAULT; Schema: public; Owner: builder
 --
 
@@ -519,7 +533,7 @@ ALTER TABLE ONLY public.currency ALTER COLUMN currency_id SET DEFAULT nextval('p
 
 
 --
--- TOC entry 3229 (class 2604 OID 219947)
+-- TOC entry 3233 (class 2604 OID 229270)
 -- Name: data data_id; Type: DEFAULT; Schema: public; Owner: builder
 --
 
@@ -527,7 +541,7 @@ ALTER TABLE ONLY public.data ALTER COLUMN data_id SET DEFAULT nextval('public.da
 
 
 --
--- TOC entry 3231 (class 2604 OID 219972)
+-- TOC entry 3235 (class 2604 OID 229295)
 -- Name: role role_id; Type: DEFAULT; Schema: public; Owner: builder
 --
 
@@ -535,7 +549,7 @@ ALTER TABLE ONLY public.role ALTER COLUMN role_id SET DEFAULT nextval('public.ro
 
 
 --
--- TOC entry 3223 (class 2604 OID 219841)
+-- TOC entry 3227 (class 2604 OID 229164)
 -- Name: source source_id; Type: DEFAULT; Schema: public; Owner: builder
 --
 
@@ -543,7 +557,7 @@ ALTER TABLE ONLY public.source ALTER COLUMN source_id SET DEFAULT nextval('publi
 
 
 --
--- TOC entry 3225 (class 2604 OID 219869)
+-- TOC entry 3229 (class 2604 OID 229192)
 -- Name: source_label source_label_id; Type: DEFAULT; Schema: public; Owner: builder
 --
 
@@ -551,7 +565,7 @@ ALTER TABLE ONLY public.source_label ALTER COLUMN source_label_id SET DEFAULT ne
 
 
 --
--- TOC entry 3228 (class 2604 OID 219926)
+-- TOC entry 3232 (class 2604 OID 229249)
 -- Name: source_label_url source_label_url_id; Type: DEFAULT; Schema: public; Owner: builder
 --
 
@@ -559,7 +573,7 @@ ALTER TABLE ONLY public.source_label_url ALTER COLUMN source_label_url_id SET DE
 
 
 --
--- TOC entry 3234 (class 2604 OID 220002)
+-- TOC entry 3238 (class 2604 OID 229325)
 -- Name: token token_id; Type: DEFAULT; Schema: public; Owner: builder
 --
 
@@ -567,7 +581,7 @@ ALTER TABLE ONLY public.token ALTER COLUMN token_id SET DEFAULT nextval('public.
 
 
 --
--- TOC entry 3227 (class 2604 OID 219915)
+-- TOC entry 3231 (class 2604 OID 229238)
 -- Name: url url_id; Type: DEFAULT; Schema: public; Owner: builder
 --
 
@@ -575,7 +589,7 @@ ALTER TABLE ONLY public.url ALTER COLUMN url_id SET DEFAULT nextval('public.url_
 
 
 --
--- TOC entry 3299 (class 2606 OID 219990)
+-- TOC entry 3303 (class 2606 OID 229313)
 -- Name: account account_account_id_pkey; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -584,7 +598,7 @@ ALTER TABLE ONLY public.account
 
 
 --
--- TOC entry 3301 (class 2606 OID 219992)
+-- TOC entry 3305 (class 2606 OID 229315)
 -- Name: account account_email_key; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -593,7 +607,7 @@ ALTER TABLE ONLY public.account
 
 
 --
--- TOC entry 3279 (class 2606 OID 219898)
+-- TOC entry 3283 (class 2606 OID 229221)
 -- Name: address address_address_id_pkey; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -602,7 +616,7 @@ ALTER TABLE ONLY public.address
 
 
 --
--- TOC entry 3281 (class 2606 OID 219900)
+-- TOC entry 3285 (class 2606 OID 229223)
 -- Name: address address_address_key; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -611,7 +625,7 @@ ALTER TABLE ONLY public.address
 
 
 --
--- TOC entry 3307 (class 2606 OID 220040)
+-- TOC entry 3311 (class 2606 OID 229363)
 -- Name: address_data address_data_address_data_id_pkey; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -620,7 +634,7 @@ ALTER TABLE ONLY public.address_data
 
 
 --
--- TOC entry 3309 (class 2606 OID 220042)
+-- TOC entry 3313 (class 2606 OID 229365)
 -- Name: address_data address_data_address_id_address_data_data_id_key; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -629,7 +643,7 @@ ALTER TABLE ONLY public.address_data
 
 
 --
--- TOC entry 3265 (class 2606 OID 219864)
+-- TOC entry 3269 (class 2606 OID 229187)
 -- Name: currency blockchair_request_name_key; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -638,7 +652,7 @@ ALTER TABLE ONLY public.currency
 
 
 --
--- TOC entry 3267 (class 2606 OID 219860)
+-- TOC entry 3271 (class 2606 OID 229183)
 -- Name: currency currency_code_key; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -647,7 +661,7 @@ ALTER TABLE ONLY public.currency
 
 
 --
--- TOC entry 3269 (class 2606 OID 219856)
+-- TOC entry 3273 (class 2606 OID 229179)
 -- Name: currency currency_currency_id_pkey; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -656,7 +670,7 @@ ALTER TABLE ONLY public.currency
 
 
 --
--- TOC entry 3271 (class 2606 OID 219862)
+-- TOC entry 3275 (class 2606 OID 229185)
 -- Name: currency currency_logo_key; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -665,7 +679,7 @@ ALTER TABLE ONLY public.currency
 
 
 --
--- TOC entry 3273 (class 2606 OID 219858)
+-- TOC entry 3277 (class 2606 OID 229181)
 -- Name: currency currency_name_key; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -674,7 +688,7 @@ ALTER TABLE ONLY public.currency
 
 
 --
--- TOC entry 3291 (class 2606 OID 219955)
+-- TOC entry 3295 (class 2606 OID 229278)
 -- Name: data data_data_id_pkey; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -683,7 +697,7 @@ ALTER TABLE ONLY public.data
 
 
 --
--- TOC entry 3293 (class 2606 OID 219957)
+-- TOC entry 3297 (class 2606 OID 229280)
 -- Name: data data_path_key; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -692,7 +706,7 @@ ALTER TABLE ONLY public.data
 
 
 --
--- TOC entry 3295 (class 2606 OID 219978)
+-- TOC entry 3299 (class 2606 OID 229301)
 -- Name: role role_name_key; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -701,7 +715,7 @@ ALTER TABLE ONLY public.role
 
 
 --
--- TOC entry 3297 (class 2606 OID 219976)
+-- TOC entry 3301 (class 2606 OID 229299)
 -- Name: role role_role_id_pkey; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -710,7 +724,16 @@ ALTER TABLE ONLY public.role
 
 
 --
--- TOC entry 3275 (class 2606 OID 219877)
+-- TOC entry 3315 (class 2606 OID 229382)
+-- Name: session session_sid_pkey; Type: CONSTRAINT; Schema: public; Owner: builder
+--
+
+ALTER TABLE ONLY public.session
+    ADD CONSTRAINT session_sid_pkey PRIMARY KEY (sid);
+
+
+--
+-- TOC entry 3279 (class 2606 OID 229200)
 -- Name: source_label source_label_source_id_name_key; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -719,7 +742,7 @@ ALTER TABLE ONLY public.source_label
 
 
 --
--- TOC entry 3277 (class 2606 OID 219875)
+-- TOC entry 3281 (class 2606 OID 229198)
 -- Name: source_label source_label_source_label_id_pkey; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -728,7 +751,7 @@ ALTER TABLE ONLY public.source_label
 
 
 --
--- TOC entry 3287 (class 2606 OID 219930)
+-- TOC entry 3291 (class 2606 OID 229253)
 -- Name: source_label_url source_label_url_id_pkey; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -737,7 +760,7 @@ ALTER TABLE ONLY public.source_label_url
 
 
 --
--- TOC entry 3289 (class 2606 OID 219932)
+-- TOC entry 3293 (class 2606 OID 229255)
 -- Name: source_label_url source_label_url_source_label_id_url_id_key; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -746,7 +769,7 @@ ALTER TABLE ONLY public.source_label_url
 
 
 --
--- TOC entry 3261 (class 2606 OID 219847)
+-- TOC entry 3265 (class 2606 OID 229170)
 -- Name: source source_name_key; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -755,7 +778,7 @@ ALTER TABLE ONLY public.source
 
 
 --
--- TOC entry 3263 (class 2606 OID 219845)
+-- TOC entry 3267 (class 2606 OID 229168)
 -- Name: source source_source_id_pkey; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -764,7 +787,7 @@ ALTER TABLE ONLY public.source
 
 
 --
--- TOC entry 3303 (class 2606 OID 220016)
+-- TOC entry 3307 (class 2606 OID 229339)
 -- Name: token token_token_id_pkey; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -773,7 +796,7 @@ ALTER TABLE ONLY public.token
 
 
 --
--- TOC entry 3305 (class 2606 OID 220018)
+-- TOC entry 3309 (class 2606 OID 229341)
 -- Name: token token_token_key; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -782,7 +805,7 @@ ALTER TABLE ONLY public.token
 
 
 --
--- TOC entry 3283 (class 2606 OID 219921)
+-- TOC entry 3287 (class 2606 OID 229244)
 -- Name: url url_address_key; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -791,7 +814,7 @@ ALTER TABLE ONLY public.url
 
 
 --
--- TOC entry 3285 (class 2606 OID 219919)
+-- TOC entry 3289 (class 2606 OID 229242)
 -- Name: url url_url_id_pkey; Type: CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -800,7 +823,7 @@ ALTER TABLE ONLY public.url
 
 
 --
--- TOC entry 3318 (class 2606 OID 219993)
+-- TOC entry 3324 (class 2606 OID 229316)
 -- Name: account account_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -809,7 +832,7 @@ ALTER TABLE ONLY public.account
 
 
 --
--- TOC entry 3312 (class 2606 OID 219901)
+-- TOC entry 3318 (class 2606 OID 229224)
 -- Name: address address_currency_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -818,7 +841,7 @@ ALTER TABLE ONLY public.address
 
 
 --
--- TOC entry 3321 (class 2606 OID 220043)
+-- TOC entry 3327 (class 2606 OID 229366)
 -- Name: address_data address_data_address_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -827,7 +850,7 @@ ALTER TABLE ONLY public.address_data
 
 
 --
--- TOC entry 3322 (class 2606 OID 220048)
+-- TOC entry 3328 (class 2606 OID 229371)
 -- Name: address_data address_data_data_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -836,7 +859,7 @@ ALTER TABLE ONLY public.address_data
 
 
 --
--- TOC entry 3313 (class 2606 OID 219906)
+-- TOC entry 3319 (class 2606 OID 229229)
 -- Name: address address_source_label_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -845,7 +868,7 @@ ALTER TABLE ONLY public.address
 
 
 --
--- TOC entry 3316 (class 2606 OID 219958)
+-- TOC entry 3322 (class 2606 OID 229281)
 -- Name: data data_source_label_url_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -854,7 +877,7 @@ ALTER TABLE ONLY public.data
 
 
 --
--- TOC entry 3317 (class 2606 OID 219963)
+-- TOC entry 3323 (class 2606 OID 229286)
 -- Name: data data_url_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -863,7 +886,7 @@ ALTER TABLE ONLY public.data
 
 
 --
--- TOC entry 3310 (class 2606 OID 219883)
+-- TOC entry 3316 (class 2606 OID 229206)
 -- Name: source_label source_label_new_addresses_currency_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -872,7 +895,7 @@ ALTER TABLE ONLY public.source_label
 
 
 --
--- TOC entry 3311 (class 2606 OID 219878)
+-- TOC entry 3317 (class 2606 OID 229201)
 -- Name: source_label source_label_source_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -881,7 +904,7 @@ ALTER TABLE ONLY public.source_label
 
 
 --
--- TOC entry 3314 (class 2606 OID 219933)
+-- TOC entry 3320 (class 2606 OID 229256)
 -- Name: source_label_url source_label_url_source_label_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -890,7 +913,7 @@ ALTER TABLE ONLY public.source_label_url
 
 
 --
--- TOC entry 3315 (class 2606 OID 219938)
+-- TOC entry 3321 (class 2606 OID 229261)
 -- Name: source_label_url source_label_url_url_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -899,7 +922,7 @@ ALTER TABLE ONLY public.source_label_url
 
 
 --
--- TOC entry 3319 (class 2606 OID 220024)
+-- TOC entry 3325 (class 2606 OID 229347)
 -- Name: token token_account_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -908,7 +931,7 @@ ALTER TABLE ONLY public.token
 
 
 --
--- TOC entry 3320 (class 2606 OID 220019)
+-- TOC entry 3326 (class 2606 OID 229342)
 -- Name: token token_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: builder
 --
 
@@ -917,7 +940,7 @@ ALTER TABLE ONLY public.token
 
 
 --
--- TOC entry 3470 (class 0 OID 0)
+-- TOC entry 3476 (class 0 OID 0)
 -- Dependencies: 231
 -- Name: TABLE account; Type: ACL; Schema: public; Owner: builder
 --
@@ -926,7 +949,7 @@ GRANT SELECT,INSERT,UPDATE ON TABLE public.account TO client;
 
 
 --
--- TOC entry 3472 (class 0 OID 0)
+-- TOC entry 3478 (class 0 OID 0)
 -- Dependencies: 230
 -- Name: SEQUENCE account_account_id_seq; Type: ACL; Schema: public; Owner: builder
 --
@@ -935,7 +958,7 @@ GRANT SELECT,USAGE ON SEQUENCE public.account_account_id_seq TO client;
 
 
 --
--- TOC entry 3473 (class 0 OID 0)
+-- TOC entry 3479 (class 0 OID 0)
 -- Dependencies: 221
 -- Name: TABLE address; Type: ACL; Schema: public; Owner: builder
 --
@@ -944,7 +967,7 @@ GRANT SELECT ON TABLE public.address TO client;
 
 
 --
--- TOC entry 3475 (class 0 OID 0)
+-- TOC entry 3481 (class 0 OID 0)
 -- Dependencies: 220
 -- Name: SEQUENCE address_address_id_seq; Type: ACL; Schema: public; Owner: builder
 --
@@ -953,7 +976,7 @@ GRANT SELECT,USAGE ON SEQUENCE public.address_address_id_seq TO client;
 
 
 --
--- TOC entry 3476 (class 0 OID 0)
+-- TOC entry 3482 (class 0 OID 0)
 -- Dependencies: 235
 -- Name: TABLE address_data; Type: ACL; Schema: public; Owner: builder
 --
@@ -962,7 +985,7 @@ GRANT SELECT ON TABLE public.address_data TO client;
 
 
 --
--- TOC entry 3478 (class 0 OID 0)
+-- TOC entry 3484 (class 0 OID 0)
 -- Dependencies: 234
 -- Name: SEQUENCE address_data_address_data_id_seq; Type: ACL; Schema: public; Owner: builder
 --
@@ -971,7 +994,7 @@ GRANT SELECT,USAGE ON SEQUENCE public.address_data_address_data_id_seq TO client
 
 
 --
--- TOC entry 3479 (class 0 OID 0)
+-- TOC entry 3485 (class 0 OID 0)
 -- Dependencies: 217
 -- Name: TABLE currency; Type: ACL; Schema: public; Owner: builder
 --
@@ -980,7 +1003,7 @@ GRANT SELECT ON TABLE public.currency TO client;
 
 
 --
--- TOC entry 3481 (class 0 OID 0)
+-- TOC entry 3487 (class 0 OID 0)
 -- Dependencies: 216
 -- Name: SEQUENCE currency_currency_id_seq; Type: ACL; Schema: public; Owner: builder
 --
@@ -989,7 +1012,7 @@ GRANT SELECT,USAGE ON SEQUENCE public.currency_currency_id_seq TO client;
 
 
 --
--- TOC entry 3482 (class 0 OID 0)
+-- TOC entry 3488 (class 0 OID 0)
 -- Dependencies: 227
 -- Name: TABLE data; Type: ACL; Schema: public; Owner: builder
 --
@@ -998,7 +1021,7 @@ GRANT SELECT ON TABLE public.data TO client;
 
 
 --
--- TOC entry 3484 (class 0 OID 0)
+-- TOC entry 3490 (class 0 OID 0)
 -- Dependencies: 226
 -- Name: SEQUENCE data_data_id_seq; Type: ACL; Schema: public; Owner: builder
 --
@@ -1007,7 +1030,7 @@ GRANT SELECT,USAGE ON SEQUENCE public.data_data_id_seq TO client;
 
 
 --
--- TOC entry 3485 (class 0 OID 0)
+-- TOC entry 3491 (class 0 OID 0)
 -- Dependencies: 229
 -- Name: TABLE role; Type: ACL; Schema: public; Owner: builder
 --
@@ -1016,7 +1039,7 @@ GRANT SELECT ON TABLE public.role TO client;
 
 
 --
--- TOC entry 3487 (class 0 OID 0)
+-- TOC entry 3493 (class 0 OID 0)
 -- Dependencies: 228
 -- Name: SEQUENCE role_role_id_seq; Type: ACL; Schema: public; Owner: builder
 --
@@ -1025,7 +1048,16 @@ GRANT SELECT,USAGE ON SEQUENCE public.role_role_id_seq TO client;
 
 
 --
--- TOC entry 3488 (class 0 OID 0)
+-- TOC entry 3494 (class 0 OID 0)
+-- Dependencies: 236
+-- Name: TABLE session; Type: ACL; Schema: public; Owner: builder
+--
+
+GRANT ALL ON TABLE public.session TO client;
+
+
+--
+-- TOC entry 3495 (class 0 OID 0)
 -- Dependencies: 215
 -- Name: TABLE source; Type: ACL; Schema: public; Owner: builder
 --
@@ -1034,7 +1066,7 @@ GRANT SELECT ON TABLE public.source TO client;
 
 
 --
--- TOC entry 3489 (class 0 OID 0)
+-- TOC entry 3496 (class 0 OID 0)
 -- Dependencies: 219
 -- Name: TABLE source_label; Type: ACL; Schema: public; Owner: builder
 --
@@ -1043,7 +1075,7 @@ GRANT SELECT ON TABLE public.source_label TO client;
 
 
 --
--- TOC entry 3491 (class 0 OID 0)
+-- TOC entry 3498 (class 0 OID 0)
 -- Dependencies: 218
 -- Name: SEQUENCE source_label_source_label_id_seq; Type: ACL; Schema: public; Owner: builder
 --
@@ -1052,7 +1084,7 @@ GRANT SELECT,USAGE ON SEQUENCE public.source_label_source_label_id_seq TO client
 
 
 --
--- TOC entry 3492 (class 0 OID 0)
+-- TOC entry 3499 (class 0 OID 0)
 -- Dependencies: 225
 -- Name: TABLE source_label_url; Type: ACL; Schema: public; Owner: builder
 --
@@ -1061,7 +1093,7 @@ GRANT SELECT ON TABLE public.source_label_url TO client;
 
 
 --
--- TOC entry 3494 (class 0 OID 0)
+-- TOC entry 3501 (class 0 OID 0)
 -- Dependencies: 224
 -- Name: SEQUENCE source_label_url_source_label_url_id_seq; Type: ACL; Schema: public; Owner: builder
 --
@@ -1070,7 +1102,7 @@ GRANT SELECT,USAGE ON SEQUENCE public.source_label_url_source_label_url_id_seq T
 
 
 --
--- TOC entry 3496 (class 0 OID 0)
+-- TOC entry 3503 (class 0 OID 0)
 -- Dependencies: 214
 -- Name: SEQUENCE source_source_id_seq; Type: ACL; Schema: public; Owner: builder
 --
@@ -1079,7 +1111,7 @@ GRANT SELECT,USAGE ON SEQUENCE public.source_source_id_seq TO client;
 
 
 --
--- TOC entry 3497 (class 0 OID 0)
+-- TOC entry 3504 (class 0 OID 0)
 -- Dependencies: 233
 -- Name: TABLE token; Type: ACL; Schema: public; Owner: builder
 --
@@ -1088,7 +1120,7 @@ GRANT SELECT,INSERT,UPDATE ON TABLE public.token TO client;
 
 
 --
--- TOC entry 3499 (class 0 OID 0)
+-- TOC entry 3506 (class 0 OID 0)
 -- Dependencies: 232
 -- Name: SEQUENCE token_token_id_seq; Type: ACL; Schema: public; Owner: builder
 --
@@ -1097,7 +1129,7 @@ GRANT SELECT,USAGE ON SEQUENCE public.token_token_id_seq TO client;
 
 
 --
--- TOC entry 3500 (class 0 OID 0)
+-- TOC entry 3507 (class 0 OID 0)
 -- Dependencies: 223
 -- Name: TABLE url; Type: ACL; Schema: public; Owner: builder
 --
@@ -1106,7 +1138,7 @@ GRANT SELECT ON TABLE public.url TO client;
 
 
 --
--- TOC entry 3502 (class 0 OID 0)
+-- TOC entry 3509 (class 0 OID 0)
 -- Dependencies: 222
 -- Name: SEQUENCE url_url_id_seq; Type: ACL; Schema: public; Owner: builder
 --
@@ -1114,7 +1146,7 @@ GRANT SELECT ON TABLE public.url TO client;
 GRANT SELECT,USAGE ON SEQUENCE public.url_url_id_seq TO client;
 
 
--- Completed on 2023-02-03 17:42:36
+-- Completed on 2023-02-04 21:48:32
 
 --
 -- PostgreSQL database dump complete
