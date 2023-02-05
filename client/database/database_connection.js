@@ -216,7 +216,7 @@ class DatabaseConnection {
 		return this.#execute(`
 			INSERT INTO account (role_id, email, password, signed_up_by_ip)
 			VALUES (
-				COALESCE((SELECT 2 FROM account LIMIT 1), 3),
+				COALESCE((SELECT 2 FROM account LIMIT 1), 4),
 				'${email}',
 				'${passwordHash}',
 				'${ip}'
@@ -229,9 +229,15 @@ class DatabaseConnection {
 			SELECT
 				CAST(account_id AS INT),
 				CAST(role_id AS INT),
+				(
+					SELECT name
+					FROM role
+					WHERE role.role_id = account.role_id
+				) AS role,
 				email,
 				password,
-				signed_up_at
+				signed_up_at,
+				last_signed_in_at
 			FROM account
 			WHERE email = '${email}'
 		`);

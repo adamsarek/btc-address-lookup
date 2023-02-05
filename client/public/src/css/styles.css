@@ -318,23 +318,27 @@ a.search-logo {
 	left: 0;
 	right: 0;
 	background-color: var(--header-background-color);
-	width: 100%;
+	width: 14.5rem;
 	padding: 0.5rem;
-	display: flex;
+	display: grid;
+	grid-auto-flow: column;
 	box-sizing: border-box;
 }
 
 .header-right nav a:not(.button) {
-	width: 3rem;
 	line-height: 3rem;
+	padding-inline: 0.5rem;
 	text-align: center;
 	text-decoration: none;
+	box-sizing: border-box;
 }
 
 .header-sign-in {
-	width: 4.75rem;
 	margin-left: 0.5rem;
 	text-align: center;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
 }
 
 main {
@@ -343,21 +347,12 @@ main {
 
 .panels {
 	margin: 0 auto;
-	display: grid;
+	display: flex;
 	grid-gap: 0.5rem;
 	box-sizing: border-box;
+	justify-content: center;
+	flex-wrap: wrap;
 }
-
-.panels-w-1 { max-width: 8rem; }
-.panels-w-2 { max-width: 16rem; }
-.panels-w-3 { max-width: 24rem; }
-.panels-w-4 { max-width: 32rem; }
-.panels-w-5 { max-width: 40rem; }
-.panels-w-6 { max-width: 48rem; }
-.panels-w-7 { max-width: 56rem; }
-.panels-w-8 { max-width: 64rem; }
-.panels-w-9 { max-width: 72rem; }
-.panels-w-10 { max-width: 80rem; }
 
 .panel {
 	color: var(--panel-color);
@@ -366,7 +361,19 @@ main {
 	border-radius: 0.5rem;
 	display: grid;
 	box-sizing: border-box;
+	flex-grow: 1;
 }
+
+.panel-w-1 { max-width: 8rem; }
+.panel-w-2 { max-width: 16rem; }
+.panel-w-3 { max-width: 24rem; }
+.panel-w-4 { max-width: 32rem; }
+.panel-w-5 { max-width: 40rem; }
+.panel-w-6 { max-width: 48rem; }
+.panel-w-7 { max-width: 56rem; }
+.panel-w-8 { max-width: 64rem; }
+.panel-w-9 { max-width: 72rem; }
+.panel-w-10 { max-width: 80rem; }
 
 .panel .title {
 	font-size: 2rem;
@@ -387,6 +394,10 @@ main {
 /* Page specific */
 .sign-form main {
 	padding-block: 2rem;
+}
+
+.sign-form .panels {
+	grid-auto-flow: column;
 }
 
 .sign-form .panel {
@@ -418,6 +429,8 @@ main {
 
 .sign-form .panel-row {
 	padding-inline: 4rem;
+	text-overflow: ellipsis;
+	overflow: hidden;
 }
 
 .sign-form .panel .error {
@@ -426,7 +439,12 @@ main {
 	margin-top: 0.25rem;
 }
 
-@media only screen and (max-width: calc(62.5rem + 7px)) {
+.sign-form .panel .content {
+	font-size: 1.2rem;
+	margin-top: 0.25rem;
+}
+
+@media only screen and (max-width: calc(61rem + 7px)) {
 	.container {
 		padding-top: 2rem;
 	}
@@ -437,7 +455,7 @@ main {
 	}
 	
 	header {
-		padding-inline: 4rem 15.25rem;
+		padding-inline: 4rem 14.5rem;
 	}
 }
 
@@ -447,7 +465,9 @@ main {
 	}
 
 	.header-right nav {
+		width: 100%;
 		display: none;
+		grid-auto-flow: row;
 	}
 
 	.nav-button {
@@ -508,6 +528,10 @@ main {
 	}
 
 	.sign-form .panel .error {
+		margin-top: 0.125rem;
+	}
+
+	.sign-form .panel .content {
 		margin-top: 0.125rem;
 	}
 }

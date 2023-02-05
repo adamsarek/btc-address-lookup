@@ -532,8 +532,6 @@ app.use(EXPRESS_SESSION({
 app.set('view engine', 'ejs');
 
 app.get('/', async (req, res) => {
-	console.log(req.session);
-
 	renderPage(res, 'index', {
 		account: (typeof req !== 'undefined' && typeof req.session !== 'undefined' && typeof req.session.account !== 'undefined' ? req.session.account : null),
 		page: {
@@ -545,6 +543,7 @@ app.get('/', async (req, res) => {
 		/*page: {
 			title: 'Index'
 		}*/
+		// #TODO - REST API - Source, Source labels - data count
 	});
 });
 
@@ -663,13 +662,14 @@ app.post('/sign-up', async (req, res) => {
 				if(account.rows.length > 0) {
 					if(BCRYPT.compareSync(form.password.data, account.rows[0].password)) {
 						await databaseConnection.signInAccount(form.email.data, ip);
-						
+
+						account = await databaseConnection.getAccount(form.email.data);
 						account = account.rows[0];
 						delete account.password;
 
 						req.session.account = account;
 						req.session.save(() => {
-							res.redirect('/');
+							res.redirect('/account');
 						});
 					}
 					else {
@@ -837,12 +837,13 @@ app.post('/sign-in', async (req, res) => {
 			if(BCRYPT.compareSync(form.password.data, account.rows[0].password)) {
 				await databaseConnection.signInAccount(form.email.data, ip);
 				
+				account = await databaseConnection.getAccount(form.email.data);
 				account = account.rows[0];
 				delete account.password;
 
 				req.session.account = account;
 				req.session.save(() => {
-					res.redirect('/');
+					res.redirect('/account');
 				});
 			}
 			else {
@@ -930,6 +931,22 @@ app.get('/change-password', async (req, res) => {
 			title: 'Change password'
 		}
 	});
+});
+
+app.get('/account', async (req, res) => {
+	if(typeof req !== 'undefined' && typeof req.session !== 'undefined' && typeof req.session.account !== 'undefined') {
+		renderPage(res, 'index', {
+			account: req.session.account,
+			page: {
+				class: 'sign-form',
+				file: 'account',
+				title: 'Account'
+			}
+		});
+	}
+	else {
+		res.redirect('/sign-in');
+	}
 });
 
 app.listen(config.connection.port, () => {

@@ -1,0 +1,21 @@
+<div class="panels">
+	<div class="panel-w-3 panel">
+		<div class="title center panel-row">Account</div>
+		<div class="left panel-row"><label>Email</label></div>
+		<div class="content left panel-row"><%= account.email %></div>
+		<div class="left panel-row"><label>Signed up</label></div>
+		<div class="content left panel-row"><%= (new Date(account.signed_up_at)).toLocaleString() %></div>
+		<div class="left panel-row"><label>Last signed in</label></div>
+		<div class="content left panel-row"><%= (new Date(account.last_signed_in_at)).toLocaleString() %></div>
+		<div class="left panel-row"><label>Role</label></div>
+		<div class="content left panel-row"><%= account.role %></div>
+		<div><hr></div>
+		<div class="left panel-row"><label><a href="/sign-out">Sign out</a></label></div>
+	</div>
+	<% if(typeof account !== 'undefined' && typeof account.role_id !== 'undefined' && account.role_id > 3) { %>
+		<form class="panel-w-5 panel">
+			<div class="title center panel-row">Accounts</div>
+			<!--#TODO - Search input with accounts email list-->
+		</form>
+	<% } %>
+</div>

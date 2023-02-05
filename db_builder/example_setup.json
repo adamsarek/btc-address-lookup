@@ -251,6 +251,7 @@
 						[
 							["Guest"],
 							["User"],
+							["Insider"],
 							["Admin"]
 						]
 					],
@@ -316,7 +317,7 @@
 						"address_data_id BIGSERIAL",
 						"address_id BIGINT NOT NULL",
 						"data_id BIGINT NOT NULL",
-						"roles SMALLINT[] NOT NULL DEFAULT '{{1,2,3}}'",
+						"roles SMALLINT[] NOT NULL DEFAULT '{{1,2,3,4}}'",
 						"CONSTRAINT address_data_address_data_id_pkey PRIMARY KEY (address_data_id)",
 						"CONSTRAINT address_data_address_id_fkey FOREIGN KEY (address_id) REFERENCES address (address_id)",
 						"CONSTRAINT address_data_data_id_fkey FOREIGN KEY (data_id) REFERENCES data (data_id)",
