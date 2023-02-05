@@ -12,7 +12,7 @@
 			<a href="/data">Data</a>
 			<a href="/api">API</a>
 			<a href="/faq">FAQ</a>
-			<a class="header-sign-in button" href="/sign-in">Sign in</a>
+			<a class="header-sign-in button" href="/<%= account == null ? 'sign-in' : 'sign-out' %>"><%= account == null ? 'Sign in' : 'Sign out' %></a>
 		</nav>
 	</div>
 </header>

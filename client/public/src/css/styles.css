@@ -332,7 +332,7 @@ a.search-logo {
 }
 
 .header-sign-in {
-	width: 4.25rem;
+	width: 4.75rem;
 	margin-left: 0.5rem;
 	text-align: center;
 }
@@ -426,7 +426,7 @@ main {
 	margin-top: 0.25rem;
 }
 
-@media only screen and (max-width: 62.5rem) {
+@media only screen and (max-width: calc(62.5rem + 7px)) {
 	.container {
 		padding-top: 2rem;
 	}
@@ -437,7 +437,7 @@ main {
 	}
 	
 	header {
-		padding-inline: 4rem 14.75rem;
+		padding-inline: 4rem 15.25rem;
 	}
 }
 

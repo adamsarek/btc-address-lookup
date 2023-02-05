@@ -535,6 +535,7 @@ app.get('/', async (req, res) => {
 	console.log(req.session);
 
 	renderPage(res, 'index', {
+		account: (typeof req !== 'undefined' && typeof req.session !== 'undefined' && typeof req.session.account !== 'undefined' ? req.session.account : null),
 		page: {
 			file: 'index'
 		}
@@ -549,6 +550,7 @@ app.get('/', async (req, res) => {
 
 app.get('/sign-up', async (req, res) => {
 	renderPage(res, 'index', {
+		account: (typeof req !== 'undefined' && typeof req.session !== 'undefined' && typeof req.session.account !== 'undefined' ? req.session.account : null),
 		page: {
 			class: 'sign-form',
 			file: 'sign_up',
@@ -677,6 +679,7 @@ app.post('/sign-up', async (req, res) => {
 						form.confirm_password.data = '';
 
 						renderPage(res, 'index', {
+							account: (typeof req !== 'undefined' && typeof req.session !== 'undefined' && typeof req.session.account !== 'undefined' ? req.session.account : null),
 							page: {
 								class: 'sign-form',
 								file: 'sign_up',
@@ -693,6 +696,7 @@ app.post('/sign-up', async (req, res) => {
 					form.confirm_password.data = '';
 
 					renderPage(res, 'index', {
+						account: (typeof req !== 'undefined' && typeof req.session !== 'undefined' && typeof req.session.account !== 'undefined' ? req.session.account : null),
 						page: {
 							class: 'sign-form',
 							file: 'sign_up',
@@ -709,6 +713,7 @@ app.post('/sign-up', async (req, res) => {
 				form.confirm_password.data = '';
 
 				renderPage(res, 'index', {
+					account: (typeof req !== 'undefined' && typeof req.session !== 'undefined' && typeof req.session.account !== 'undefined' ? req.session.account : null),
 					page: {
 						class: 'sign-form',
 						file: 'sign_up',
@@ -723,6 +728,7 @@ app.post('/sign-up', async (req, res) => {
 			form.confirm_password.data = '';
 
 			renderPage(res, 'index', {
+				account: (typeof req !== 'undefined' && typeof req.session !== 'undefined' && typeof req.session.account !== 'undefined' ? req.session.account : null),
 				page: {
 					class: 'sign-form',
 					file: 'sign_up',
@@ -737,6 +743,7 @@ app.post('/sign-up', async (req, res) => {
 		form.confirm_password.data = '';
 
 		renderPage(res, 'index', {
+			account: (typeof req !== 'undefined' && typeof req.session !== 'undefined' && typeof req.session.account !== 'undefined' ? req.session.account : null),
 			page: {
 				class: 'sign-form',
 				file: 'sign_up',
@@ -749,6 +756,7 @@ app.post('/sign-up', async (req, res) => {
 
 app.get('/sign-in', async (req, res) => {
 	renderPage(res, 'index', {
+		account: (typeof req !== 'undefined' && typeof req.session !== 'undefined' && typeof req.session.account !== 'undefined' ? req.session.account : null),
 		page: {
 			class: 'sign-form',
 			file: 'sign_in',
@@ -843,6 +851,7 @@ app.post('/sign-in', async (req, res) => {
 				form.password.data = '';
 
 				renderPage(res, 'index', {
+					account: (typeof req !== 'undefined' && typeof req.session !== 'undefined' && typeof req.session.account !== 'undefined' ? req.session.account : null),
 					page: {
 						class: 'sign-form',
 						file: 'sign_in',
@@ -858,6 +867,7 @@ app.post('/sign-in', async (req, res) => {
 			form.password.data = '';
 
 			renderPage(res, 'index', {
+				account: (typeof req !== 'undefined' && typeof req.session !== 'undefined' && typeof req.session.account !== 'undefined' ? req.session.account : null),
 				page: {
 					class: 'sign-form',
 					file: 'sign_in',
@@ -871,6 +881,7 @@ app.post('/sign-in', async (req, res) => {
 		form.password.data = '';
 
 		renderPage(res, 'index', {
+			account: (typeof req !== 'undefined' && typeof req.session !== 'undefined' && typeof req.session.account !== 'undefined' ? req.session.account : null),
 			page: {
 				class: 'sign-form',
 				file: 'sign_in',
@@ -890,6 +901,7 @@ app.get('/sign-out', async (req, res) => {
 
 app.get('/forgotten-password', async (req, res) => {
 	renderPage(res, 'index', {
+		account: (typeof req !== 'undefined' && typeof req.session !== 'undefined' && typeof req.session.account !== 'undefined' ? req.session.account : null),
 		page: {
 			class: 'sign-form',
 			file: 'forgotten_password',
@@ -900,6 +912,7 @@ app.get('/forgotten-password', async (req, res) => {
 
 app.get('/reset-password', async (req, res) => {
 	renderPage(res, 'index', {
+		account: (typeof req !== 'undefined' && typeof req.session !== 'undefined' && typeof req.session.account !== 'undefined' ? req.session.account : null),
 		page: {
 			class: 'sign-form',
 			file: 'reset_password',
@@ -910,6 +923,7 @@ app.get('/reset-password', async (req, res) => {
 
 app.get('/change-password', async (req, res) => {
 	renderPage(res, 'index', {
+		account: (typeof req !== 'undefined' && typeof req.session !== 'undefined' && typeof req.session.account !== 'undefined' ? req.session.account : null),
 		page: {
 			class: 'sign-form',
 			file: 'change_password',
