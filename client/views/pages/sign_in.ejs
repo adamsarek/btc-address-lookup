@@ -1,10 +1,13 @@
 <div class="panels-w-3 panels">
 	<form class="panel" method="POST">
 		<div class="title center panel-row">Sign in</div>
+		<div class="error center panel-row"><%= typeof form !== 'undefined' && typeof form._error !== 'undefined' ? form._error : '' %></div>
 		<div class="left panel-row"><label for="email">Email</label></div>
-		<div class="panel-row"><input class="input" name="email" type="email" placeholder="Email" autofocus></div>
+		<div class="panel-row"><input class="input" name="email" type="email" placeholder="Email" value="<%= typeof form !== 'undefined' && typeof form.email !== 'undefined' && typeof form.email.data !== 'undefined' ? form.email.data : '' %>" maxlength="128" pattern="^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$" required autofocus></div>
+		<div class="error left panel-row"><%= typeof form !== 'undefined' && typeof form.email !== 'undefined' && typeof form.email.error !== 'undefined' ? form.email.error : '' %></div>
 		<div class="left panel-row"><label for="password">Password</label></div>
-		<div class="panel-row"><input class="input" name="password" type="password" placeholder="Password"></div>
+		<div class="panel-row"><input class="input" name="password" type="password" placeholder="Password" minlength="8" maxlength="128" pattern="^(?=.*[0-9])(?=.*[.!@#$%^&'*+/=?^_`{|}~-])[a-zA-Z0-9.!@#$%^&'*+/=?^_`{|}~-]*$" required></div>
+		<div class="error left panel-row"><%= typeof form !== 'undefined' && typeof form.password !== 'undefined' && typeof form.password.error !== 'undefined' ? form.password.error : '' %></div>
 		<div class="center panel-row"><input class="button" type="submit" value="Sign in"></div>
 		<div><hr></div>
 		<div class="left panel-row"><label>Forgot your password?</label></div>

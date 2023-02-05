@@ -110,7 +110,7 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
 - :hammer: Web pages
   - :hammer: Index - search bar, list of sources, statistics
   - :heavy_check_mark: Sign up
-  - :hammer: Sign in *- server-side not yet implemented*
+  - :heavy_check_mark: Sign in
   - :hammer: Sign out *- server-side not yet implemented*
   - :hammer: Forgotten password *- server-side not yet implemented*
   - :hammer: Reset password *- server-side not yet implemented*

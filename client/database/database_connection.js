@@ -236,6 +236,16 @@ class DatabaseConnection {
 			WHERE email = '${email}'
 		`);
 	}
+
+	signInAccount(email, ip) {
+		return this.#execute(`
+			UPDATE account
+			SET
+				last_signed_in_by_ip = '${ip}',
+				last_signed_in_at = CURRENT_TIMESTAMP
+			WHERE email = '${email}'
+		`);
+	}
 }
 
 // Export

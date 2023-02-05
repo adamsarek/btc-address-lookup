@@ -655,11 +655,13 @@ app.post('/sign-up', async (req, res) => {
 
 			// Database successful
 			if(dbSuccess) {
-				const account = await databaseConnection.getAccount(form.email.data);
+				let account = await databaseConnection.getAccount(form.email.data);
 
-				// No account found
+				// Account found
 				if(account.rows.length > 0) {
 					if(BCRYPT.compareSync(form.password.data, account.rows[0].password)) {
+						await databaseConnection.signInAccount(form.email.data, ip);
+						
 						account = account.rows[0];
 						delete account.password;
 
@@ -753,6 +755,130 @@ app.get('/sign-in', async (req, res) => {
 			title: 'Sign in'
 		}
 	});
+});
+
+app.post('/sign-in', async (req, res) => {
+	const form = {
+		email: { data: '', error: '' },
+		password: { data: '', error: '' }
+	};
+	
+	// Get form data
+	const reqBodyKeys = Object.keys(req.body);
+	for(let i = 0; i < reqBodyKeys.length; i++) {
+		form[reqBodyKeys[i]].data = req.body[reqBodyKeys[i]];
+	}
+
+	let validationSuccess = true;
+	
+	// Email validation
+	if(form.email.data.length == 0) {
+		form.email.error = 'Email is empty.';
+		validationSuccess = false;
+	}
+	else if(form.email.data.length > 128) {
+		form.email.error = 'Email is too long.';
+		validationSuccess = false;
+	}
+	else if(!/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(form.email.data)) {
+		form.email.error = 'Email is not valid.';
+		validationSuccess = false;
+	}
+	
+	// Password validation
+	if(form.password.data.length == 0) {
+		form.password.error = 'Password is empty.';
+		validationSuccess = false;
+	}
+	else if(form.password.data.length < 8) {
+		form.password.error = 'Password is too short.';
+		validationSuccess = false;
+	}
+	else if(form.password.data.length > 128) {
+		form.password.error = 'Password is too long.';
+		validationSuccess = false;
+	}
+	else if(!/^[a-zA-Z0-9.!@#$%^&'*+/=?^_`{|}~-]*$/.test(form.password.data)) {
+		form.password.error = 'Password is not valid.';
+		validationSuccess = false;
+	}
+	else if(!/^(?=.*[0-9])[a-zA-Z0-9.!@#$%^&'*+/=?^_`{|}~-]*$/.test(form.password.data)) {
+		form.password.error = 'Password does not contain number.';
+		validationSuccess = false;
+	}
+	else if(!/^(?=.*[.!@#$%^&'*+/=?^_`{|}~-])[a-zA-Z0-9.!@#$%^&'*+/=?^_`{|}~-]*$/.test(form.password.data)) {
+		form.password.error = 'Password does not contain special character.';
+		validationSuccess = false;
+	}
+	
+	// Successfully validated
+	if(validationSuccess) {
+		// Get client IP
+		let ips = (
+			req.headers['cf-connecting-ip'] ||
+			req.headers['x-real-ip'] ||
+			req.headers['x-forwarded-for'] ||
+			req.socket.remoteAddress || ''
+		).split(',');
+		const ip = ips[0].trim();
+
+		let account = await databaseConnection.getAccount(form.email.data);
+
+		// Account found
+		if(account.rows.length > 0) {
+			if(BCRYPT.compareSync(form.password.data, account.rows[0].password)) {
+				await databaseConnection.signInAccount(form.email.data, ip);
+				
+				account = account.rows[0];
+				delete account.password;
+
+				req.session.account = account;
+				req.session.save(() => {
+					res.redirect('/');
+				});
+			}
+			else {
+				form._error = 'Account does not exist.';
+
+				form.password.data = '';
+
+				renderPage(res, 'index', {
+					page: {
+						class: 'sign-form',
+						file: 'sign_in',
+						title: 'Sign in'
+					},
+					form: form
+				});
+			}
+		}
+		else {
+			form._error = 'Account does not exist.';
+
+			form.password.data = '';
+
+			renderPage(res, 'index', {
+				page: {
+					class: 'sign-form',
+					file: 'sign_in',
+					title: 'Sign in'
+				},
+				form: form
+			});
+		}
+	}
+	else {
+		form.password.data = '';
+
+		renderPage(res, 'index', {
+			page: {
+				class: 'sign-form',
+				file: 'sign_in',
+				title: 'Sign in'
+			},
+			form: form
+		});
+	}
 });
 
 app.get('/forgotten-password', async (req, res) => {
