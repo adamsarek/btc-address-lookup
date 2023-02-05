@@ -1,5 +1,5 @@
 // External imports
-const pg = require('pg');
+const PG = require('pg');
 
 class Database {
 	constructor() {
@@ -23,13 +23,13 @@ class Database {
 		if(connectionPool) {
 			const connectionString = this.#getConnectionString(connectionDetails);
 			if(!this._connectionPool[connectionString]) {
-				this._connectionPool[connectionString] = new pg.Pool({ connectionString });
+				this._connectionPool[connectionString] = new PG.Pool({ connectionString });
 			}
 
 			return this._connectionPool[connectionString];
 		}
 		else {
-			return new pg.Client({ connectionString });
+			return new PG.Client({ connectionString });
 		}
 	}
 }

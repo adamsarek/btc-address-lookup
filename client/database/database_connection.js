@@ -1,3 +1,6 @@
+// External imports
+const BCRYPT = require('bcrypt');
+
 class DatabaseConnection {
 	constructor(connection) {
 		this._connection = connection;
@@ -196,6 +199,41 @@ class DatabaseConnection {
 				) AS addresses
 			FROM source_label
 			WHERE source_label_id = ${sourceLabelId}
+		`);
+	}
+
+	hasEmail(email) {
+		return this.#execute(`
+			SELECT 1
+			FROM account
+			WHERE email = '${email}'
+		`);
+	}
+
+	addAccount(email, password, ip) {
+		const passwordHash = BCRYPT.hashSync(password, 12);
+
+		return this.#execute(`
+			INSERT INTO account (role_id, email, password, signed_up_by_ip)
+			VALUES (
+				COALESCE((SELECT 2 FROM account LIMIT 1), 3),
+				'${email}',
+				'${passwordHash}',
+				'${ip}'
+			)
+		`);
+	}
+
+	getAccount(email) {
+		return this.#execute(`
+			SELECT
+				CAST(account_id AS INT),
+				CAST(role_id AS INT),
+				email,
+				password,
+				signed_up_at
+			FROM account
+			WHERE email = '${email}'
 		`);
 	}
 }

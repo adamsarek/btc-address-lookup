@@ -7,8 +7,20 @@
 // https://dev.to/juhanakristian/basics-of-react-server-side-rendering-with-expressjs-phd
 // https://www.digitalocean.com/community/tutorials/how-to-use-ejs-to-template-your-node-application
 
+// https://stackabuse.com/bytes/how-to-get-a-users-ip-address-in-express-js/
+// https://heynode.com/blog/2020-04/salt-and-hash-passwords-bcrypt/
+// https://security.stackexchange.com/questions/17207/recommended-of-rounds-for-bcrypt
+// https://www.section.io/engineering-education/session-management-in-nodejs-using-expressjs-and-express-session/
+// https://stackoverflow.com/questions/29506253/best-session-storage-middleware-for-express-postgresql
+// https://www.npmjs.com/package/express-pg-session
+
 // External imports
+const BCRYPT = require('bcrypt');
+const BODY_PARSER = require('body-parser');
+const CONNECT_PG_SIMPLE = require('connect-pg-simple');
+const CRYPTO = require('crypto');
 const EXPRESS = require('express');
+const EXPRESS_SESSION = require('express-session');
 const FS = require('fs');
 const PATH = require('path');
 
@@ -18,7 +30,6 @@ const DatabaseConnection = require('./database/database_connection.js');
 
 const config = require('./config.json');
 const db = require('./db.json');
-const { render } = require('ejs');
 const databaseConnection = new DatabaseConnection(new Database().getConnection(db.connection));
 
 const app = EXPRESS();
@@ -470,6 +481,30 @@ app.get('/api/source_labels/:source_label_id([0-9]{1,})', async (req, res) => {
 	}
 });
 
+function rotateSecret() {
+	if(!FS.existsSync('./secret.json')) {
+		SECRET = {
+			session: {
+				[CRYPTO.randomBytes(64).toString('hex')]: Date.now()
+			}
+		};
+		FS.writeFileSync('./secret.json', JSON.stringify(SECRET));
+	}
+	else {
+		SECRET = require('./secret.json');
+		SECRET['session'] = {[CRYPTO.randomBytes(64).toString('hex')]: Date.now(), ...SECRET['session']};
+		for(const secretSession of Object.keys(SECRET['session'])) {
+			if(SECRET['session'][secretSession] + config.session.secret_timeout * 2 < Date.now()) {
+				delete SECRET['session'][secretSession];
+			}
+		}
+	}
+
+	setTimeout(() => {
+		rotateSecret();
+	}, Object.values(SECRET['session'])[0] + config.session.secret_timeout - Date.now());
+}
+
 function renderPage(res, page, data) {
 	// Set data
 	data.title = 'BTC Address Lookup';
@@ -478,11 +513,27 @@ function renderPage(res, page, data) {
 	res.render(`${page}`, data);
 }
 
+let SECRET;
+rotateSecret();
+
+app.use(BODY_PARSER.json());
+app.use(BODY_PARSER.urlencoded({ extended: true }));
 app.use(EXPRESS.static('public'));
+app.use(EXPRESS_SESSION({
+	store: new (CONNECT_PG_SIMPLE(EXPRESS_SESSION))({
+		pool: databaseConnection.getConnection()
+	}),
+	secret: Object.keys(SECRET['session']),
+	resave: false,
+	saveUninitialized: false,
+	cookie: { maxAge: config.session.cookie_timeout }
+}));
 
 app.set('view engine', 'ejs');
 
 app.get('/', async (req, res) => {
+	console.log(req.session);
+
 	renderPage(res, 'index', {
 		page: {
 			file: 'index'
@@ -504,6 +555,194 @@ app.get('/sign-up', async (req, res) => {
 			title: 'Sign up'
 		}
 	});
+});
+
+app.post('/sign-up', async (req, res) => {
+	const form = {
+		email: { data: '', error: '' },
+		password: { data: '', error: '' },
+		confirm_password: { data: '', error: '' }
+	};
+	
+	// Get form data
+	const reqBodyKeys = Object.keys(req.body);
+	for(let i = 0; i < reqBodyKeys.length; i++) {
+		form[reqBodyKeys[i]].data = req.body[reqBodyKeys[i]];
+	}
+
+	let validationSuccess = true;
+	
+	// Email validation
+	if(form.email.data.length == 0) {
+		form.email.error = 'Email is empty.';
+		validationSuccess = false;
+	}
+	else if(form.email.data.length > 128) {
+		form.email.error = 'Email is too long.';
+		validationSuccess = false;
+	}
+	else if(!/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(form.email.data)) {
+		form.email.error = 'Email is not valid.';
+		validationSuccess = false;
+	}
+	
+	// Password validation
+	if(form.password.data.length == 0) {
+		form.password.error = 'Password is empty.';
+		validationSuccess = false;
+	}
+	else if(form.password.data.length < 8) {
+		form.password.error = 'Password is too short.';
+		validationSuccess = false;
+	}
+	else if(form.password.data.length > 128) {
+		form.password.error = 'Password is too long.';
+		validationSuccess = false;
+	}
+	else if(!/^[a-zA-Z0-9.!@#$%^&'*+/=?^_`{|}~-]*$/.test(form.password.data)) {
+		form.password.error = 'Password is not valid.';
+		validationSuccess = false;
+	}
+	else if(!/^(?=.*[0-9])[a-zA-Z0-9.!@#$%^&'*+/=?^_`{|}~-]*$/.test(form.password.data)) {
+		form.password.error = 'Password does not contain number.';
+		validationSuccess = false;
+	}
+	else if(!/^(?=.*[.!@#$%^&'*+/=?^_`{|}~-])[a-zA-Z0-9.!@#$%^&'*+/=?^_`{|}~-]*$/.test(form.password.data)) {
+		form.password.error = 'Password does not contain special character.';
+		validationSuccess = false;
+	}
+	
+	// Confirm password validation
+	if(form.confirm_password.data == '') {
+		form.confirm_password.error = 'Confirm password is empty.';
+		validationSuccess = false;
+	}
+	else if(form.password.data != form.confirm_password.data) {
+		form.confirm_password.error = 'Passwords do not match.';
+		validationSuccess = false;
+	}
+
+	// Successfully validated
+	if(validationSuccess) {
+		let formSuccess = true;
+
+		// Get client IP
+		let ips = (
+			req.headers['cf-connecting-ip'] ||
+			req.headers['x-real-ip'] ||
+			req.headers['x-forwarded-for'] ||
+			req.socket.remoteAddress || ''
+		).split(',');
+		const ip = ips[0].trim();
+
+		// Email exists
+		if((await databaseConnection.hasEmail(form.email.data)).rows.length > 0) {
+			form.email.error = 'Email already exists.';
+			formSuccess = false;
+		}
+
+		// Form successful
+		if(formSuccess) {
+			let dbSuccess = true;
+
+			try {
+				await databaseConnection.addAccount(form.email.data, form.password.data, ip);
+			}
+			catch (error) {
+				console.error(error);
+				dbSuccess = false;
+			}
+
+			// Database successful
+			if(dbSuccess) {
+				const account = await databaseConnection.getAccount(form.email.data);
+
+				// No account found
+				if(account.rows.length > 0) {
+					if(BCRYPT.compareSync(form.password.data, account.rows[0].password)) {
+						account = account.rows[0];
+						delete account.password;
+
+						req.session.account = account;
+						req.session.save(() => {
+							res.redirect('/');
+						});
+					}
+					else {
+						form._error = 'Account does not exist.';
+
+						form.password.data = '';
+						form.confirm_password.data = '';
+
+						renderPage(res, 'index', {
+							page: {
+								class: 'sign-form',
+								file: 'sign_up',
+								title: 'Sign up'
+							},
+							form: form
+						});
+					}
+				}
+				else {
+					form._error = 'Account does not exist.';
+
+					form.password.data = '';
+					form.confirm_password.data = '';
+
+					renderPage(res, 'index', {
+						page: {
+							class: 'sign-form',
+							file: 'sign_up',
+							title: 'Sign up'
+						},
+						form: form
+					});
+				}
+			}
+			else {
+				form._error = 'Account could not be created. Try again later.';
+
+				form.password.data = '';
+				form.confirm_password.data = '';
+
+				renderPage(res, 'index', {
+					page: {
+						class: 'sign-form',
+						file: 'sign_up',
+						title: 'Sign up'
+					},
+					form: form
+				});
+			}
+		}
+		else {
+			form.password.data = '';
+			form.confirm_password.data = '';
+
+			renderPage(res, 'index', {
+				page: {
+					class: 'sign-form',
+					file: 'sign_up',
+					title: 'Sign up'
+				},
+				form: form
+			});
+		}
+	}
+	else {
+		form.password.data = '';
+		form.confirm_password.data = '';
+
+		renderPage(res, 'index', {
+			page: {
+				class: 'sign-form',
+				file: 'sign_up',
+				title: 'Sign up'
+			},
+			form: form
+		});
+	}
 });
 
 app.get('/sign-in', async (req, res) => {

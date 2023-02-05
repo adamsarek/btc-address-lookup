@@ -48,6 +48,7 @@
 	--panel-color: #1F1911;
 	--panel-background-color: #EFE9E1;
 	--panel-border-color: #CFC9C1;
+	--error-color: #CF3931;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -79,6 +80,7 @@
 		--panel-color: #EFE9E1;
 		--panel-background-color: #2F2921;
 		--panel-border-color: #0F0901;
+		--error-color: #CF3931;
 	}
 }
 
@@ -418,6 +420,12 @@ main {
 	padding-inline: 4rem;
 }
 
+.sign-form .panel .error {
+	color: var(--error-color);
+	font-size: 0.8rem;
+	margin-top: 0.25rem;
+}
+
 @media only screen and (max-width: 62.5rem) {
 	.container {
 		padding-top: 2rem;
@@ -497,6 +505,10 @@ main {
 
 	.sign-form .panel-row {
 		padding-inline: 0.5rem;
+	}
+
+	.sign-form .panel .error {
+		margin-top: 0.125rem;
 	}
 }
 

@@ -12,6 +12,10 @@
 			"3": { "use_count_limit": 300, "reset_use_count_after": 60 }
 		}
 	},
+	"session": {
+		"secret_timeout": 86400000,
+		"cookie_timeout": 86400000
+	},
 	"crawler": {
 		"data_path": "../db_builder/crawled_data"
 	}

@@ -1,5 +1,6 @@
 db.json
 package-lock.json
+secret.json
 
 # dependencies
 /node_modules
