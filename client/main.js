@@ -949,6 +949,19 @@ app.get('/account', async (req, res) => {
 	}
 });
 
+app.get('*', async (req, res) => {
+	res.status(404);
+	
+	renderPage(res, 'index', {
+		account: req.session.account,
+		page: {
+			class: 'sign-form',
+			file: 'error',
+			title: 'Page not found'
+		}
+	});
+});
+
 app.listen(config.connection.port, () => {
 	console.log(`Client server started listening on port ${config.connection.port}!`);
 });

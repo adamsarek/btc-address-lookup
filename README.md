@@ -115,13 +115,14 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   - :hammer: Forgotten password *- server-side not yet implemented*
   - :hammer: Reset password *- server-side not yet implemented*
   - :hammer: Change password *- server-side not yet implemented*
-  - :heavy_check_mark: Account
+  - :hammer: Account *- administration not yet implemented*
   - :x: Search by address
   - :x: Source - list of source labels
   - :x: Source / source label - list of addresses
   - :x: Data - list of addresses (independent on source label)
   - :x: API docs
   - :x: FAQ
+  - :heavy_check_mark: Error - 404 Not Found
 
 ### Requirements:
 - [Node.js 18.13.0 LTS for Windows (64-bit)](https://nodejs.org/en/download/ "Node.js 18.13.0 LTS for Windows (64-bit)")
