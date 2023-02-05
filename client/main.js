@@ -881,6 +881,13 @@ app.post('/sign-in', async (req, res) => {
 	}
 });
 
+app.get('/sign-out', async (req, res) => {
+	delete req.session.account;
+	req.session.destroy(() => {
+		res.redirect('/');
+	});
+});
+
 app.get('/forgotten-password', async (req, res) => {
 	renderPage(res, 'index', {
 		page: {
