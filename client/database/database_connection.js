@@ -233,7 +233,7 @@ class DatabaseConnection {
 					SELECT name
 					FROM role
 					WHERE role.role_id = account.role_id
-				) AS role,
+				) AS role_name,
 				email,
 				password,
 				signed_up_at,

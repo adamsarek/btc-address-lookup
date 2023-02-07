@@ -17,6 +17,19 @@
 		"secret_timeout": 86400000,
 		"cookie_timeout": 86400000
 	},
+	"router": {
+		"title": "BTC Address Lookup",
+		"page": {
+			"/":                   {                       "file": "index" },
+			"/sign-up":            { "class": "sign-form", "file": "sign_up",            "title": "Sign up" },
+			"/sign-in":            { "class": "sign-form", "file": "sign_in",            "title": "Sign in" },
+			"/forgotten-password": { "class": "sign-form", "file": "forgotten_password", "title": "Forgotten password" },
+			"/reset-password":     { "class": "sign-form", "file": "reset_password",     "title": "Reset password" },
+			"/change-password":    { "class": "sign-form", "file": "change_password",    "title": "Change password" },
+			"/account":            { "class": "sign-form", "file": "account",            "title": "Account" },
+			"*":                   { "class": "sign-form", "file": "error",              "title": "Page not found" }
+		}
+	},
 	"crawler": {
 		"data_path": "../db_builder/crawled_data"
 	}

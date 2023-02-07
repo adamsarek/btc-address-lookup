@@ -28,157 +28,344 @@ const PATH = require('path');
 const Database = require('./database/database.js');
 const DatabaseConnection = require('./database/database_connection.js');
 
-const config = require('./config.json');
-const db = require('./db.json');
-const databaseConnection = new DatabaseConnection(new Database().getConnection(db.connection));
-
-const app = EXPRESS();
-
-app.get('/api/tokens/:token([a-zA-Z0-9]{1,})', async (req, res) => {
-	let token;
-	
-	// Token is not set
-	if(!req.params.hasOwnProperty('token') || req.params.token.length == 0) {
-		return res.status(400).json({error: 'Token has to be set!'});
+// Functions
+function rotateSecret() {
+	if(!FS.existsSync('./secret.json')) {
+		SECRET = {
+			session: {
+				[CRYPTO.randomBytes(64).toString('hex')]: Date.now()
+			}
+		};
+		FS.writeFileSync('./secret.json', JSON.stringify(SECRET));
 	}
 	else {
-		token = req.params.token;
-	}
-
-	token = await databaseConnection.getToken(token);
-
-	// Token does not exist
-	if(token.rows.length == 0) {
-		return res.status(400).json({error: 'Token does not exist!'});
-	}
-	else {
-		token = token.rows[0];
-		const now = Date.now();
-		const newResetUseCountAt = now + config.api.role[token.role_id].reset_use_count_after * 1000;
-		
-		if(token.reset_use_count_at != null) {
-			const resetUseCountAt = Date.parse(token.reset_use_count_at);
-			
-			if(now < resetUseCountAt) {
-				// Token use count limit reached
-				if(token.use_count >= token.use_count_limit) {
-					return res.status(400).json({error: 'Token use count limit reached!'});
-				}
-				else {
-					token.use_count++;
-				}
-			}
-			else {
-				token.use_count = 1;
-				token.reset_use_count_at = newResetUseCountAt;
+		SECRET = require('./secret.json');
+		SECRET['session'] = {[CRYPTO.randomBytes(64).toString('hex')]: Date.now(), ...SECRET['session']};
+		for(const secretSession of Object.keys(SECRET['session'])) {
+			if(SECRET['session'][secretSession] + config.session.secret_timeout * 2 < Date.now()) {
+				delete SECRET['session'][secretSession];
 			}
 		}
-		else {
-			token.use_count = 1;
-			token.reset_use_count_at = newResetUseCountAt;
-		}
-		token.last_used_at = now;
-
-		await databaseConnection.setToken(token);
-
-		token.last_used_at = new Date(token.last_used_at).toISOString();
-		token.reset_use_count_at = new Date(token.reset_use_count_at).toISOString();
-
-		return res.json(token);
 	}
-});
 
-app.get('/api/addresses', async (req, res) => {
-	let offset;
-	
+	setTimeout(() => {
+		rotateSecret();
+	}, Object.values(SECRET['session'])[0] + config.session.secret_timeout - Date.now());
+}
+
+function preProcessAPI(req, res, next) {
+	req.data = {};
+
+	// Get client IP
+	req.data.ip = (
+		req.headers['cf-connecting-ip'] ||
+		req.headers['x-real-ip'] ||
+		req.headers['x-forwarded-for'] ||
+		req.socket.remoteAddress || ''
+	).split(',')[0].trim();
+
+	// Get account
+	if(typeof req.session.account !== 'undefined') {
+		req.data.account = req.session.account;
+	}
+
+	next();
+}
+
+function useOffset(req, res, next) {
 	// Offset is not set
 	if(!req.query.hasOwnProperty('offset') || req.query.offset.length == 0) {
-		offset = 0;
+		req.data.offset = 0;
 	}
 	else {
-		offset = parseInt(req.query.offset);
+		req.data.offset = parseInt(req.query.offset);
 
 		// Offset does not have a numeric value
-		if(isNaN(offset)) {
+		if(isNaN(req.data.offset)) {
 			return res.status(400).json({error: 'Offset has to have a numeric value!'});
 		}
 		// Offset is too low
-		else if(offset <= -1) {
+		else if(req.data.offset <= -1) {
 			return res.status(400).json({error: 'Offset has to be at least 0!'});
 		}
 	}
 
-	let limit;
-	
+	next();
+}
+
+function useLimit(req, res, next) {
 	// Limit is not set
 	if(!req.query.hasOwnProperty('limit') || req.query.limit.length == 0) {
 		return res.status(400).json({error: 'Limit has to be set!'});
 	}
 	else {
-		limit = parseInt(req.query.limit);
+		req.data.limit = parseInt(req.query.limit);
 
 		// Limit does not have a numeric value
-		if(isNaN(limit)) {
+		if(isNaN(req.data.limit)) {
 			return res.status(400).json({error: 'Limit has to have a numeric value!'});
 		}
 		// Limit is too low
-		else if(limit <= 0) {
+		else if(req.data.limit <= 0) {
 			return res.status(400).json({error: 'Limit has to be at least 1!'});
 		}
 		// Limit is too high
-		else if(limit > 100) {
+		else if(req.data.limit > 100) {
 			return res.status(400).json({error: 'Limit has to be at most 100!'});
 		}
+		else {
+			next();
+		}
 	}
+}
 
-	let token;
-	
+async function loadToken(req, res, next) {
 	// Token is not set
 	if(!req.query.hasOwnProperty('token') || req.query.token.length == 0) {
 		return res.status(400).json({error: 'Token has to be set!'});
 	}
 	else {
-		token = req.query.token;
-	}
+		req.data.token = req.query.token;
 
-	token = await databaseConnection.getToken(token);
+		next();
+	}
+}
+
+async function useToken(req, res, next) {
+	req.data.token = await databaseConnection.getToken(req.data.token);
 
 	// Token does not exist
-	if(token.rows.length == 0) {
+	if(req.data.token.rows.length == 0) {
 		return res.status(400).json({error: 'Token does not exist!'});
 	}
 	else {
-		token = token.rows[0];
+		req.data.token = req.data.token.rows[0];
 		const now = Date.now();
-		const newResetUseCountAt = now + config.api.role[token.role_id].reset_use_count_after * 1000;
+		const newResetUseCountAt = now + config.api.role[req.data.token.role_id].reset_use_count_after * 1000;
 		
-		if(token.reset_use_count_at != null) {
-			const resetUseCountAt = Date.parse(token.reset_use_count_at);
+		if(req.data.token.reset_use_count_at != null) {
+			const resetUseCountAt = Date.parse(req.data.token.reset_use_count_at);
 			
 			if(now < resetUseCountAt) {
 				// Token use count limit reached
-				if(token.use_count >= token.use_count_limit) {
+				if(req.data.token.use_count >= req.data.token.use_count_limit) {
 					return res.status(400).json({error: 'Token use count limit reached!'});
 				}
 				else {
-					token.use_count++;
+					req.data.token.use_count++;
 				}
 			}
 			else {
-				token.use_count = 1;
-				token.reset_use_count_at = newResetUseCountAt;
+				req.data.token.use_count = 1;
+				req.data.token.reset_use_count_at = newResetUseCountAt;
 			}
 		}
 		else {
-			token.use_count = 1;
-			token.reset_use_count_at = newResetUseCountAt;
+			req.data.token.use_count = 1;
+			req.data.token.reset_use_count_at = newResetUseCountAt;
 		}
-		token.last_used_at = now;
+		req.data.token.last_used_at = now;
 
-		await databaseConnection.setToken(token);
+		await databaseConnection.setToken(req.data.token);
+
+		next();
+	}
+}
+
+function preProcess(req, res, next) {
+	req.data = {};
+
+	// Get title
+	req.data.title = config.router.title;
+
+	// Get client IP
+	req.data.ip = (
+		req.headers['cf-connecting-ip'] ||
+		req.headers['x-real-ip'] ||
+		req.headers['x-forwarded-for'] ||
+		req.socket.remoteAddress || ''
+	).split(',')[0].trim();
+
+	// Get account
+	if(typeof req.session.account !== 'undefined') {
+		req.data.account = req.session.account;
+	}
+
+	// Get page
+	if(typeof config.router.page[req.url] !== 'undefined') {
+		req.data.page = config.router.page[req.url];
+	}
+	else {
+		req.data.page = config.router.page['*'];
+	}
+
+	next();
+}
+
+function getForm(req, inputs) {
+	const form = {
+		_error: '',
+		_success: {
+			formValidation: true
+		}
+	};
+
+	// Load form data
+	for(const input of inputs) {
+		form[input] = {
+			data: (req.body[input] !== 'undefined' ? req.body[input] : ''),
+			error: ''
+		};
+	}
+
+	// Email validation
+	if(typeof form.email !== 'undefined') {
+		if(form.email.data.length == 0) {
+			form.email.error = 'Email is empty.';
+			form._success.formValidation = false;
+		}
+		else if(form.email.data.length > 128) {
+			form.email.error = 'Email is too long.';
+			form._success.formValidation = false;
+		}
+		else if(!/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(form.email.data)) {
+			form.email.error = 'Email is not valid.';
+			form._success.formValidation = false;
+		}
+	}
+
+	// Password validation
+	if(typeof form.password !== 'undefined') {
+		if(form.password.data.length == 0) {
+			form.password.error = 'Password is empty.';
+			form._success.formValidation = false;
+		}
+		else if(form.password.data.length < 8) {
+			form.password.error = 'Password is too short.';
+			form._success.formValidation = false;
+		}
+		else if(form.password.data.length > 128) {
+			form.password.error = 'Password is too long.';
+			form._success.formValidation = false;
+		}
+		else if(!/^[a-zA-Z0-9.!@#$%^&'*+/=?^_`{|}~-]*$/.test(form.password.data)) {
+			form.password.error = 'Password is not valid.';
+			form._success.formValidation = false;
+		}
+		else if(!/^(?=.*[0-9])[a-zA-Z0-9.!@#$%^&'*+/=?^_`{|}~-]*$/.test(form.password.data)) {
+			form.password.error = 'Password does not contain number.';
+			form._success.formValidation = false;
+		}
+		else if(!/^(?=.*[.!@#$%^&'*+/=?^_`{|}~-])[a-zA-Z0-9.!@#$%^&'*+/=?^_`{|}~-]*$/.test(form.password.data)) {
+			form.password.error = 'Password does not contain special character.';
+			form._success.formValidation = false;
+		}
+	}
+
+	// Confirm password validation
+	if(typeof form.confirm_password !== 'undefined') {
+		if(form.confirm_password.data == '') {
+			form.confirm_password.error = 'Confirm password is empty.';
+			form._success.formValidation = false;
+		}
+		else if(form.password.data != form.confirm_password.data) {
+			form.confirm_password.error = 'Passwords do not match.';
+			form._success.formValidation = false;
+		}
 	}
 	
-	const addresses = await databaseConnection.getAddresses(token.role_id, limit, offset);
+	return form;
+}
+
+async function signIn(req, res, next) {
+	req.data.form._success.overall = false;
+	
+	let account = await databaseConnection.getAccount(req.data.form.email.data);
+	
+	// Account found
+	if(account.rows.length > 0) {
+		if(BCRYPT.compareSync(req.data.form.password.data, account.rows[0].password)) {
+			await databaseConnection.signInAccount(req.data.form.email.data, req.data.ip);
+
+			account = await databaseConnection.getAccount(req.data.form.email.data);
+
+			req.session.account = account.rows[0];
+			req.session.save(() => {
+				req.data.form._success.overall = true;
+				return res.redirect('/account');
+			});
+		}
+		else {
+			req.data.form._error = 'Account does not exist.';
+			next();
+		}
+	}
+	else {
+		req.data.form._error = 'Account does not exist.';
+		next();
+	}
+}
+
+function postProcess(req, res, next) {
+	if(typeof req.data.form !== 'undefined') {
+		if(typeof req.data.form.password !== 'undefined') { req.data.form.password.data = ''; }
+		if(typeof req.data.form.confirm_password !== 'undefined') { req.data.form.confirm_password.data = ''; }
+		if(typeof req.data.form.current_password !== 'undefined') { req.data.form.current_password.data = ''; }
+	}
+
+	next();
+}
+
+function render(req, res) {
+	res.render('index', req.data);
+}
+
+
+
+const config = require('./config.json');
+const db = require('./db.json');
+const databaseConnection = new DatabaseConnection(new Database().getConnection(db.connection));
+
+let SECRET;
+rotateSecret();
+
+const app = EXPRESS();
+app.use(BODY_PARSER.json());
+app.use(BODY_PARSER.urlencoded({ extended: true }));
+app.use(EXPRESS.static('public'));
+app.use(EXPRESS_SESSION({
+	store: new (CONNECT_PG_SIMPLE(EXPRESS_SESSION))({
+		pool: databaseConnection.getConnection()
+	}),
+	secret: Object.keys(SECRET['session']),
+	resave: false,
+	saveUninitialized: false,
+	cookie: { maxAge: config.session.cookie_timeout }
+}));
+app.set('view engine', 'ejs');
+
+
+
+// REST API
+app.get('/api/tokens/:token([a-zA-Z0-9]{1,})', preProcessAPI, (req, res, next) => {
+	// Token is not set
+	if(!req.params.hasOwnProperty('token') || req.params.token.length == 0) {
+		return res.status(400).json({error: 'Token has to be set!'});
+	}
+	else {
+		req.data.token = req.params.token;
+
+		next();
+	}
+}, useToken, (req, res) => {
+	req.data.token.last_used_at = new Date(req.data.token.last_used_at).toISOString();
+	req.data.token.reset_use_count_at = new Date(req.data.token.reset_use_count_at).toISOString();
+	
+	return res.json(req.data.token);
+});
+
+app.get('/api/addresses', preProcessAPI, useOffset, useLimit, loadToken, useToken, async (req, res) => {
+	const addresses = await databaseConnection.getAddresses(req.data.token.role_id, req.data.limit, req.data.offset);
 
 	// No address found
 	if(addresses.rows.length == 0) {
@@ -189,65 +376,18 @@ app.get('/api/addresses', async (req, res) => {
 	}
 });
 
-app.get('/api/addresses/:address([a-zA-Z0-9]{1,})', async (req, res) => {
-	let address;
-	
+app.get('/api/addresses/:address([a-zA-Z0-9]{1,})', preProcessAPI, (req, res, next) => {
 	// Address is not set
 	if(!req.params.hasOwnProperty('address') || req.params.address.length == 0) {
 		return res.status(400).json({error: 'Address has to be set!'});
 	}
 	else {
-		address = req.params.address;
-	}
+		req.data.address = req.params.address;
 
-	let token;
-	
-	// Token is not set
-	if(!req.query.hasOwnProperty('token') || req.query.token.length == 0) {
-		return res.status(400).json({error: 'Token has to be set!'});
+		next();
 	}
-	else {
-		token = req.query.token;
-	}
-
-	token = await databaseConnection.getToken(token);
-
-	// Token does not exist
-	if(token.rows.length == 0) {
-		return res.status(400).json({error: 'Token does not exist!'});
-	}
-	else {
-		token = token.rows[0];
-		const now = Date.now();
-		const newResetUseCountAt = now + config.api.role[token.role_id].reset_use_count_after * 1000;
-		
-		if(token.reset_use_count_at != null) {
-			const resetUseCountAt = Date.parse(token.reset_use_count_at);
-			
-			if(now < resetUseCountAt) {
-				// Token use count limit reached
-				if(token.use_count >= token.use_count_limit) {
-					return res.status(400).json({error: 'Token use count limit reached!'});
-				}
-				else {
-					token.use_count++;
-				}
-			}
-			else {
-				token.use_count = 1;
-				token.reset_use_count_at = newResetUseCountAt;
-			}
-		}
-		else {
-			token.use_count = 1;
-			token.reset_use_count_at = newResetUseCountAt;
-		}
-		token.last_used_at = now;
-
-		await databaseConnection.setToken(token);
-	}
-	
-	address = await databaseConnection.getAddress(token.role_id, address);
+}, loadToken, useToken, async (req, res) => {
+	const address = await databaseConnection.getAddress(req.data.token.role_id, req.data.address);
 
 	// Address not found
 	if(address.rows.length == 0) {
@@ -258,65 +398,18 @@ app.get('/api/addresses/:address([a-zA-Z0-9]{1,})', async (req, res) => {
 	}
 });
 
-app.get('/api/data/:data_id([0-9]{1,})', async (req, res) => {
-	let dataId;
-	
+app.get('/api/data/:data_id([0-9]{1,})', preProcessAPI, (req, res, next) => {
 	// Data ID is not set
 	if(!req.params.hasOwnProperty('data_id') || req.params.data_id.length == 0) {
 		return res.status(400).json({error: 'Data ID has to be set!'});
 	}
 	else {
-		dataId = req.params.data_id;
-	}
+		req.data.dataId = req.params.data_id;
 
-	let token;
-	
-	// Token is not set
-	if(!req.query.hasOwnProperty('token') || req.query.token.length == 0) {
-		return res.status(400).json({error: 'Token has to be set!'});
+		next();
 	}
-	else {
-		token = req.query.token;
-	}
-
-	token = await databaseConnection.getToken(token);
-
-	// Token does not exist
-	if(token.rows.length == 0) {
-		return res.status(400).json({error: 'Token does not exist!'});
-	}
-	else {
-		token = token.rows[0];
-		const now = Date.now();
-		const newResetUseCountAt = now + config.api.role[token.role_id].reset_use_count_after * 1000;
-		
-		if(token.reset_use_count_at != null) {
-			const resetUseCountAt = Date.parse(token.reset_use_count_at);
-			
-			if(now < resetUseCountAt) {
-				// Token use count limit reached
-				if(token.use_count >= token.use_count_limit) {
-					return res.status(400).json({error: 'Token use count limit reached!'});
-				}
-				else {
-					token.use_count++;
-				}
-			}
-			else {
-				token.use_count = 1;
-				token.reset_use_count_at = newResetUseCountAt;
-			}
-		}
-		else {
-			token.use_count = 1;
-			token.reset_use_count_at = newResetUseCountAt;
-		}
-		token.last_used_at = now;
-
-		await databaseConnection.setToken(token);
-	}
-	
-	let data = await databaseConnection.getData(token.role_id, dataId);
+}, loadToken, useToken, async (req, res) => {
+	let data = await databaseConnection.getData(req.data.token.role_id, req.data.dataId);
 
 	// Data not found
 	if(data.rows.length == 0) {
@@ -348,18 +441,16 @@ app.get('/api/sources', async (req, res) => {
 	}
 });
 
-app.get('/api/sources/:source_id([0-9]{1,})', async (req, res) => {
-	let sourceId;
-	
+app.get('/api/sources/:source_id([0-9]{1,})', preProcessAPI, async (req, res) => {
 	// Source ID is not set
 	if(!req.params.hasOwnProperty('source_id') || req.params.source_id.length == 0) {
 		return res.status(400).json({error: 'Source ID has to be set!'});
 	}
 	else {
-		sourceId = req.params.source_id;
+		req.data.sourceId = req.params.source_id;
 	}
 
-	const source = await databaseConnection.getSource(sourceId);
+	const source = await databaseConnection.getSource(req.data.sourceId);
 
 	// Source not found
 	if(source.rows.length == 0) {
@@ -370,107 +461,56 @@ app.get('/api/sources/:source_id([0-9]{1,})', async (req, res) => {
 	}
 });
 
-app.get('/api/source_labels/:source_label_id([0-9]{1,})', async (req, res) => {
-	let addressOffset;
-	
+app.get('/api/source_labels/:source_label_id([0-9]{1,})', preProcessAPI, (req, res, next) => {
 	// Address offset is not set
 	if(!req.query.hasOwnProperty('address_offset') || req.query.address_offset.length == 0) {
-		addressOffset = 0;
+		req.data.addressOffset = 0;
 	}
 	else {
-		addressOffset = parseInt(req.query.address_offset);
+		req.data.addressOffset = parseInt(req.query.address_offset);
 
 		// Address offset does not have a numeric value
-		if(isNaN(addressOffset)) {
+		if(isNaN(req.data.addressOffset)) {
 			return res.status(400).json({error: 'Address offset has to have a numeric value!'});
 		}
 		// Address offset is too low
-		else if(addressOffset <= -1) {
+		else if(req.data.addressOffset <= -1) {
 			return res.status(400).json({error: 'Address offset has to be at least 0!'});
 		}
 	}
 
-	let addressLimit;
-	
 	// Address limit is not set
 	if(!req.query.hasOwnProperty('address_limit') || req.query.address_limit.length == 0) {
 		return res.status(400).json({error: 'Address limit has to be set!'});
 	}
 	else {
-		addressLimit = parseInt(req.query.address_limit);
+		req.data.addressLimit = parseInt(req.query.address_limit);
 
 		// Address limit does not have a numeric value
-		if(isNaN(addressLimit)) {
+		if(isNaN(req.data.addressLimit)) {
 			return res.status(400).json({error: 'Address limit has to have a numeric value!'});
 		}
 		// Address limit is too low
-		else if(addressLimit <= 0) {
+		else if(req.data.addressLimit <= 0) {
 			return res.status(400).json({error: 'Address limit has to be at least 1!'});
 		}
 		// Address limit is too high
-		else if(addressLimit > 100) {
+		else if(req.data.addressLimit > 100) {
 			return res.status(400).json({error: 'Address limit has to be at most 100!'});
 		}
 	}
 
-	let sourceLabelId;
-	
 	// Source label ID is not set
 	if(!req.params.hasOwnProperty('source_label_id') || req.params.source_label_id.length == 0) {
 		return res.status(400).json({error: 'Source label ID has to be set!'});
 	}
 	else {
-		sourceLabelId = req.params.source_label_id;
+		req.data.sourceLabelId = req.params.source_label_id;
 	}
 
-	let token;
-	
-	// Token is not set
-	if(!req.query.hasOwnProperty('token') || req.query.token.length == 0) {
-		return res.status(400).json({error: 'Token has to be set!'});
-	}
-	else {
-		token = req.query.token;
-	}
-
-	token = await databaseConnection.getToken(token);
-
-	// Token does not exist
-	if(token.rows.length == 0) {
-		return res.status(400).json({error: 'Token does not exist!'});
-	}
-	else {
-		token = token.rows[0];
-		const now = Date.now();
-		const newResetUseCountAt = now + config.api.role[token.role_id].reset_use_count_after * 1000;
-		
-		if(token.reset_use_count_at != null) {
-			const resetUseCountAt = Date.parse(token.reset_use_count_at);
-			
-			if(now < resetUseCountAt) {
-				// Token use count limit reached
-				if(token.use_count >= token.use_count_limit) {
-					return res.status(400).json({error: 'Token use count limit reached!'});
-				}
-				else {
-					token.use_count++;
-				}
-			}
-			else {
-				token.use_count = 1;
-				token.reset_use_count_at = newResetUseCountAt;
-			}
-		}
-		else {
-			token.use_count = 1;
-			token.reset_use_count_at = newResetUseCountAt;
-		}
-		token.last_used_at = now;
-
-		await databaseConnection.setToken(token);
-	}
-
-	const sourceLabel = await databaseConnection.getSourceLabel(token.role_id, sourceLabelId, addressLimit, addressOffset);
+	next();
+}, loadToken, useToken, async (req, res) => {
+	const sourceLabel = await databaseConnection.getSourceLabel(req.data.token.role_id, req.data.sourceLabelId, req.data.addressLimit, req.data.addressOffset);
 
 	// Source label not found
 	if(sourceLabel.rows.length == 0) {
@@ -481,486 +521,93 @@ app.get('/api/source_labels/:source_label_id([0-9]{1,})', async (req, res) => {
 	}
 });
 
-function rotateSecret() {
-	if(!FS.existsSync('./secret.json')) {
-		SECRET = {
-			session: {
-				[CRYPTO.randomBytes(64).toString('hex')]: Date.now()
-			}
-		};
-		FS.writeFileSync('./secret.json', JSON.stringify(SECRET));
-	}
-	else {
-		SECRET = require('./secret.json');
-		SECRET['session'] = {[CRYPTO.randomBytes(64).toString('hex')]: Date.now(), ...SECRET['session']};
-		for(const secretSession of Object.keys(SECRET['session'])) {
-			if(SECRET['session'][secretSession] + config.session.secret_timeout * 2 < Date.now()) {
-				delete SECRET['session'][secretSession];
-			}
-		}
-	}
-
-	setTimeout(() => {
-		rotateSecret();
-	}, Object.values(SECRET['session'])[0] + config.session.secret_timeout - Date.now());
-}
-
-function renderPage(res, page, data) {
-	// Set data
-	data.title = 'BTC Address Lookup';
-	
-	// Render page
-	res.render(`${page}`, data);
-}
-
-let SECRET;
-rotateSecret();
-
-app.use(BODY_PARSER.json());
-app.use(BODY_PARSER.urlencoded({ extended: true }));
-app.use(EXPRESS.static('public'));
-app.use(EXPRESS_SESSION({
-	store: new (CONNECT_PG_SIMPLE(EXPRESS_SESSION))({
-		pool: databaseConnection.getConnection()
-	}),
-	secret: Object.keys(SECRET['session']),
-	resave: false,
-	saveUninitialized: false,
-	cookie: { maxAge: config.session.cookie_timeout }
-}));
-
-app.set('view engine', 'ejs');
-
-app.get('/', async (req, res) => {
-	renderPage(res, 'index', {
-		account: (typeof req !== 'undefined' && typeof req.session !== 'undefined' && typeof req.session.account !== 'undefined' ? req.session.account : null),
-		page: {
-			file: 'index'
-		}
-		/*search: {
-			q: "x"
-		}*/
-		/*page: {
-			title: 'Index'
-		}*/
-		// #TODO - REST API - Source, Source labels - data count
-	});
+app.get('/api/*', (req, res) => {
+	return res.status(404).json({error: 'Page not found'});
 });
 
-app.get('/sign-up', async (req, res) => {
-	renderPage(res, 'index', {
-		account: (typeof req !== 'undefined' && typeof req.session !== 'undefined' && typeof req.session.account !== 'undefined' ? req.session.account : null),
-		page: {
-			class: 'sign-form',
-			file: 'sign_up',
-			title: 'Sign up'
-		}
-	});
-});
 
-app.post('/sign-up', async (req, res) => {
-	const form = {
-		email: { data: '', error: '' },
-		password: { data: '', error: '' },
-		confirm_password: { data: '', error: '' }
-	};
-	
-	// Get form data
-	const reqBodyKeys = Object.keys(req.body);
-	for(let i = 0; i < reqBodyKeys.length; i++) {
-		form[reqBodyKeys[i]].data = req.body[reqBodyKeys[i]];
-	}
 
-	let validationSuccess = true;
-	
-	// Email validation
-	if(form.email.data.length == 0) {
-		form.email.error = 'Email is empty.';
-		validationSuccess = false;
-	}
-	else if(form.email.data.length > 128) {
-		form.email.error = 'Email is too long.';
-		validationSuccess = false;
-	}
-	else if(!/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(form.email.data)) {
-		form.email.error = 'Email is not valid.';
-		validationSuccess = false;
-	}
-	
-	// Password validation
-	if(form.password.data.length == 0) {
-		form.password.error = 'Password is empty.';
-		validationSuccess = false;
-	}
-	else if(form.password.data.length < 8) {
-		form.password.error = 'Password is too short.';
-		validationSuccess = false;
-	}
-	else if(form.password.data.length > 128) {
-		form.password.error = 'Password is too long.';
-		validationSuccess = false;
-	}
-	else if(!/^[a-zA-Z0-9.!@#$%^&'*+/=?^_`{|}~-]*$/.test(form.password.data)) {
-		form.password.error = 'Password is not valid.';
-		validationSuccess = false;
-	}
-	else if(!/^(?=.*[0-9])[a-zA-Z0-9.!@#$%^&'*+/=?^_`{|}~-]*$/.test(form.password.data)) {
-		form.password.error = 'Password does not contain number.';
-		validationSuccess = false;
-	}
-	else if(!/^(?=.*[.!@#$%^&'*+/=?^_`{|}~-])[a-zA-Z0-9.!@#$%^&'*+/=?^_`{|}~-]*$/.test(form.password.data)) {
-		form.password.error = 'Password does not contain special character.';
-		validationSuccess = false;
-	}
-	
-	// Confirm password validation
-	if(form.confirm_password.data == '') {
-		form.confirm_password.error = 'Confirm password is empty.';
-		validationSuccess = false;
-	}
-	else if(form.password.data != form.confirm_password.data) {
-		form.confirm_password.error = 'Passwords do not match.';
-		validationSuccess = false;
-	}
+// Web pages
+app.get('/', preProcess, render);
 
-	// Successfully validated
-	if(validationSuccess) {
-		let formSuccess = true;
+app.get('/sign-up', preProcess, render);
 
-		// Get client IP
-		let ips = (
-			req.headers['cf-connecting-ip'] ||
-			req.headers['x-real-ip'] ||
-			req.headers['x-forwarded-for'] ||
-			req.socket.remoteAddress || ''
-		).split(',');
-		const ip = ips[0].trim();
+app.post('/sign-up', preProcess, async (req, res, next) => {
+	req.data.form = getForm(req, ['email', 'password', 'confirm_password']);
 
-		// Email exists
-		if((await databaseConnection.hasEmail(form.email.data)).rows.length > 0) {
-			form.email.error = 'Email already exists.';
-			formSuccess = false;
-		}
+	// Form successfully validated
+	if(req.data.form._success.formValidation) {
+		try {
+			req.data.form._success.dataValidation = true;
+			
+			// Email exists
+			if((await databaseConnection.hasEmail(req.data.form.email.data)).rows.length > 0) {
+				req.data.form.email.error = 'Email already exists.';
+				req.data.form._success.dataValidation = false;
 
-		// Form successful
-		if(formSuccess) {
-			let dbSuccess = true;
-
-			try {
-				await databaseConnection.addAccount(form.email.data, form.password.data, ip);
-			}
-			catch (error) {
-				console.error(error);
-				dbSuccess = false;
+				next();
 			}
 
-			// Database successful
-			if(dbSuccess) {
-				let account = await databaseConnection.getAccount(form.email.data);
+			// Data successfully validated
+			if(req.data.form._success.dataValidation) {
+				await databaseConnection.addAccount(req.data.form.email.data, req.data.form.password.data, req.data.ip);
 
-				// Account found
-				if(account.rows.length > 0) {
-					if(BCRYPT.compareSync(form.password.data, account.rows[0].password)) {
-						await databaseConnection.signInAccount(form.email.data, ip);
-
-						account = await databaseConnection.getAccount(form.email.data);
-						account = account.rows[0];
-						delete account.password;
-
-						req.session.account = account;
-						req.session.save(() => {
-							res.redirect('/account');
-						});
-					}
-					else {
-						form._error = 'Account does not exist.';
-
-						form.password.data = '';
-						form.confirm_password.data = '';
-
-						renderPage(res, 'index', {
-							account: (typeof req !== 'undefined' && typeof req.session !== 'undefined' && typeof req.session.account !== 'undefined' ? req.session.account : null),
-							page: {
-								class: 'sign-form',
-								file: 'sign_up',
-								title: 'Sign up'
-							},
-							form: form
-						});
-					}
-				}
-				else {
-					form._error = 'Account does not exist.';
-
-					form.password.data = '';
-					form.confirm_password.data = '';
-
-					renderPage(res, 'index', {
-						account: (typeof req !== 'undefined' && typeof req.session !== 'undefined' && typeof req.session.account !== 'undefined' ? req.session.account : null),
-						page: {
-							class: 'sign-form',
-							file: 'sign_up',
-							title: 'Sign up'
-						},
-						form: form
-					});
-				}
-			}
-			else {
-				form._error = 'Account could not be created. Try again later.';
-
-				form.password.data = '';
-				form.confirm_password.data = '';
-
-				renderPage(res, 'index', {
-					account: (typeof req !== 'undefined' && typeof req.session !== 'undefined' && typeof req.session.account !== 'undefined' ? req.session.account : null),
-					page: {
-						class: 'sign-form',
-						file: 'sign_up',
-						title: 'Sign up'
-					},
-					form: form
-				});
+				signIn(req, res, next);
 			}
 		}
-		else {
-			form.password.data = '';
-			form.confirm_password.data = '';
-
-			renderPage(res, 'index', {
-				account: (typeof req !== 'undefined' && typeof req.session !== 'undefined' && typeof req.session.account !== 'undefined' ? req.session.account : null),
-				page: {
-					class: 'sign-form',
-					file: 'sign_up',
-					title: 'Sign up'
-				},
-				form: form
-			});
+		catch(error) {
+			req.data.form._error = 'Account could not be created. Try again later.';
+			next();
 		}
 	}
-	else {
-		form.password.data = '';
-		form.confirm_password.data = '';
+}, postProcess, render);
 
-		renderPage(res, 'index', {
-			account: (typeof req !== 'undefined' && typeof req.session !== 'undefined' && typeof req.session.account !== 'undefined' ? req.session.account : null),
-			page: {
-				class: 'sign-form',
-				file: 'sign_up',
-				title: 'Sign up'
-			},
-			form: form
-		});
-	}
-});
+app.get('/sign-in', preProcess, render);
 
-app.get('/sign-in', async (req, res) => {
-	renderPage(res, 'index', {
-		account: (typeof req !== 'undefined' && typeof req.session !== 'undefined' && typeof req.session.account !== 'undefined' ? req.session.account : null),
-		page: {
-			class: 'sign-form',
-			file: 'sign_in',
-			title: 'Sign in'
+app.post('/sign-in', preProcess, (req, res, next) => {
+	req.data.form = getForm(req, ['email', 'password']);
+
+	// Form successfully validated
+	if(req.data.form._success.formValidation) {
+		try {
+			signIn(req, res, next);
 		}
-	});
-});
-
-app.post('/sign-in', async (req, res) => {
-	const form = {
-		email: { data: '', error: '' },
-		password: { data: '', error: '' }
-	};
-	
-	// Get form data
-	const reqBodyKeys = Object.keys(req.body);
-	for(let i = 0; i < reqBodyKeys.length; i++) {
-		form[reqBodyKeys[i]].data = req.body[reqBodyKeys[i]];
-	}
-
-	let validationSuccess = true;
-	
-	// Email validation
-	if(form.email.data.length == 0) {
-		form.email.error = 'Email is empty.';
-		validationSuccess = false;
-	}
-	else if(form.email.data.length > 128) {
-		form.email.error = 'Email is too long.';
-		validationSuccess = false;
-	}
-	else if(!/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(form.email.data)) {
-		form.email.error = 'Email is not valid.';
-		validationSuccess = false;
-	}
-	
-	// Password validation
-	if(form.password.data.length == 0) {
-		form.password.error = 'Password is empty.';
-		validationSuccess = false;
-	}
-	else if(form.password.data.length < 8) {
-		form.password.error = 'Password is too short.';
-		validationSuccess = false;
-	}
-	else if(form.password.data.length > 128) {
-		form.password.error = 'Password is too long.';
-		validationSuccess = false;
-	}
-	else if(!/^[a-zA-Z0-9.!@#$%^&'*+/=?^_`{|}~-]*$/.test(form.password.data)) {
-		form.password.error = 'Password is not valid.';
-		validationSuccess = false;
-	}
-	else if(!/^(?=.*[0-9])[a-zA-Z0-9.!@#$%^&'*+/=?^_`{|}~-]*$/.test(form.password.data)) {
-		form.password.error = 'Password does not contain number.';
-		validationSuccess = false;
-	}
-	else if(!/^(?=.*[.!@#$%^&'*+/=?^_`{|}~-])[a-zA-Z0-9.!@#$%^&'*+/=?^_`{|}~-]*$/.test(form.password.data)) {
-		form.password.error = 'Password does not contain special character.';
-		validationSuccess = false;
-	}
-	
-	// Successfully validated
-	if(validationSuccess) {
-		// Get client IP
-		let ips = (
-			req.headers['cf-connecting-ip'] ||
-			req.headers['x-real-ip'] ||
-			req.headers['x-forwarded-for'] ||
-			req.socket.remoteAddress || ''
-		).split(',');
-		const ip = ips[0].trim();
-
-		let account = await databaseConnection.getAccount(form.email.data);
-
-		// Account found
-		if(account.rows.length > 0) {
-			if(BCRYPT.compareSync(form.password.data, account.rows[0].password)) {
-				await databaseConnection.signInAccount(form.email.data, ip);
-				
-				account = await databaseConnection.getAccount(form.email.data);
-				account = account.rows[0];
-				delete account.password;
-
-				req.session.account = account;
-				req.session.save(() => {
-					res.redirect('/account');
-				});
-			}
-			else {
-				form._error = 'Account does not exist.';
-
-				form.password.data = '';
-
-				renderPage(res, 'index', {
-					account: (typeof req !== 'undefined' && typeof req.session !== 'undefined' && typeof req.session.account !== 'undefined' ? req.session.account : null),
-					page: {
-						class: 'sign-form',
-						file: 'sign_in',
-						title: 'Sign in'
-					},
-					form: form
-				});
-			}
-		}
-		else {
-			form._error = 'Account does not exist.';
-
-			form.password.data = '';
-
-			renderPage(res, 'index', {
-				account: (typeof req !== 'undefined' && typeof req.session !== 'undefined' && typeof req.session.account !== 'undefined' ? req.session.account : null),
-				page: {
-					class: 'sign-form',
-					file: 'sign_in',
-					title: 'Sign in'
-				},
-				form: form
-			});
+		catch(error) {
+			req.data.form._error = 'Could not sign into the account. Try again later.';
+			next();
 		}
 	}
-	else {
-		form.password.data = '';
+}, postProcess, render);
 
-		renderPage(res, 'index', {
-			account: (typeof req !== 'undefined' && typeof req.session !== 'undefined' && typeof req.session.account !== 'undefined' ? req.session.account : null),
-			page: {
-				class: 'sign-form',
-				file: 'sign_in',
-				title: 'Sign in'
-			},
-			form: form
-		});
-	}
-});
-
-app.get('/sign-out', async (req, res) => {
+app.get('/sign-out', (req, res) => {
 	delete req.session.account;
 	req.session.destroy(() => {
-		res.redirect('/');
+		return res.redirect('/');
 	});
 });
 
-app.get('/forgotten-password', async (req, res) => {
-	renderPage(res, 'index', {
-		account: (typeof req !== 'undefined' && typeof req.session !== 'undefined' && typeof req.session.account !== 'undefined' ? req.session.account : null),
-		page: {
-			class: 'sign-form',
-			file: 'forgotten_password',
-			title: 'Reset password'
-		}
-	});
-});
+app.get('/forgotten-password', preProcess, render);
 
-app.get('/reset-password', async (req, res) => {
-	renderPage(res, 'index', {
-		account: (typeof req !== 'undefined' && typeof req.session !== 'undefined' && typeof req.session.account !== 'undefined' ? req.session.account : null),
-		page: {
-			class: 'sign-form',
-			file: 'reset_password',
-			title: 'Reset password'
-		}
-	});
-});
+app.get('/reset-password', preProcess, render);
 
-app.get('/change-password', async (req, res) => {
-	renderPage(res, 'index', {
-		account: (typeof req !== 'undefined' && typeof req.session !== 'undefined' && typeof req.session.account !== 'undefined' ? req.session.account : null),
-		page: {
-			class: 'sign-form',
-			file: 'change_password',
-			title: 'Change password'
-		}
-	});
-});
+app.get('/change-password', preProcess, render);
 
-app.get('/account', async (req, res) => {
-	if(typeof req !== 'undefined' && typeof req.session !== 'undefined' && typeof req.session.account !== 'undefined') {
-		renderPage(res, 'index', {
-			account: req.session.account,
-			page: {
-				class: 'sign-form',
-				file: 'account',
-				title: 'Account'
-			}
-		});
+app.get('/account', preProcess, (req, res, next) => {
+	if(typeof req.data.account === 'undefined') {
+		return res.redirect('/sign-in');
 	}
 	else {
-		res.redirect('/sign-in');
+		next();
 	}
-});
+}, render);
 
-app.get('*', async (req, res) => {
+app.get('*', preProcess, (req, res, next) => {
 	res.status(404);
-	
-	renderPage(res, 'index', {
-		account: req.session.account,
-		page: {
-			class: 'sign-form',
-			file: 'error',
-			title: 'Page not found'
-		}
-	});
-});
+
+	next();
+}, render);
+
+
 
 app.listen(config.connection.port, () => {
 	console.log(`Client server started listening on port ${config.connection.port}!`);
