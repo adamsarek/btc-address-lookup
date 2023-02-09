@@ -54,7 +54,7 @@ class DatabaseConnection {
 		`);
 	}
 
-	getAddresses(roleId, limit, offset) {
+	getAddresses(roleId, limit, offset, currencyId=null, havingData=false, sourceId=null, sourceLabelId=null) {
 		return this.#execute(`
 			SELECT
 				address,
@@ -62,18 +62,43 @@ class DatabaseConnection {
 					SELECT REPLACE(code, 'N/A', '_unknown')
 					FROM currency
 					WHERE currency.currency_id = address.currency_id
-				), '_pending') AS currency,
-				CASE WHEN (
-					SELECT COUNT(*)
-					FROM address_data
-					WHERE address_id = address.address_id AND '${roleId}' = ANY(roles)
-				) > 0 THEN TRUE ELSE FALSE END AS has_data,
-				ARRAY_REMOVE(ARRAY_AGG(CAST(data_id AS INT) ORDER BY CAST(data_id AS INT)), NULL) AS data_ids
+				), '_pending') AS currency_code,
+				ARRAY_REMOVE(ARRAY_AGG(CAST(address_data.data_id AS INT) ORDER BY CAST(address_data.data_id AS INT)), NULL) AS data_ids
 			FROM address
-			LEFT JOIN address_data ON address_data.address_id = address.address_id AND '${roleId}' = ANY(roles)
+			${havingData ? '' : 'LEFT '}JOIN address_data ON address_data.address_id = address.address_id AND '${roleId}' = ANY(roles)
+			${sourceLabelId != null ? (`
+				JOIN data ON data.data_id = address_data.data_id
+				JOIN source_label_url ON source_label_url.source_label_url_id = data.source_label_url_id AND source_label_url.source_label_id = ${sourceLabelId}
+			`) : (
+				sourceId != null ? (`
+					JOIN data ON data.data_id = address_data.data_id
+					JOIN source_label_url ON source_label_url.source_label_url_id = data.source_label_url_id
+					JOIN source_label ON source_label.source_label_id = source_label_url.source_label_id AND source_label.source_id = ${sourceId}
+				`) : ''
+			)}
+			${currencyId != null ? 'WHERE currency_id ' + (currencyId > 0 ? '= ' + currencyId : 'IS NULL') : ''}
 			GROUP BY address.address_id, currency_id, address
 			ORDER BY CAST(address.address_id AS INT)
 			LIMIT ${limit} OFFSET ${offset}
+		`);
+	}
+
+	getAddressesCount(roleId, currencyId=null, havingData=false, sourceId=null, sourceLabelId=null) {
+		return this.#execute(`
+			SELECT COUNT(DISTINCT address.address_id)
+			FROM address
+			${havingData ? '' : 'LEFT '}JOIN address_data ON address_data.address_id = address.address_id AND '${roleId}' = ANY(roles)
+			${sourceLabelId != null ? (`
+				JOIN data ON data.data_id = address_data.data_id
+				JOIN source_label_url ON source_label_url.source_label_url_id = data.source_label_url_id AND source_label_url.source_label_id = ${sourceLabelId}
+			`) : (
+				sourceId != null ? (`
+					JOIN data ON data.data_id = address_data.data_id
+					JOIN source_label_url ON source_label_url.source_label_url_id = data.source_label_url_id
+					JOIN source_label ON source_label.source_label_id = source_label_url.source_label_id AND source_label.source_id = ${sourceId}
+				`) : ''
+			)}
+			${currencyId != null ? 'WHERE currency_id ' + (currencyId > 0 ? '= ' + currencyId : 'IS NULL') : ''}
 		`);
 	}
 
@@ -85,12 +110,7 @@ class DatabaseConnection {
 					SELECT REPLACE(code, 'N/A', '_unknown')
 					FROM currency
 					WHERE currency.currency_id = address.currency_id
-				), '_pending') AS currency,
-				CASE WHEN (
-					SELECT COUNT(*)
-					FROM address_data
-					WHERE address_id = address.address_id AND '${roleId}' = ANY(roles)
-				) > 0 THEN TRUE ELSE FALSE END AS has_data,
+				), '_pending') AS currency_code,
 				ARRAY_REMOVE(ARRAY_AGG(CAST(data_id AS INT) ORDER BY CAST(data_id AS INT)), NULL) AS data_ids
 			FROM address
 			LEFT JOIN address_data ON address_data.address_id = address.address_id AND '${roleId}' = ANY(roles)

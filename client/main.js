@@ -14,6 +14,14 @@
 // https://stackoverflow.com/questions/29506253/best-session-storage-middleware-for-express-postgresql
 // https://www.npmjs.com/package/express-pg-session
 
+// #TODO
+// Overall
+//   Currencies - With data / All (with + without data)
+// Sources
+//   Currencies - With data / All (with + without data)
+// Source labels
+//   Currencies - With data / All (with + without data)
+
 // External imports
 const BCRYPT = require('bcrypt');
 const BODY_PARSER = require('body-parser');
@@ -126,7 +134,6 @@ async function loadToken(req, res, next) {
 	}
 	else {
 		req.data.token = req.query.token;
-
 		next();
 	}
 }
@@ -192,8 +199,9 @@ function preProcess(req, res, next) {
 	}
 
 	// Get page
-	if(typeof config.router.page[req.url] !== 'undefined') {
-		req.data.page = config.router.page[req.url];
+	const page = '/' + req.url.split('/')[1];
+	if(typeof config.router.page[page] !== 'undefined') {
+		req.data.page = { ...config.router.page[page] };
 	}
 	else {
 		req.data.page = config.router.page['*'];
@@ -317,6 +325,10 @@ function postProcess(req, res, next) {
 }
 
 function render(req, res) {
+	if(res.statusCode == 404) {
+		req.data.page = config.router.page['*'];
+	}
+
 	res.render('index', req.data);
 }
 
@@ -354,7 +366,6 @@ app.get('/api/tokens/:token([a-zA-Z0-9]{1,})', preProcessAPI, (req, res, next) =
 	}
 	else {
 		req.data.token = req.params.token;
-
 		next();
 	}
 }, useToken, (req, res) => {
@@ -383,7 +394,6 @@ app.get('/api/addresses/:address([a-zA-Z0-9]{1,})', preProcessAPI, (req, res, ne
 	}
 	else {
 		req.data.address = req.params.address;
-
 		next();
 	}
 }, loadToken, useToken, async (req, res) => {
@@ -405,7 +415,6 @@ app.get('/api/data/:data_id([0-9]{1,})', preProcessAPI, (req, res, next) => {
 	}
 	else {
 		req.data.dataId = req.params.data_id;
-
 		next();
 	}
 }, loadToken, useToken, async (req, res) => {
@@ -544,7 +553,6 @@ app.post('/sign-up', preProcess, async (req, res, next) => {
 			if((await databaseConnection.hasEmail(req.data.form.email.data)).rows.length > 0) {
 				req.data.form.email.error = 'Email already exists.';
 				req.data.form._success.dataValidation = false;
-
 				next();
 			}
 
@@ -601,14 +609,115 @@ app.get('/account', preProcess, (req, res, next) => {
 	}
 }, render);
 
-app.get('*', preProcess, (req, res, next) => {
-	res.status(404);
+app.get('/addresses', preProcess, async (req, res, next) => {
+	// Page is not set
+	if(!req.query.hasOwnProperty('page') || req.query.page.length == 0) {
+		req.data.pageId = 1;
+	}
+	else {
+		req.data.pageId = parseInt(req.query.page);
 
-	next();
+		// Page does not have a numeric value or is too low
+		if(isNaN(req.data.pageId) || req.data.pageId <= 0) {
+			res.status(404);
+			return render(req, res);
+		}
+	}
+
+	req.data.limit = config.router.address_limit;
+	req.data.offset = (req.data.pageId - 1) * req.data.limit;
+
+	// Currency code is not set
+	if(!req.query.hasOwnProperty('currency_code') || req.query.currency_code.length == 0) {
+		req.data.currencyId = null;
+	}
+	else if(req.query.currency_code == '_pending') {
+		req.data.currencyId = 0;
+	}
+	else if(req.query.currency_code == '_unknown') {
+		req.data.currencyId = 2;
+	}
+	else {
+		const currency = (await databaseConnection.getCurrency(req.query.currency_code)).rows;
+
+		// Currency found
+		if(currency.length > 0) {
+			req.data.currencyId = currency[0].currency_id;
+		}
+		else {
+			res.status(404);
+			return render(req, res);
+		}
+	}
+
+	// Having data is not set or is not true
+	if(!req.query.hasOwnProperty('having_data') || req.query.having_data.length == 0 || req.query.having_data != '1') {
+		req.data.havingData = false;
+	}
+	else {
+		req.data.havingData = true;
+	}
+
+	// Source ID is not set
+	if(!req.query.hasOwnProperty('source_id') || req.query.source_id.length == 0) {
+		req.data.sourceId = null;
+	}
+	else {
+		req.data.sourceId = req.query.source_id;
+	}
+
+	// Source label ID is not set
+	if(!req.query.hasOwnProperty('source_label_id') || req.query.source_label_id.length == 0) {
+		req.data.sourceLabelId = null;
+	}
+	else {
+		req.data.sourceLabelId = req.query.source_label_id;
+	}
+
+	const roleId = typeof req.data.account !== 'undefined' ? req.data.account.role_id : 1;
+	
+	req.data.addresses = (await databaseConnection.getAddresses(roleId, req.data.limit, req.data.offset, req.data.currencyId, req.data.havingData, req.data.sourceId, req.data.sourceLabelId)).rows;
+	
+	// No address found
+	if(req.data.addresses.length == 0) {
+		res.status(404);
+		return render(req, res);
+	}
+	else {
+		req.data.addressesCount = (await databaseConnection.getAddressesCount(roleId, req.data.currencyId, req.data.havingData, req.data.sourceId, req.data.sourceLabelId)).rows[0].count;
+		req.data.pageCount = Math.ceil(req.data.addressesCount / req.data.limit);
+		
+		req.data.page.title += ` (${new Intl.NumberFormat().format(req.data.pageId)} / ${new Intl.NumberFormat().format(req.data.pageCount)})`;
+		next();
+	}
 }, render);
+
+app.get('*', preProcess, (req, res) => {
+	res.status(404);
+	return render(req, res);
+});
 
 
 
 app.listen(config.connection.port, () => {
 	console.log(`Client server started listening on port ${config.connection.port}!`);
+
+	// getAddresses(roleId, limit, offset, currencyId=null, havingData=false, sourceId=null, sourceLabelId=null)
+	/*let addresses_a, addresses_b, addresses_c;
+	addresses_a = await databaseConnection.getAddresses(3, 5, 10, null, true, null, 4);
+	console.log(addresses_a.rows);
+	addresses_b = await databaseConnection.getAddresses(3, 5, 10, null, true, 4, 4);
+	console.log(addresses_b.rows);
+	addresses_c = await databaseConnection.getAddresses(3, 5, 10, null, true, 4, null);
+	console.log(addresses_c.rows);
+
+	console.log(JSON.stringify(addresses_a.rows) == JSON.stringify(addresses_b.rows));
+	console.log(JSON.stringify(addresses_b.rows) == JSON.stringify(addresses_c.rows));
+
+	addresses_a = await databaseConnection.getAddressesCount(3, null, true, null, 4);
+	console.log(addresses_a.rows);
+	addresses_b = await databaseConnection.getAddressesCount(3, null, true, 4, 4);
+	console.log(addresses_b.rows);
+	addresses_c = await databaseConnection.getAddressesCount(3, null, true, 4, null);
+	console.log(addresses_c.rows);*/
 });

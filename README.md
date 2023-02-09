@@ -98,17 +98,18 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
 ### Features:
 - :hammer: REST API
   - :heavy_check_mark: Get token
-  - :heavy_check_mark: Get list of addresses
-  - :heavy_check_mark: Get single address
+  - :heavy_check_mark: Limit access to addresses data by user roles
+  - :hammer: Get addresses (filterable by currency, having data, source & source label) *- update needed*
+  - :heavy_check_mark: Get address
   - :heavy_check_mark: Get data
-  - :heavy_check_mark: Get list of sources
-  - :heavy_check_mark: Get single source
-  - :heavy_check_mark: Get source label
-  - :heavy_check_mark: Limit access by user roles
+  - :hammer: Get sources *- update needed*
+  - :hammer: Get source *- update needed*
+  - :hammer: Get source label *- update needed*
+  - :x: Get currency
   - :x: Generate token (linked with the account or IP address)
   - :x: Caching data
 - :hammer: Web pages
-  - :hammer: Index - search bar, list of sources, statistics
+  - :hammer: Index *- search server-side not yet implemented*
   - :heavy_check_mark: Sign up
   - :heavy_check_mark: Sign in
   - :heavy_check_mark: Sign out
@@ -116,12 +117,11 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   - :hammer: Reset password *- server-side not yet implemented*
   - :hammer: Change password *- server-side not yet implemented*
   - :hammer: Account *- administration not yet implemented*
-  - :x: Search by address
-  - :x: Source - list of source labels
-  - :x: Source / source label - list of addresses
-  - :x: Data - list of addresses (independent on source label)
-  - :x: API docs
-  - :x: FAQ
+  - :hammer: Addresses *- client-side not yet implemented*
+  - :x: Address - all information related to the searched address
+  - :x: Data - statistics, contain links to the Addresses page with filtered list of addresses
+  - :x: API - listed API features, token generation
+  - :x: FAQ - answered questions related to the website & thesis
   - :heavy_check_mark: Error - 404 Not Found
 
 ### Requirements:

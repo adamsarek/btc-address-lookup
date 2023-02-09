@@ -27,8 +27,10 @@
 			"/reset-password":     { "class": "sign-form", "file": "reset_password",     "title": "Reset password" },
 			"/change-password":    { "class": "sign-form", "file": "change_password",    "title": "Change password" },
 			"/account":            { "class": "sign-form", "file": "account",            "title": "Account" },
+			"/addresses":          { "class": "sign-form", "file": "addresses",          "title": "Addresses" },
 			"*":                   { "class": "sign-form", "file": "error",              "title": "Page not found" }
-		}
+		},
+		"address_limit": 20
 	},
 	"crawler": {
 		"data_path": "../db_builder/crawled_data"
