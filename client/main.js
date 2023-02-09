@@ -127,6 +127,63 @@ function useLimit(req, res, next) {
 	}
 }
 
+function useHavingData(req, res, next) {
+	// Having data is not set or is not true
+	if(!req.query.hasOwnProperty('having_data') || req.query.having_data.length == 0 || req.query.having_data != '1') {
+		req.data.havingData = false;
+	}
+	else {
+		req.data.havingData = true;
+	}
+
+	next();
+}
+
+function useSourceId(req, res, next) {
+	// Source ID is not set
+	if(!req.query.hasOwnProperty('source_id') || req.query.source_id.length == 0) {
+		req.data.sourceId = null;
+	}
+	else {
+		req.data.sourceId = req.query.source_id;
+	}
+
+	next();
+}
+
+function useSourceLabelId(req, res, next) {
+	// Source label ID is not set
+	if(!req.query.hasOwnProperty('source_label_id') || req.query.source_label_id.length == 0) {
+		req.data.sourceLabelId = null;
+	}
+	else {
+		req.data.sourceLabelId = req.query.source_label_id;
+	}
+
+	next();
+}
+
+async function useCurrencyCode(req, res, next) {
+	// Currency code is not set
+	if(!req.query.hasOwnProperty('currency_code') || req.query.currency_code.length == 0) {
+		req.data.currencyId = null;
+	}
+	else {
+		const currency = (await databaseConnection.getCurrency(req.query.currency_code)).rows;
+
+		// Currency found
+		if(currency.length > 0) {
+			req.data.currencyId = currency[0].currency_id;
+		}
+		else {
+			res.status(404);
+			return render(req, res);
+		}
+	}
+
+	next();
+}
+
 async function loadToken(req, res, next) {
 	// Token is not set
 	if(!req.query.hasOwnProperty('token') || req.query.token.length == 0) {
@@ -375,15 +432,15 @@ app.get('/api/tokens/:token([a-zA-Z0-9]{1,})', preProcessAPI, (req, res, next) =
 	return res.json(req.data.token);
 });
 
-app.get('/api/addresses', preProcessAPI, useOffset, useLimit, loadToken, useToken, async (req, res) => {
-	const addresses = await databaseConnection.getAddresses(req.data.token.role_id, req.data.limit, req.data.offset);
-
+app.get('/api/addresses', preProcessAPI, useOffset, useLimit, useHavingData, useSourceId, useSourceLabelId, useCurrencyCode, loadToken, useToken, async (req, res) => {
+	const addresses = (await databaseConnection.getAddresses(req.data.token.role_id, req.data.limit, req.data.offset, req.data.havingData, req.data.sourceId, req.data.sourceLabelId, req.data.currencyId)).rows;
+	
 	// No address found
-	if(addresses.rows.length == 0) {
+	if(addresses.length == 0) {
 		return res.status(404).json({error: 'No address has been found!'});
 	}
 	else {
-		return res.json(addresses.rows);
+		return res.json(addresses);
 	}
 });
 
@@ -623,7 +680,7 @@ app.get('/account', preProcess, (req, res, next) => {
 	}
 }, render);
 
-app.get('/addresses', preProcess, async (req, res, next) => {
+app.get('/addresses', preProcess, (req, res, next) => {
 	// Page is not set
 	if(!req.query.hasOwnProperty('page') || req.query.page.length == 0) {
 		req.data.pageId = 1;
@@ -641,56 +698,11 @@ app.get('/addresses', preProcess, async (req, res, next) => {
 	req.data.limit = config.router.address_limit;
 	req.data.offset = (req.data.pageId - 1) * req.data.limit;
 
-	// Currency code is not set
-	if(!req.query.hasOwnProperty('currency_code') || req.query.currency_code.length == 0) {
-		req.data.currencyId = null;
-	}
-	else if(req.query.currency_code == '_pending') {
-		req.data.currencyId = 0;
-	}
-	else if(req.query.currency_code == '_unknown') {
-		req.data.currencyId = 2;
-	}
-	else {
-		const currency = (await databaseConnection.getCurrency(req.query.currency_code)).rows;
-
-		// Currency found
-		if(currency.length > 0) {
-			req.data.currencyId = currency[0].currency_id;
-		}
-		else {
-			res.status(404);
-			return render(req, res);
-		}
-	}
-
-	// Having data is not set or is not true
-	if(!req.query.hasOwnProperty('having_data') || req.query.having_data.length == 0 || req.query.having_data != '1') {
-		req.data.havingData = false;
-	}
-	else {
-		req.data.havingData = true;
-	}
-
-	// Source ID is not set
-	if(!req.query.hasOwnProperty('source_id') || req.query.source_id.length == 0) {
-		req.data.sourceId = null;
-	}
-	else {
-		req.data.sourceId = req.query.source_id;
-	}
-
-	// Source label ID is not set
-	if(!req.query.hasOwnProperty('source_label_id') || req.query.source_label_id.length == 0) {
-		req.data.sourceLabelId = null;
-	}
-	else {
-		req.data.sourceLabelId = req.query.source_label_id;
-	}
-
+	next();
+}, useHavingData, useSourceId, useSourceLabelId, useCurrencyCode, async (req, res, next) => {
 	const roleId = typeof req.data.account !== 'undefined' ? req.data.account.role_id : 1;
 	
-	req.data.addresses = (await databaseConnection.getAddresses(roleId, req.data.limit, req.data.offset, req.data.currencyId, req.data.havingData, req.data.sourceId, req.data.sourceLabelId)).rows;
+	req.data.addresses = (await databaseConnection.getAddresses(roleId, req.data.limit, req.data.offset, req.data.havingData, req.data.sourceId, req.data.sourceLabelId, req.data.currencyId)).rows;
 	
 	// No address found
 	if(req.data.addresses.length == 0) {
@@ -698,7 +710,7 @@ app.get('/addresses', preProcess, async (req, res, next) => {
 		return render(req, res);
 	}
 	else {
-		req.data.addressesCount = (await databaseConnection.getAddressesCount(roleId, req.data.currencyId, req.data.havingData, req.data.sourceId, req.data.sourceLabelId)).rows[0].count;
+		req.data.addressesCount = (await databaseConnection.getAddressesCount(roleId, req.data.havingData, req.data.sourceId, req.data.sourceLabelId, req.data.currencyId)).rows[0].count;
 		req.data.pageCount = Math.ceil(req.data.addressesCount / req.data.limit);
 		
 		req.data.page.title += ` (${new Intl.NumberFormat().format(req.data.pageId)} / ${new Intl.NumberFormat().format(req.data.pageCount)})`;
@@ -716,7 +728,7 @@ app.get('*', preProcess, (req, res) => {
 app.listen(config.connection.port, () => {
 	console.log(`Client server started listening on port ${config.connection.port}!`);
 
-	// getAddresses(roleId, limit, offset, currencyId=null, havingData=false, sourceId=null, sourceLabelId=null)
+	// getAddresses(roleId, limit, offset, havingData=false, sourceId=null, sourceLabelId=null, currencyId=null)
 	/*let addresses_a, addresses_b, addresses_c;
 	addresses_a = await databaseConnection.getAddresses(3, 5, 10, null, true, null, 4);
 	console.log(addresses_a.rows);

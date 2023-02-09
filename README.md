@@ -99,7 +99,7 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
 - :hammer: REST API
   - :heavy_check_mark: Get token
   - :heavy_check_mark: Limit access to addresses data by user roles
-  - :hammer: Get addresses (filterable by currency, having data, source & source label) *- update needed*
+  - :heavy_check_mark: Get addresses (filterable by having data, source, source label & currency)
   - :heavy_check_mark: Get address
   - :heavy_check_mark: Get data
   - :heavy_check_mark: Get sources

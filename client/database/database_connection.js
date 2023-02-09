@@ -54,7 +54,7 @@ class DatabaseConnection {
 		`);
 	}
 
-	getAddresses(roleId, limit, offset, currencyId=null, havingData=false, sourceId=null, sourceLabelId=null) {
+	getAddresses(roleId, limit, offset, havingData=false, sourceId=null, sourceLabelId=null, currencyId=null) {
 		return this.#execute(`
 			SELECT
 				address,
@@ -83,7 +83,7 @@ class DatabaseConnection {
 		`);
 	}
 
-	getAddressesCount(roleId, currencyId=null, havingData=false, sourceId=null, sourceLabelId=null) {
+	getAddressesCount(roleId, havingData=false, sourceId=null, sourceLabelId=null, currencyId=null) {
 		return this.#execute(`
 			SELECT COUNT(DISTINCT address.address_id)
 			FROM address

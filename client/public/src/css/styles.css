@@ -393,7 +393,7 @@ main {
 
 /* Page specific */
 .sign-form main {
-	padding-block: 2rem;
+	padding-block: 1.5rem 2rem;
 }
 
 .sign-form .panels {
@@ -449,13 +449,13 @@ main {
 		padding-top: 2rem;
 	}
 
+	header {
+		padding-inline: 4rem 14.5rem;
+	}
+
 	.search-panel,
 	.search-logo {
 		display: none;
-	}
-	
-	header {
-		padding-inline: 4rem 14.5rem;
 	}
 }
 
@@ -495,7 +495,7 @@ main {
 
 @media only screen and (max-width: 24rem) {
 	.sign-form main {
-		padding-block: 1rem;
+		padding-block: 0 0.5rem;
 	}
 
 	.sign-form .panel {
