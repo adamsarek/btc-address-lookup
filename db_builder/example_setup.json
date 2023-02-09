@@ -69,7 +69,7 @@
 						["name", "code", "logo", "blockchair_request_name"],
 						[
 							["Bitcoin", "BTC", "/src/img/BTC.svg", "bitcoin"],
-							["Unknown", "N/A", "/src/img/unknown.svg", null],
+							["Unknown", "_unknown", "/src/img/_unknown.svg", null],
 							["Ethereum", "ETH", "/src/img/ETH.svg", "ethereum"],
 							["Cardano", "ADA", "/src/img/ADA.svg", "cardano"],
 							["Bitcoin Cash", "BCH", "/src/img/BCH.svg", "bitcoin-cash"],

@@ -102,10 +102,12 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   - :hammer: Get addresses (filterable by currency, having data, source & source label) *- update needed*
   - :heavy_check_mark: Get address
   - :heavy_check_mark: Get data
-  - :hammer: Get sources *- update needed*
-  - :hammer: Get source *- update needed*
-  - :hammer: Get source label *- update needed*
-  - :x: Get currency
+  - :heavy_check_mark: Get sources
+  - :heavy_check_mark: Get source
+  - :heavy_check_mark: Get source labels
+  - :heavy_check_mark: Get source label
+  - :heavy_check_mark: Get currencies
+  - :heavy_check_mark: Get currency
   - :x: Generate token (linked with the account or IP address)
   - :x: Caching data
 - :hammer: Web pages

@@ -192,34 +192,71 @@ class DatabaseConnection {
 		`);
 	}
 
-	getSourceLabel(roleId, sourceLabelId, addressLimit, addressOffset) {
+	getSourceLabels() {
 		return this.#execute(`
 			SELECT
-				(
-					SELECT CAST(source_id AS INT)
-					FROM source
-					WHERE source.source_id = source_label.source_id
-				) AS source_id,
-				(
-					SELECT name
-					FROM source
-					WHERE source.source_id = source_label.source_id
-				) AS source_name,
 				CAST(source_label_id AS INT),
-				name AS source_label_name,
-				ARRAY (
-					SELECT address
-					FROM address
-					JOIN address_data ON address_data.address_id = address.address_id AND '${roleId}' = ANY(roles)
-					JOIN data ON data.data_id = address_data.data_id
-					JOIN source_label_url ON source_label_url.source_label_url_id = data.source_label_url_id AND source_label_url.source_label_id = ${sourceLabelId}
-					GROUP BY address.address_id, address
-					ORDER BY CAST(address.address_id AS INT)
-					LIMIT ${addressLimit} OFFSET ${addressOffset}
-				) AS addresses
+				source_label.name AS source_label_name,
+				CAST(source.source_id AS INT),
+				source.name AS source_name
 			FROM source_label
+			JOIN source ON source.source_id = source_label.source_id
+			ORDER BY CAST(source_label.source_label_id AS INT)
+		`);
+	}
+
+	getSourceLabel(sourceLabelId) {
+		return this.#execute(`
+			SELECT
+				CAST(source_label_id AS INT),
+				source_label.name AS source_label_name,
+				CAST(source.source_id AS INT),
+				source.name AS source_name
+			FROM source_label
+			JOIN source ON source.source_id = source_label.source_id
 			WHERE source_label_id = ${sourceLabelId}
 		`);
+	}
+
+	getCurrencies() {
+		return this.#execute(`
+			SELECT
+				0 AS currency_id,
+				'Pending' AS currency_name,
+				'_pending' AS currency_code,
+				'/src/img/_pending.svg' AS logo
+			UNION
+			SELECT
+				CAST(currency_id AS INT),
+				name AS currency_name,
+				code AS currency_code,
+				logo
+			FROM currency
+			ORDER BY CAST(currency_id AS INT)
+		`);
+	}
+
+	getCurrency(currencyCode) {
+		if(currencyCode == '_pending') {
+			return this.#execute(`
+				SELECT
+					0 AS currency_id,
+					'Pending' AS currency_name,
+					'_pending' AS currency_code,
+					'/src/img/_pending.svg' AS logo
+			`);
+		}
+		else {
+			return this.#execute(`
+				SELECT
+					CAST(currency_id AS INT),
+					name AS currency_name,
+					code AS currency_code,
+					logo
+				FROM currency
+				WHERE code = '${currencyCode}'
+			`);
+		}
 	}
 
 	hasEmail(email) {

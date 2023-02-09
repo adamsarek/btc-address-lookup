@@ -438,7 +438,7 @@ app.get('/api/data/:data_id([0-9]{1,})', preProcessAPI, (req, res, next) => {
 	}
 });
 
-app.get('/api/sources', async (req, res) => {
+app.get('/api/sources', preProcessAPI, loadToken, useToken, async (req, res) => {
 	const sources = await databaseConnection.getSources();
 
 	// No source found
@@ -450,7 +450,7 @@ app.get('/api/sources', async (req, res) => {
 	}
 });
 
-app.get('/api/sources/:source_id([0-9]{1,})', preProcessAPI, async (req, res) => {
+app.get('/api/sources/:source_id([0-9]{1,})', preProcessAPI, loadToken, useToken, async (req, res) => {
 	// Source ID is not set
 	if(!req.params.hasOwnProperty('source_id') || req.params.source_id.length == 0) {
 		return res.status(400).json({error: 'Source ID has to be set!'});
@@ -470,45 +470,19 @@ app.get('/api/sources/:source_id([0-9]{1,})', preProcessAPI, async (req, res) =>
 	}
 });
 
-app.get('/api/source_labels/:source_label_id([0-9]{1,})', preProcessAPI, (req, res, next) => {
-	// Address offset is not set
-	if(!req.query.hasOwnProperty('address_offset') || req.query.address_offset.length == 0) {
-		req.data.addressOffset = 0;
+app.get('/api/source_labels', preProcessAPI, loadToken, useToken, async (req, res) => {
+	const sourceLabels = await databaseConnection.getSourceLabels();
+
+	// No source label found
+	if(sourceLabels.rows.length == 0) {
+		return res.status(404).json({error: 'No source label has been found!'});
 	}
 	else {
-		req.data.addressOffset = parseInt(req.query.address_offset);
-
-		// Address offset does not have a numeric value
-		if(isNaN(req.data.addressOffset)) {
-			return res.status(400).json({error: 'Address offset has to have a numeric value!'});
-		}
-		// Address offset is too low
-		else if(req.data.addressOffset <= -1) {
-			return res.status(400).json({error: 'Address offset has to be at least 0!'});
-		}
+		return res.json(sourceLabels.rows);
 	}
+});
 
-	// Address limit is not set
-	if(!req.query.hasOwnProperty('address_limit') || req.query.address_limit.length == 0) {
-		return res.status(400).json({error: 'Address limit has to be set!'});
-	}
-	else {
-		req.data.addressLimit = parseInt(req.query.address_limit);
-
-		// Address limit does not have a numeric value
-		if(isNaN(req.data.addressLimit)) {
-			return res.status(400).json({error: 'Address limit has to have a numeric value!'});
-		}
-		// Address limit is too low
-		else if(req.data.addressLimit <= 0) {
-			return res.status(400).json({error: 'Address limit has to be at least 1!'});
-		}
-		// Address limit is too high
-		else if(req.data.addressLimit > 100) {
-			return res.status(400).json({error: 'Address limit has to be at most 100!'});
-		}
-	}
-
+app.get('/api/source_labels/:source_label_id([0-9]{1,})', preProcessAPI, loadToken, useToken, async (req, res) => {
 	// Source label ID is not set
 	if(!req.params.hasOwnProperty('source_label_id') || req.params.source_label_id.length == 0) {
 		return res.status(400).json({error: 'Source label ID has to be set!'});
@@ -517,9 +491,7 @@ app.get('/api/source_labels/:source_label_id([0-9]{1,})', preProcessAPI, (req, r
 		req.data.sourceLabelId = req.params.source_label_id;
 	}
 
-	next();
-}, loadToken, useToken, async (req, res) => {
-	const sourceLabel = await databaseConnection.getSourceLabel(req.data.token.role_id, req.data.sourceLabelId, req.data.addressLimit, req.data.addressOffset);
+	const sourceLabel = await databaseConnection.getSourceLabel(req.data.sourceLabelId);
 
 	// Source label not found
 	if(sourceLabel.rows.length == 0) {
@@ -527,6 +499,38 @@ app.get('/api/source_labels/:source_label_id([0-9]{1,})', preProcessAPI, (req, r
 	}
 	else {
 		return res.json(sourceLabel.rows[0]);
+	}
+});
+
+app.get('/api/currencies', preProcessAPI, loadToken, useToken, async (req, res) => {
+	const currencies = await databaseConnection.getCurrencies();
+
+	// No currency found
+	if(currencies.rows.length == 0) {
+		return res.status(404).json({error: 'No currency has been found!'});
+	}
+	else {
+		return res.json(currencies.rows);
+	}
+});
+
+app.get('/api/currencies/:currency_code([a-zA-Z0-9_]{1,})', preProcessAPI, loadToken, useToken, async (req, res) => {
+	// Currency code is not set
+	if(!req.params.hasOwnProperty('currency_code') || req.params.currency_code.length == 0) {
+		return res.status(400).json({error: 'Currency code has to be set!'});
+	}
+	else {
+		req.data.currencyCode = req.params.currency_code;
+	}
+
+	const currency = await databaseConnection.getCurrency(req.data.currencyCode);
+
+	// Currency not found
+	if(currency.rows.length == 0) {
+		return res.status(404).json({error: 'Currency has not been found!'});
+	}
+	else {
+		return res.json(currency.rows[0]);
 	}
 });
 
