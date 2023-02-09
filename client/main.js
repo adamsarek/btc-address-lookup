@@ -539,6 +539,16 @@ app.get('/api/*', (req, res) => {
 // Web pages
 app.get('/', preProcess, render);
 
+app.get('/search', (req, res) => {
+	// Q is not set
+	if(!req.query.hasOwnProperty('q') || req.query.q.trim().length == 0) {
+		return res.redirect('/');
+	}
+	else {
+		return res.redirect('/address/' + req.query.q.trim());
+	}
+});
+
 app.get('/sign-up', preProcess, render);
 
 app.post('/sign-up', preProcess, async (req, res, next) => {
