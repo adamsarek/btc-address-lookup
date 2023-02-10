@@ -1,3 +1,3 @@
 <link rel="icon" href="/src/img/logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/src/css/styles.css">
-<title><%= typeof page !== 'undefined' && typeof page.title !== 'undefined' ? page.title + ' - ' + title : title %></title>
+<title><%= typeof page !== 'undefined' && typeof page.title !== 'undefined' ? page.title + (typeof pageId !== 'undefined' && typeof pageCount !== 'undefined' ? ' (' + new Intl.NumberFormat().format(pageId) + ' / ' + new Intl.NumberFormat().format(pageCount) + ')' : '') + ' - ' + title : title %></title>

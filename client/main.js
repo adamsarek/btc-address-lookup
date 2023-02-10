@@ -145,7 +145,13 @@ function useSourceId(req, res, next) {
 		req.data.sourceId = null;
 	}
 	else {
-		req.data.sourceId = req.query.source_id;
+		req.data.sourceId = parseInt(req.query.source_id);
+
+		// Source ID does not have a numeric value or is too low
+		if(isNaN(req.data.sourceId) || req.data.sourceId <= 0) {
+			res.status(404);
+			return render(req, res);
+		}
 	}
 
 	next();
@@ -157,7 +163,13 @@ function useSourceLabelId(req, res, next) {
 		req.data.sourceLabelId = null;
 	}
 	else {
-		req.data.sourceLabelId = req.query.source_label_id;
+		req.data.sourceLabelId = parseInt(req.query.source_label_id);
+
+		// Source label ID does not have a numeric value or is too low
+		if(isNaN(req.data.sourceLabelId) || req.data.sourceLabelId <= 0) {
+			res.status(404);
+			return render(req, res);
+		}
 	}
 
 	next();
@@ -256,7 +268,7 @@ function preProcess(req, res, next) {
 	}
 
 	// Get page
-	const page = '/' + req.url.split('/')[1];
+	const page = '/' + req.url.split('/')[1].split('?')[0];
 	if(typeof config.router.page[page] !== 'undefined') {
 		req.data.page = { ...config.router.page[page] };
 	}
@@ -701,7 +713,7 @@ app.get('/addresses', preProcess, (req, res, next) => {
 	next();
 }, useHavingData, useSourceId, useSourceLabelId, useCurrencyCode, async (req, res, next) => {
 	const roleId = typeof req.data.account !== 'undefined' ? req.data.account.role_id : 1;
-	
+
 	req.data.addresses = (await databaseConnection.getAddresses(roleId, req.data.limit, req.data.offset, req.data.havingData, req.data.sourceId, req.data.sourceLabelId, req.data.currencyId)).rows;
 	
 	// No address found
@@ -712,8 +724,6 @@ app.get('/addresses', preProcess, (req, res, next) => {
 	else {
 		req.data.addressesCount = (await databaseConnection.getAddressesCount(roleId, req.data.havingData, req.data.sourceId, req.data.sourceLabelId, req.data.currencyId)).rows[0].count;
 		req.data.pageCount = Math.ceil(req.data.addressesCount / req.data.limit);
-		
-		req.data.page.title += ` (${new Intl.NumberFormat().format(req.data.pageId)} / ${new Intl.NumberFormat().format(req.data.pageCount)})`;
 		next();
 	}
 }, render);
