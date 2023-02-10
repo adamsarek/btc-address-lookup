@@ -60,21 +60,11 @@ class DatabaseConnection {
 		sql[1] = `address_data.address_id = address.address_id`;
 		sql[2] = ` AND '${roleId}' = ANY(roles)`;
 		sql[3] = `EXISTS (
-			SELECT 1
-			FROM address_data
-			WHERE ${sql[1]}${sql[2]}
-		`;
-		sql[4] = `
-			EXISTS (
-				SELECT 1
-				FROM data
-				WHERE data.data_id = address_data.data_id AND EXISTS (
-					SELECT 1
-					FROM source_label_url
-					WHERE source_label_url.source_label_url_id = data.source_label_url_id
-		`;
-		sql[5] = `
-			FROM address
+			SELECT 1 FROM address_data WHERE ${sql[1]}${sql[2]}`;
+		sql[4] = `EXISTS (
+			SELECT 1 FROM data WHERE data.data_id = address_data.data_id AND EXISTS (
+				SELECT 1 FROM source_label_url WHERE source_label_url.source_label_url_id = data.source_label_url_id`;
+		sql[5] = `FROM address
 			${sourceLabelId != null ? (`
 				${sql[0]}${sql[3]} AND ${sql[4]} AND source_label_url.source_label_id = ${sourceLabelId}
 						)
@@ -83,13 +73,8 @@ class DatabaseConnection {
 			`) : (
 				sourceId != null ? (`
 					${sql[0]}${sql[3]} AND ${sql[4]} AND EXISTS (
-									SELECT 1
-									FROM source_label
-									WHERE source_label.source_label_id = source_label_url.source_label_id AND source_label.source_id = ${sourceId}
-								)
-							)
-						)
-					)
+						SELECT 1 FROM source_label WHERE source_label.source_label_id = source_label_url.source_label_id AND source_label.source_id = ${sourceId}
+					))))
 				`) : (
 					havingData ? (`
 						${sql[0]}${sql[3]}
@@ -100,71 +85,59 @@ class DatabaseConnection {
 						`) : ''
 					)
 				)
-			)}
-		`;
+			)}`;
 
 		if(sqlOption == 0) {
-			return `
-				SELECT
-					address,
-					COALESCE((
-						SELECT ARRAY[name, code, logo]
-						FROM currency
-						WHERE currency.currency_id = address.currency_id
-					), ARRAY['Pending', '_pending', '/src/img/_pending.svg']) AS currency,
-					ARRAY (
-						SELECT CAST(address_data.data_id AS INT)
-						FROM address_data
-						${sourceLabelId != null ? (`
-							${sql[0]}${sql[1]}${sql[2]} AND ${sql[4]} AND source_label_url.source_label_id = ${sourceLabelId}
-								)
+			return `SELECT
+				address,
+				COALESCE((
+					SELECT ARRAY[name, code, logo]
+					FROM currency
+					WHERE currency.currency_id = address.currency_id
+				), ARRAY['Pending', '_pending', '/src/img/_pending.svg']) AS currency,
+				ARRAY (
+					SELECT CAST(address_data.data_id AS INT)
+					FROM address_data
+					${sourceLabelId != null ? (`
+						${sql[0]}${sql[1]}${sql[2]} AND ${sql[4]} AND source_label_url.source_label_id = ${sourceLabelId}
 							)
+						)
+					`) : (
+						sourceId != null ? (`
+							${sql[0]}${sql[1]}${sql[2]} AND ${sql[4]} AND EXISTS (
+								SELECT 1 FROM source_label WHERE source_label.source_label_id = source_label_url.source_label_id AND source_label.source_id = ${sourceId}
+							)))
 						`) : (
-							sourceId != null ? (`
-								${sql[0]}${sql[1]}${sql[2]} AND ${sql[4]} AND EXISTS (
-											SELECT 1
-											FROM source_label
-											WHERE source_label.source_label_id = source_label_url.source_label_id AND source_label.source_id = ${sourceId}
-										)
-									)
-								)
+							havingData ? (`
+								${sql[0]}${sql[1]}${sql[2]}
 							`) : (
-								havingData ? (`
-									${sql[0]}${sql[1]}${sql[2]}
-								`) : (
-									currencyId != null ? (`
-										WHERE currency_id ${currencyId > 0 ? '= ' + currencyId : 'IS NULL'} AND ${sql[1]}${sql[2]}
-									`) : (`
-										WHERE ${sql[1]}${sql[2]}
-									`)
-								)
+								currencyId != null ? (`
+									WHERE currency_id ${currencyId > 0 ? '= ' + currencyId : 'IS NULL'} AND ${sql[1]}${sql[2]}
+								`) : (`
+									WHERE ${sql[1]}${sql[2]}
+								`)
 							)
-						)}
-						ORDER BY CAST(address_data.data_id AS INT)
-					) AS data_ids
-				${sql[5]}
-			`;
+						)
+					)}
+					ORDER BY CAST(address_data.data_id AS INT)
+				) AS data_ids
+			${sql[5]}
+			ORDER BY CAST(address_id AS INT)`;
 		}
 		else {
-			return `
-				SELECT COUNT(DISTINCT address.address_id)
-				${sql[5]}
-			`;
+			return `SELECT COUNT(DISTINCT address.address_id) ${sql[5]}`;
 		}
 	}
 
 	getAddresses(roleId, limit, offset, havingData=false, sourceId=null, sourceLabelId=null, currencyId=null) {
 		return this.#execute(`
 			${this.#prepareSQL(0, roleId, havingData, sourceId, sourceLabelId, currencyId)}
-			ORDER BY CAST(address_id AS INT)
 			LIMIT ${limit} OFFSET ${offset}
 		`);
 	}
 
 	getAddressesCount(roleId, havingData=false, sourceId=null, sourceLabelId=null, currencyId=null) {
-		return this.#execute(`
-			${this.#prepareSQL(1, roleId, havingData, sourceId, sourceLabelId, currencyId)}
-		`);
+		return this.#execute(this.#prepareSQL(1, roleId, havingData, sourceId, sourceLabelId, currencyId));
 	}
 
 	getAddress(roleId, address) {
