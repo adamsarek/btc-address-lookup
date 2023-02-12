@@ -9,7 +9,7 @@
 	font-family: 'Material Symbols Outlined';
 	font-weight: normal;
 	font-style: normal;
-	font-size: 24px;
+	font-size: 1.5rem;
 	line-height: 1;
 	letter-spacing: normal;
 	text-transform: none;
@@ -26,6 +26,7 @@
 	--a-color: #3F3931;
 	--a-hover-color: #0F0901;
 	--a-focus-color: #0F0901;
+	--img-box-shadow-color: #CFC9C1;
 	--input-color: inherit;
 	--input-background-color: #FFF9F1;
 	--input-border-color: #DFD9D1;
@@ -58,6 +59,7 @@
 		--a-color: #CFC9C1;
 		--a-hover-color: #FFF9F1;
 		--a-focus-color: #FFF9F1;
+		--img-box-shadow-color: #0F0901;
 		--input-color: inherit;
 		--input-background-color: #3F3931;
 		--input-border-color: #5F5951;
@@ -142,6 +144,7 @@ label {
 }
 
 input,
+select,
 .input,
 button,
 input[type="button"],
@@ -152,10 +155,14 @@ input[type="submit"],
 	height: 3rem;
 	line-height: 1.5rem;
 	padding: 0.75rem;
+	margin: 0;
+	display: inline-block;
 	box-sizing: border-box;
+	vertical-align: middle;
 }
 
 input,
+select,
 .input {
 	color: var(--input-color);
 	background-color: var(--input-background-color);
@@ -163,6 +170,7 @@ input,
 }
 
 input:hover,
+select:hover,
 .input:hover {
 	color: var(--input-hover-color);
 	background-color: var(--input-hover-background-color);
@@ -170,6 +178,7 @@ input:hover,
 }
 
 input:focus,
+select:focus,
 .input:focus {
 	color: var(--input-focus-color);
 	background-color: var(--input-focus-background-color);
@@ -190,7 +199,8 @@ input[type="submit"],
 button:hover,
 input[type="button"]:hover,
 input[type="submit"]:hover,
-.button:hover {
+.button:hover,
+.button.active {
 	color: var(--button-hover-color);
 	background-color: var(--button-hover-background-color);
 	border: 1px solid var(--button-hover-border-color);
@@ -199,7 +209,8 @@ input[type="submit"]:hover,
 button:focus,
 input[type="button"]:focus,
 input[type="submit"]:focus,
-.button:focus {
+.button:focus,
+.button.active:focus {
 	color: var(--button-focus-color);
 	background-color: var(--button-focus-background-color);
 	border: 1px solid var(--button-focus-border-color);
@@ -383,6 +394,42 @@ main {
 	width: 100%;
 }
 
+.panel .error {
+	font-size: 0.8rem;
+}
+
+.panel .flex-content {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+}
+
+.panel .flex-content > * {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+}
+
+.panel table {
+	border-collapse: collapse;
+}
+
+.panel .no-wrap {
+	display: grid;
+	grid-auto-flow: column;
+	align-items: center;
+}
+
+.panel .no-wrap > * {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.panel .inline-content {
+	display: inline-block;
+}
+
 .panel-row {
 	box-sizing: border-box;
 }
@@ -405,7 +452,6 @@ main {
 }
 
 .sign-form .panel .title {
-	font-size: 2rem;
 	padding-bottom: 1rem;
 }
 
@@ -435,13 +481,54 @@ main {
 
 .sign-form .panel .error {
 	color: var(--error-color);
-	font-size: 0.8rem;
 	margin-top: 0.25rem;
 }
 
 .sign-form .panel .content {
-	font-size: 1.2rem;
 	margin-top: 0.25rem;
+}
+
+.sign-form .panel .flex-content {
+	margin-top: 1rem;
+	grid-gap: 1rem;
+}
+
+.sign-form .panel table {
+	margin: 0 auto;
+}
+
+.sign-form .panel table tr th,
+.sign-form .panel table tr td {
+	padding-right: 1rem;
+}
+
+.sign-form .panel table tr th:last-of-type,
+.sign-form .panel table tr td:last-of-type {
+	padding-right: 0;
+}
+
+.sign-form .panel img {
+	background-color: #FFF;
+	border: 2px solid #FFF;
+	border-radius: 1.5rem;
+	width: 1.5rem;
+	height: 1.5rem;
+	margin-right: 0.5rem;
+	box-shadow: 0 0 0.5rem 1px var(--img-box-shadow-color);
+	box-sizing: border-box;
+	vertical-align: middle;
+}
+
+.sign-form .panel .flex-content .inline-content {
+	padding-right: 0.5rem;
+}
+
+.sign-form .panel .flex-content .inline-content:last-of-type {
+	padding-right: 0;
+}
+
+.sign-form .panel .inline-content .button {
+	margin-top: 0;
 }
 
 @media only screen and (max-width: calc(61rem + 7px)) {
@@ -533,6 +620,24 @@ main {
 
 	.sign-form .panel .content {
 		margin-top: 0.125rem;
+	}
+
+	.sign-form .panel .flex-content {
+		margin-top: 0.5rem;
+		grid-gap: 0.5rem 0.25rem;
+	}
+
+	.sign-form .panel table tr th,
+	.sign-form .panel table tr td {
+		padding-right: 0.5rem;
+	}
+
+	.sign-form .panel img {
+		margin-right: 0.25rem;
+	}
+
+	.sign-form .panel .flex-content .inline-content {
+		padding-right: 0.25rem;
 	}
 }
 

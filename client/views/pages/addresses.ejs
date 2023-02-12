@@ -1,0 +1,62 @@
+<!--
+<% if(typeof addresses !== 'undefined') { %>
+	<% for(const address of addresses) { %>
+		<%- Object.values(address).join(', ') + '<br>' %>
+		<%- JSON.stringify(address.currency) + '<br>' %>
+		<%- JSON.stringify(address.data) + '<br>' %>
+	<% } %>
+<% } %>
+-->
+<% const generateLink = (page) => { return '?' + ((sourceId != null ? '&source_id=' + sourceId : '') + (sourceLabelId != null ? '&source_label_id=' + sourceLabelId : '') + (currencyCode != null ? '&currency_code=' + currencyCode : '') + (havingData ? '&having_data=on' : '') + '&page=' + page).slice(1); }; %>
+<% let leftButtonCount = pageId >= 3 ? 2 : pageId - 1; %>
+<% let rightButtonCount = pageId <= pageCount - 2 ? 2 : pageCount - pageId; %>
+<% if(pageCount >= 3) { %>
+	<% if(leftButtonCount > rightButtonCount) { leftButtonCount += leftButtonCount - rightButtonCount; } %>
+	<% if(rightButtonCount > leftButtonCount) { rightButtonCount += rightButtonCount - leftButtonCount; } %>
+<% } %>
+
+<div class="panels">
+	<div class="panel-w-8 panel">
+		<div class="title center panel-row">Addresses</div>
+		<form class="flex-content content panel-row">
+			<div><div class="inline-content">Source</div><div class="inline-content"><select name="source_id"><option value="">All</option></select></div></div>
+			<div><div class="inline-content">Source label</div><div class="inline-content"><select name="source_label_id"><option value="">All</option></select></div></div>
+			<div><div class="inline-content">Currency</div><div class="inline-content"><select name="currency_code"><option value="">All</option></select></div></div>
+			<div><div class="inline-content">Data</div><div class="inline-content"><input name="having_data" type="checkbox" <%- havingData ? 'checked' : '' %>></div></div>
+			<div><input type="submit" value="Filter"></div>
+		</form>
+		<div><hr></div>
+		<div class="center panel-row">
+			<table>
+				<tr><th align="left"><label>Address</label></th><th align="left"><label>Data</label></th></tr>
+				<% if(addresses.length > 0) { %>
+					<% for(const address of addresses) { %>
+						<%- '<tr><td align="left"><label><a class="no-wrap" href="/address/' + address.address + '"><img src="' + address.currency[2] + '" title="' + address.currency[0] + (address.currency[1] != '_pending' && address.currency[1] != '_unknown' ? ' (' + address.currency[1] + ')' : '') + '"><div>' + address.address + '</div></a></label></td><td align="left"><label>' + address.data_ids.length + '</label></td></tr>' %>
+					<% } %>
+				<% } %>
+			</table>
+		</div>
+		<div><hr></div>
+		<div class="flex-content content panel-row">
+			<div><div class="inline-content"><a class="button" href="<%- generateLink(1) %>">❮</a></div></div>
+			<div>
+				<% for(let i = 0; i < leftButtonCount; i++) { %>
+					<%- '<div class="inline-content"><a class="button" href="' + generateLink(pageId - leftButtonCount + i) + '">' + new Intl.NumberFormat().format(pageId - leftButtonCount + i) + '</a></div>' %>
+				<% } %>
+				<div class="inline-content"><a class="active button" href="<%- generateLink(pageId) %>"><%= new Intl.NumberFormat().format(pageId) %></a></div>
+				<% for(let i = 0; i < rightButtonCount; i++) { %>
+					<%- '<div class="inline-content"><a class="button" href="' + generateLink(pageId + i + 1) + '">' + new Intl.NumberFormat().format(pageId + i + 1) + '</a></div>' %>
+				<% } %>
+			</div>
+			<div><div class="inline-content"><a class="button" href="<%- generateLink(pageCount) %>">❯</a></div></div>
+		</div>
+		<div><hr></div>
+		<div class="panel-row">
+			<div class="flex-content">
+				<div class="inline-content"><div>Loading</div><div class="content"><%- new Intl.NumberFormat().format((Date.now() - startedAt) / 1000) + ' s' %></div></div>
+				<div class="inline-content"><div>Addresses (page)</div><div class="content"><%- addressesCount > 0 ? new Intl.NumberFormat().format(offset + 1) + ' - ' + new Intl.NumberFormat().format(addressesCount < (offset + limit) ? addressesCount : (offset + limit)) : 0 %></div></div>
+				<div class="inline-content"><div>Addresses (total)</div><div class="content"><%- new Intl.NumberFormat().format(addressesCount) %></div></div>
+			</div>
+		</div>
+	</div>
+</div>

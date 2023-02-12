@@ -129,7 +129,7 @@ function useLimit(req, res, next) {
 
 function useHavingData(req, res, next) {
 	// Having data is not set or is not true
-	if(!req.query.hasOwnProperty('having_data') || req.query.having_data.length == 0 || req.query.having_data != '1') {
+	if(!req.query.hasOwnProperty('having_data') || req.query.having_data.length == 0 || (req.query.having_data != 'on' && req.query.having_data != '1')) {
 		req.data.havingData = false;
 	}
 	else {
@@ -179,6 +179,7 @@ async function useCurrencyCode(req, res, next) {
 	// Currency code is not set
 	if(!req.query.hasOwnProperty('currency_code') || req.query.currency_code.length == 0) {
 		req.data.currencyId = null;
+		req.data.currencyCode = null;
 	}
 	else {
 		const currency = (await databaseConnection.getCurrency(req.query.currency_code)).rows;
@@ -186,6 +187,7 @@ async function useCurrencyCode(req, res, next) {
 		// Currency found
 		if(currency.length > 0) {
 			req.data.currencyId = currency[0].currency_id;
+			req.data.currencyCode = currency[0].currency_code;
 		}
 		else {
 			res.status(404);
@@ -250,6 +252,9 @@ async function useToken(req, res, next) {
 
 function preProcess(req, res, next) {
 	req.data = {};
+
+	// Get timestamp
+	req.data.startedAt = Date.now();
 
 	// Get title
 	req.data.title = config.router.title;
@@ -447,13 +452,7 @@ app.get('/api/tokens/:token([a-zA-Z0-9]{1,})', preProcessAPI, (req, res, next) =
 app.get('/api/addresses', preProcessAPI, useOffset, useLimit, useHavingData, useSourceId, useSourceLabelId, useCurrencyCode, loadToken, useToken, async (req, res) => {
 	const addresses = (await databaseConnection.getAddresses(req.data.token.role_id, req.data.limit, req.data.offset, req.data.havingData, req.data.sourceId, req.data.sourceLabelId, req.data.currencyId)).rows;
 	
-	// No address found
-	if(addresses.length == 0) {
-		return res.status(404).json({error: 'No address has been found!'});
-	}
-	else {
-		return res.json(addresses);
-	}
+	return res.json(addresses);
 });
 
 app.get('/api/addresses/:address([a-zA-Z0-9]{1,})', preProcessAPI, (req, res, next) => {
@@ -510,13 +509,7 @@ app.get('/api/data/:data_id([0-9]{1,})', preProcessAPI, (req, res, next) => {
 app.get('/api/sources', preProcessAPI, loadToken, useToken, async (req, res) => {
 	const sources = await databaseConnection.getSources();
 
-	// No source found
-	if(sources.rows.length == 0) {
-		return res.status(404).json({error: 'No source has been found!'});
-	}
-	else {
-		return res.json(sources.rows);
-	}
+	return res.json(sources.rows);
 });
 
 app.get('/api/sources/:source_id([0-9]{1,})', preProcessAPI, loadToken, useToken, async (req, res) => {
@@ -542,13 +535,7 @@ app.get('/api/sources/:source_id([0-9]{1,})', preProcessAPI, loadToken, useToken
 app.get('/api/source_labels', preProcessAPI, loadToken, useToken, async (req, res) => {
 	const sourceLabels = await databaseConnection.getSourceLabels();
 
-	// No source label found
-	if(sourceLabels.rows.length == 0) {
-		return res.status(404).json({error: 'No source label has been found!'});
-	}
-	else {
-		return res.json(sourceLabels.rows);
-	}
+	return res.json(sourceLabels.rows);
 });
 
 app.get('/api/source_labels/:source_label_id([0-9]{1,})', preProcessAPI, loadToken, useToken, async (req, res) => {
@@ -574,13 +561,7 @@ app.get('/api/source_labels/:source_label_id([0-9]{1,})', preProcessAPI, loadTok
 app.get('/api/currencies', preProcessAPI, loadToken, useToken, async (req, res) => {
 	const currencies = await databaseConnection.getCurrencies();
 
-	// No currency found
-	if(currencies.rows.length == 0) {
-		return res.status(404).json({error: 'No currency has been found!'});
-	}
-	else {
-		return res.json(currencies.rows);
-	}
+	return res.json(currencies.rows);
 });
 
 app.get('/api/currencies/:currency_code([a-zA-Z0-9_]{1,})', preProcessAPI, loadToken, useToken, async (req, res) => {
@@ -715,17 +696,10 @@ app.get('/addresses', preProcess, (req, res, next) => {
 	const roleId = typeof req.data.account !== 'undefined' ? req.data.account.role_id : 1;
 
 	req.data.addresses = (await databaseConnection.getAddresses(roleId, req.data.limit, req.data.offset, req.data.havingData, req.data.sourceId, req.data.sourceLabelId, req.data.currencyId)).rows;
+	req.data.addressesCount = (await databaseConnection.getAddressesCount(roleId, req.data.havingData, req.data.sourceId, req.data.sourceLabelId, req.data.currencyId)).rows[0].count;
+	req.data.pageCount = Math.ceil(req.data.addressesCount / req.data.limit);
 	
-	// No address found
-	if(req.data.addresses.length == 0) {
-		res.status(404);
-		return render(req, res);
-	}
-	else {
-		req.data.addressesCount = (await databaseConnection.getAddressesCount(roleId, req.data.havingData, req.data.sourceId, req.data.sourceLabelId, req.data.currencyId)).rows[0].count;
-		req.data.pageCount = Math.ceil(req.data.addressesCount / req.data.limit);
-		next();
-	}
+	next();
 }, render);
 
 app.get('*', preProcess, (req, res) => {
