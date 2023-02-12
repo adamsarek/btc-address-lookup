@@ -129,7 +129,7 @@ function useLimit(req, res, next) {
 
 function useHavingData(req, res, next) {
 	// Having data is not set or is not true
-	if(!req.query.hasOwnProperty('having_data') || req.query.having_data.length == 0 || (req.query.having_data != 'on' && req.query.having_data != '1')) {
+	if(!req.query.hasOwnProperty('having_data') || req.query.having_data.length == 0 || req.query.having_data != '1') {
 		req.data.havingData = false;
 	}
 	else {
@@ -192,6 +192,55 @@ async function useCurrencyCode(req, res, next) {
 		else {
 			res.status(404);
 			return render(req, res);
+		}
+	}
+
+	next();
+}
+
+async function useData(req, res, next) {
+	req.data.data = [
+		{ name: 'All sources', sourceId: null, sourceLabelId: null }
+	];
+	const sources = (await databaseConnection.getSources()).rows;
+	for(const source of sources) {
+		if(source.source_label_ids.length > 1) {
+			req.data.data.push({
+				name: source.source_name,
+				sourceId: source.source_id,
+				sourceLabelId: null
+			});
+		}
+		for(const sourceLabelId of source.source_label_ids) {
+			const sourceLabel = (await databaseConnection.getSourceLabel(sourceLabelId)).rows[0];
+			req.data.data.push({
+				name: source.source_name + ' / ' + sourceLabel.source_label_name,
+				sourceId: source.source_id,
+				sourceLabelId: sourceLabel.source_label_id
+			});
+		}
+	}
+	
+	// Data is not set
+	if(!req.query.hasOwnProperty('data') || req.query.data.length == 0) {
+		req.data.dataSelected = '';
+		req.data.havingData = false;
+		req.data.sourceId = null;
+		req.data.sourceLabelId = null;
+	}
+	else {
+		const data = parseInt(req.query.data);
+
+		// Data does not have a numeric value or is too low or is too high
+		if(isNaN(data) || data < 0 || data >= req.data.data.length) {
+			res.status(404);
+			return render(req, res);
+		}
+		else {
+			req.data.dataSelected = req.query.data;
+			req.data.havingData = true;
+			req.data.sourceId = req.data.data[data].sourceId;
+			req.data.sourceLabelId = req.data.data[data].sourceLabelId;
 		}
 	}
 
@@ -692,12 +741,14 @@ app.get('/addresses', preProcess, (req, res, next) => {
 	req.data.offset = (req.data.pageId - 1) * req.data.limit;
 
 	next();
-}, useHavingData, useSourceId, useSourceLabelId, useCurrencyCode, async (req, res, next) => {
+}, useData, useCurrencyCode, async (req, res, next) => {
 	const roleId = typeof req.data.account !== 'undefined' ? req.data.account.role_id : 1;
 
 	req.data.addresses = (await databaseConnection.getAddresses(roleId, req.data.limit, req.data.offset, req.data.havingData, req.data.sourceId, req.data.sourceLabelId, req.data.currencyId)).rows;
 	req.data.addressesCount = (await databaseConnection.getAddressesCount(roleId, req.data.havingData, req.data.sourceId, req.data.sourceLabelId, req.data.currencyId)).rows[0].count;
 	req.data.pageCount = Math.ceil(req.data.addressesCount / req.data.limit);
+	req.data.pageCount = req.data.pageCount > 0 ? req.data.pageCount : 1;
+	req.data.currencies = (await databaseConnection.getCurrencies()).rows;
 	
 	next();
 }, render);
