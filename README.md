@@ -111,7 +111,7 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   - :x: Generate token (linked with the account or IP address)
   - :x: Caching data
 - :hammer: Web pages
-  - :heavy_check_mark: Index
+  - :hammer: Index - statistics, contain links to the Addresses page
   - :heavy_check_mark: Sign up
   - :heavy_check_mark: Sign in
   - :heavy_check_mark: Sign out
@@ -121,7 +121,7 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   - :hammer: Account *- administration not yet implemented*
   - :heavy_check_mark: Addresses (filterable by currency & data)
   - :x: Address - all information related to the searched address
-  - :x: Data - statistics, contain links to the Addresses page with filtered list of addresses
+  - :x: Data - all information related to the data sources
   - :x: API - listed API features, token generation
   - :x: FAQ - answered questions related to the website & thesis
   - :heavy_check_mark: Error - 404 Not Found
