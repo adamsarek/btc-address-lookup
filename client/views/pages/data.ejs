@@ -1,0 +1,30 @@
+<div class="panels">
+	<div class="panel-w-6 panel">
+		<div class="title center panel-row">Data</div>
+		<div class="center panel-row">
+			<table>
+				<% if(data.length > 0) { %>
+					<tr><th align="left"><label>Data / Currency</label></th><th align="left"><label>Addresses</label></th></tr>
+					<% for(const dataItem of data) { %>
+						<% if(dataItem.addressesCount > 0) { %>	
+							<%- '<tr><td align="left"><label><a class="no-wrap" href="' + dataItem.link + '"><div>' + dataItem.name + '</div></a></label></td><td align="left"><label>' + new Intl.NumberFormat().format(dataItem.addressesCount) + '</label></td></tr>' %>
+							<% for(const currencyItem of dataItem.currencies) { %>
+								<% if(currencyItem.addressesCount > 0) { %>
+									<%- '<tr><td align="left"><label><a class="no-wrap" href="' + currencyItem.link + '"><img src="' + currencyItem.logo + '" title="' + currencyItem.currency_name + (currencyItem.currency_code[0] != '_' ? ' (' + currencyItem.currency_code + ')' : '') + '"><div>' + currencyItem.currency_name + (currencyItem.currency_code[0] != '_' ? ' (' + currencyItem.currency_code + ')' : '') + '</div></a></label></td><td align="left"><label>' + new Intl.NumberFormat().format(currencyItem.addressesCount) + '</label></td></tr>' %>
+								<% } %>
+							<% } %>
+						<% } %>
+					<% } %>
+				<% } else { %>
+					<tr><td align="center" colspan="2"><label>No source has been found.</label></td></tr>
+				<% } %>
+			</table>
+		</div>
+		<div><hr></div>
+		<div class="panel-row">
+			<div class="flex-content">
+				<div class="inline-content"><div>Loading</div><div class="content"><%- new Intl.NumberFormat().format((Date.now() - startedAt) / 1000) + ' s' %></div></div>
+			</div>
+		</div>
+	</div>
+</div>

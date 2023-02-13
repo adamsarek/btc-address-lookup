@@ -125,7 +125,7 @@ class DatabaseConnection {
 			ORDER BY CAST(address_id AS INT)`;
 		}
 		else {
-			return `SELECT COUNT(DISTINCT address.address_id) ${sql[5]}`;
+			return `SELECT COUNT(*) ${sql[5]}`;
 		}
 	}
 

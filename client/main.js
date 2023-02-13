@@ -198,7 +198,7 @@ async function useCurrencyCode(req, res, next) {
 	next();
 }
 
-async function useData(req, res, next) {
+async function loadData(req, res, next) {
 	req.data.data = [
 		{ name: 'All sources', sourceId: null, sourceLabelId: null }
 	];
@@ -220,7 +220,11 @@ async function useData(req, res, next) {
 			});
 		}
 	}
-	
+
+	next();
+}
+
+function useData(req, res, next) {
 	// Data is not set
 	if(!req.query.hasOwnProperty('data') || req.query.data.length == 0) {
 		req.data.dataSelected = '';
@@ -741,7 +745,7 @@ app.get('/addresses', preProcess, (req, res, next) => {
 	req.data.offset = (req.data.pageId - 1) * req.data.limit;
 
 	next();
-}, useData, useCurrencyCode, async (req, res, next) => {
+}, loadData, useData, useCurrencyCode, async (req, res, next) => {
 	const roleId = typeof req.data.account !== 'undefined' ? req.data.account.role_id : 1;
 
 	req.data.addresses = (await databaseConnection.getAddresses(roleId, req.data.limit, req.data.offset, req.data.havingData, req.data.sourceId, req.data.sourceLabelId, req.data.currencyId)).rows;
@@ -750,6 +754,52 @@ app.get('/addresses', preProcess, (req, res, next) => {
 	req.data.pageCount = req.data.pageCount > 0 ? req.data.pageCount : 1;
 	req.data.currencies = (await databaseConnection.getCurrencies()).rows;
 	
+	next();
+}, render);
+
+app.get('/data', preProcess, loadData, async (req, res, next) => {
+	const roleId = typeof req.data.account !== 'undefined' ? req.data.account.role_id : 1;
+
+	req.data.currencies = (await databaseConnection.getCurrencies()).rows;
+	
+	for(let i = 0; i < req.data.data.length; i++) {
+		req.data.data[i].havingData = true;
+		req.data.data[i].addressesCount = (await databaseConnection.getAddressesCount(roleId, true, req.data.data[i].sourceId, req.data.data[i].sourceLabelId, null)).rows[0].count;
+		req.data.data[i].link = '/addresses?data=' + i;
+		req.data.data[i].currencies = [];
+
+		for(let j = 0; j < req.data.currencies.length; j++) {
+			req.data.data[i].currencies[j] = { ...req.data.currencies[j] };
+			req.data.data[i].currencies[j].addressesCount = (await databaseConnection.getAddressesCount(roleId, true, req.data.data[i].sourceId, req.data.data[i].sourceLabelId, req.data.currencies[j].currency_id)).rows[0].count;
+			req.data.data[i].currencies[j].link = '/addresses?currency_code=' + req.data.currencies[j].currency_code + '&data=' + i;
+		}
+	}
+
+	req.data.data.unshift({
+		name: 'All',
+		havingData: false,
+		sourceId: null,
+		sourceLabelId: null,
+		addressesCount: (await databaseConnection.getAddressesCount(roleId, false, null, null, null)).rows[0].count,
+		link: '/addresses',
+		currencies: []
+	});
+
+	for(let i = 0; i < req.data.currencies.length; i++) {
+		req.data.data[0].currencies[i] = { ...req.data.currencies[i] };
+		req.data.data[0].currencies[i].addressesCount = (await databaseConnection.getAddressesCount(roleId, false, null, null, req.data.currencies[i].currency_id)).rows[0].count;
+		req.data.data[0].currencies[i].link = '/addresses?currency_code=' + req.data.currencies[i].currency_code;
+	}
+
+	for(let i = 0; i < req.data.data.length; i++) {
+		req.data.data[i].currencies = req.data.data[i].currencies.sort((a, b) => {
+			if(a.addressesCount != b.addressesCount) { return b.addressesCount - a.addressesCount; }
+			if(a.currency_code > b.currency_code) { return 1; }
+			if(a.currency_code < b.currency_code) { return -1; }
+			return 0;
+		});
+	}
+
 	next();
 }, render);
 

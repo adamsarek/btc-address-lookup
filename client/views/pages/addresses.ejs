@@ -15,7 +15,7 @@
 					<option value=""<%- currencyCode == '' ? ' selected' : '' %>>All</option>
 					<% for(const currency of currencies.sort((a, b) => (a.currency_code > b.currency_code) ? 1 : ((b.currency_code > a.currency_code) ? -1 : 0))) { %>
 						<% if(currency.currency_code[0] != '_') { %>
-							<%- '<option value="' + currency.currency_code + '"' + (currencyCode == currency.currency_code ? ' selected' : '') + '>' + currency.currency_name + (currency.currency_code != '_pending' && currency.currency_code != '_unknown' ? ' (' + currency.currency_code + ')' : '') + '</option>' %>
+							<%- '<option value="' + currency.currency_code + '"' + (currencyCode == currency.currency_code ? ' selected' : '') + '>' + currency.currency_name + (currency.currency_code[0] != '_' ? ' (' + currency.currency_code + ')' : '') + '</option>' %>
 						<% } %>
 					<% } %>
 				</optgroup>
@@ -23,7 +23,7 @@
 				<optgroup label="Special cases">
 					<% for(const currency of currencies.sort((a, b) => (a.currency_code > b.currency_code) ? 1 : ((b.currency_code > a.currency_code) ? -1 : 0))) { %>
 						<% if(currency.currency_code[0] == '_') { %>
-							<%- '<option value="' + currency.currency_code + '"' + (currencyCode == currency.currency_code ? ' selected' : '') + '>' + currency.currency_name + (currency.currency_code != '_pending' && currency.currency_code != '_unknown' ? ' (' + currency.currency_code + ')' : '') + '</option>' %>
+							<%- '<option value="' + currency.currency_code + '"' + (currencyCode == currency.currency_code ? ' selected' : '') + '>' + currency.currency_name + (currency.currency_code[0] != '_' ? ' (' + currency.currency_code + ')' : '') + '</option>' %>
 						<% } %>
 					<% } %>
 				</optgroup>
@@ -46,7 +46,7 @@
 				<% if(addresses.length > 0) { %>
 					<tr><th align="left"><label>Address</label></th><th align="left"><label>Data</label></th></tr>
 					<% for(const address of addresses) { %>
-						<%- '<tr><td align="left"><label><a class="no-wrap" href="/address/' + address.address + '"><img src="' + address.currency[2] + '" title="' + address.currency[0] + (address.currency[1] != '_pending' && address.currency[1] != '_unknown' ? ' (' + address.currency[1] + ')' : '') + '"><div>' + address.address + '</div></a></label></td><td align="left"><label>' + address.data_ids.length + '</label></td></tr>' %>
+						<%- '<tr><td align="left"><label><a class="no-wrap" href="/address/' + address.address + '"><img src="' + address.currency[2] + '" title="' + address.currency[0] + (address.currency[1][0] != '_' ? ' (' + address.currency[1] + ')' : '') + '"><div>' + address.address + '</div></a></label></td><td align="left"><label>' + new Intl.NumberFormat().format(address.data_ids.length) + '</label></td></tr>' %>
 					<% } %>
 				<% } else { %>
 					<tr><td align="center" colspan="2"><label>No address has been found.</label></td></tr>
