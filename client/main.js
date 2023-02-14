@@ -14,14 +14,6 @@
 // https://stackoverflow.com/questions/29506253/best-session-storage-middleware-for-express-postgresql
 // https://www.npmjs.com/package/express-pg-session
 
-// #TODO
-// Overall
-//   Currencies - With data / All (with + without data)
-// Sources
-//   Currencies - With data / All (with + without data)
-// Source labels
-//   Currencies - With data / All (with + without data)
-
 // External imports
 const BCRYPT = require('bcrypt');
 const BODY_PARSER = require('body-parser');
@@ -202,7 +194,11 @@ async function loadData(req, res, next) {
 	req.data.data = [
 		{ name: 'All sources', sourceId: null, sourceLabelId: null }
 	];
+	
 	const sources = (await databaseConnection.getSources()).rows;
+
+	const promises = [];
+
 	for(const source of sources) {
 		if(source.source_label_ids.length > 1) {
 			req.data.data.push({
@@ -212,16 +208,27 @@ async function loadData(req, res, next) {
 			});
 		}
 		for(const sourceLabelId of source.source_label_ids) {
-			const sourceLabel = (await databaseConnection.getSourceLabel(sourceLabelId)).rows[0];
-			req.data.data.push({
-				name: source.source_name + ' / ' + sourceLabel.source_label_name,
+			const data = {
+				name: source.source_name + ' / ',
 				sourceId: source.source_id,
-				sourceLabelId: sourceLabel.source_label_id
-			});
+				sourceLabelId: null
+			};
+			req.data.data.push(data);
+			promises.push(databaseConnection.getSourceLabel(sourceLabelId).then((result) => {
+				for(let i = 0; i < req.data.data.length; i++) {
+					if(req.data.data[i] == data) {
+						req.data.data[i].name += result.rows[0].source_label_name;
+						req.data.data[i].sourceLabelId = result.rows[0].source_label_id;
+						break;
+					}
+				}
+			}));
 		}
 	}
 
-	next();
+	Promise.all(promises).then(() => {
+		next();
+	});
 }
 
 function useData(req, res, next) {
@@ -463,7 +470,7 @@ function render(req, res) {
 
 const config = require('./config.json');
 const db = require('./db.json');
-const databaseConnection = new DatabaseConnection(new Database().getConnection(db.connection));
+const databaseConnection = new DatabaseConnection(new Database().getConnection(db.connection), config);
 
 let SECRET;
 rotateSecret();
@@ -757,6 +764,155 @@ app.get('/addresses', preProcess, (req, res, next) => {
 	next();
 }, render);
 
+/*app.get('/data', preProcess, (req, res, next) => {
+	const roleId = typeof req.data.account !== 'undefined' ? req.data.account.role_id : 1;
+
+	const promises = [];
+	const nextPromises = [];
+	
+	req.data.currencies = (await databaseConnection.getCurrencies()).rows;
+
+	req.data.data = [
+		{
+			name: 'All',
+			sourceId: null,
+			sourceLabelId: null,
+			link: '/addresses',
+			currencies: []
+		},
+		{
+			name: 'All sources',
+			sourceId: null,
+			sourceLabelId: null,
+			link: '/addresses?data=0',
+			currencies: []
+		}
+	];
+
+	promises.push(databaseConnection.getAddressesCount(roleId, false, req.data.data[0].sourceId, req.data.data[0].sourceLabelId, null).then((result) => {
+		req.data.data[0].addressesCount = result.rows[0].count;
+	}));
+	for(let i = 0; i < req.data.currencies.length; i++) {
+		req.data.data[0].currencies[i] = { ...req.data.currencies[i] };
+		req.data.data[0].currencies[i].link = '/addresses?currency_code=' + req.data.currencies[i].currency_code;
+		const dataCurrency = req.data.data[0].currencies[i];
+		promises.push(databaseConnection.getAddressesCount(roleId, false, req.data.data[0].sourceId, req.data.data[0].sourceLabelId, req.data.currencies[i].currency_id).then((result) => {
+			for(let j = 0; j < req.data.data[0].currencies.length; j++) {
+				if(req.data.data[0].currencies[j] == dataCurrency) {
+					req.data.data[0].currencies[j].addressesCount = result.rows[0].count;
+					break;
+				}
+			}
+		}));
+	}
+
+	promises.push(databaseConnection.getAddressesCount(roleId, true, req.data.data[1].sourceId, req.data.data[1].sourceLabelId, null).then((result) => {
+		req.data.data[1].addressesCount = result.rows[0].count;
+	}));
+	for(let i = 0; i < req.data.currencies.length; i++) {
+		req.data.data[1].currencies[i] = { ...req.data.currencies[i] };
+		req.data.data[1].currencies[i].link = '/addresses?currency_code=' + req.data.currencies[i].currency_code + '&data=0';
+		const dataCurrency = req.data.data[1].currencies[i];
+		promises.push(databaseConnection.getAddressesCount(roleId, true, req.data.data[1].sourceId, req.data.data[1].sourceLabelId, req.data.currencies[i].currency_id).then((result) => {
+			for(let j = 0; j < req.data.data[1].currencies.length; j++) {
+				if(req.data.data[1].currencies[j] == dataCurrency) {
+					req.data.data[1].currencies[j].addressesCount = result.rows[0].count;
+					break;
+				}
+			}
+		}));
+	}
+	
+	const sources = (await databaseConnection.getSources()).rows;
+	for(const source of sources) {
+		if(source.source_label_ids.length > 1) {
+			req.data.data.push({
+				name: source.source_name,
+				sourceId: source.source_id,
+				sourceLabelId: null,
+				link: '/addresses?data=' + (req.data.data.length - 1),
+				currencies: []
+			});
+			let data = req.data.data[req.data.data.length - 1];
+			promises.push(databaseConnection.getAddressesCount(roleId, true, req.data.data[req.data.data.length - 1].sourceId, req.data.data[req.data.data.length - 1].sourceLabelId, null).then((result) => {
+				for(let i = 0; i < req.data.data.length; i++) {
+					if(req.data.data[i] == data) {
+						req.data.data[i].addressesCount = result.rows[0].count;
+						break;
+					}
+				}
+			}));
+		}
+		for(const sourceLabelId of source.source_label_ids) {
+			let data = {
+				name: source.source_name + ' / ',
+				sourceId: source.source_id,
+				sourceLabelId: null
+			};
+			req.data.data.push(data);
+			promises.push(databaseConnection.getSourceLabel(sourceLabelId).then((result) => {
+				for(let i = 0; i < req.data.data.length; i++) {
+					if(req.data.data[i] == data) {
+						req.data.data[i].name += result.rows[0].source_label_name;
+						req.data.data[i].sourceLabelId = result.rows[0].source_label_id;
+						req.data.data[i].link = i > 0 ? '/addresses?data=' + (i - 1) : '/addresses';
+						req.data.data[i].currencies = [];
+						let data = req.data.data[i];
+						nextPromises.push(databaseConnection.getAddressesCount(roleId, true, req.data.data[i].sourceId, req.data.data[i].sourceLabelId, null).then((result) => {
+							for(let j = 0; j < req.data.data.length; j++) {
+								if(req.data.data[j] == data) {
+									req.data.data[j].addressesCount = result.rows[0].count;
+									break;
+								}
+							}
+						}));
+						for(let j = 0; j < req.data.currencies.length; j++) {
+							req.data.data[i].currencies[j] = { ...req.data.currencies[j] };
+							const dataCurrency = req.data.data[i].currencies[j];
+							nextPromises.push(databaseConnection.getAddressesCount(roleId, true, req.data.data[i].sourceId, req.data.data[i].sourceLabelId, req.data.currencies[j].currency_id).then((result) => {
+								for(let k = 0; k < req.data.data.length; k++) {
+									if(req.data.data[k] == data) {
+										for(let l = 0; l < req.data.data[k].currencies.length; l++) {
+											if(req.data.data[k].currencies[l] == dataCurrency) {
+												req.data.data[k].currencies[l].addressesCount = result.rows[0].count;
+												break;
+											}
+										}
+										break;
+									}
+								}
+							}));
+						}
+						break;
+					}
+				}
+			}));
+		}
+	}
+
+	Promise.all(promises).then(() => {
+		Promise.all(nextPromises).then(() => {
+			for(let i = 0; i < req.data.data.length; i++) {
+				req.data.data[i].currencies = req.data.data[i].currencies.sort((a, b) => {
+					if(a.addressesCount != b.addressesCount) { return b.addressesCount - a.addressesCount; }
+					if(a.currency_code > b.currency_code) { return 1; }
+					if(a.currency_code < b.currency_code) { return -1; }
+					return 0;
+				});
+			}
+		
+			req.data.data = req.data.data.sort((a, b) => {
+				if(a.addressesCount != b.addressesCount) { return b.addressesCount - a.addressesCount; }
+				if(a.sourceId != b.sourceId) { return a.sourceId - b.sourceId; }
+				if(a.sourceLabelId != b.sourceLabelId) { return a.sourceLabelId - b.sourceLabelId; }
+				return 0;
+			});
+
+			next();
+		});
+	});
+}, render);*/
+
 app.get('/data', preProcess, loadData, async (req, res, next) => {
 	const roleId = typeof req.data.account !== 'undefined' ? req.data.account.role_id : 1;
 
@@ -768,10 +924,22 @@ app.get('/data', preProcess, loadData, async (req, res, next) => {
 		req.data.data[i].link = '/addresses?data=' + i;
 		req.data.data[i].currencies = [];
 
+		let addressesCount = 0;
+
 		for(let j = 0; j < req.data.currencies.length; j++) {
+			if(addressesCount >= req.data.data[i].addressesCount) {
+				for(let k = j; k < req.data.currencies.length; k++) {
+					req.data.data[i].currencies[k] = { ...req.data.currencies[k] };
+					req.data.data[i].currencies[k].addressesCount = 0;
+					req.data.data[i].currencies[k].link = '/addresses?currency_code=' + req.data.currencies[k].currency_code + '&data=' + i;
+				}
+				break;
+			}
+
 			req.data.data[i].currencies[j] = { ...req.data.currencies[j] };
 			req.data.data[i].currencies[j].addressesCount = (await databaseConnection.getAddressesCount(roleId, true, req.data.data[i].sourceId, req.data.data[i].sourceLabelId, req.data.currencies[j].currency_id)).rows[0].count;
 			req.data.data[i].currencies[j].link = '/addresses?currency_code=' + req.data.currencies[j].currency_code + '&data=' + i;
+			addressesCount += req.data.data[i].currencies[j].addressesCount;
 		}
 	}
 
@@ -785,10 +953,22 @@ app.get('/data', preProcess, loadData, async (req, res, next) => {
 		currencies: []
 	});
 
+	let addressesCount = 0;
+
 	for(let i = 0; i < req.data.currencies.length; i++) {
+		if(addressesCount >= req.data.data[0].addressesCount) {
+			for(let j = i; j < req.data.currencies.length; j++) {
+				req.data.data[0].currencies[j] = { ...req.data.currencies[j] };
+				req.data.data[0].currencies[j].addressesCount = 0;
+				req.data.data[0].currencies[j].link = '/addresses?currency_code=' + req.data.currencies[j].currency_code;
+			}
+			break;
+		}
+		
 		req.data.data[0].currencies[i] = { ...req.data.currencies[i] };
 		req.data.data[0].currencies[i].addressesCount = (await databaseConnection.getAddressesCount(roleId, false, null, null, req.data.currencies[i].currency_id)).rows[0].count;
 		req.data.data[0].currencies[i].link = '/addresses?currency_code=' + req.data.currencies[i].currency_code;
+		addressesCount += req.data.data[0].currencies[i].addressesCount;
 	}
 
 	for(let i = 0; i < req.data.data.length; i++) {
@@ -799,6 +979,13 @@ app.get('/data', preProcess, loadData, async (req, res, next) => {
 			return 0;
 		});
 	}
+
+	req.data.data = req.data.data.sort((a, b) => {
+		if(a.addressesCount != b.addressesCount) { return b.addressesCount - a.addressesCount; }
+		if(a.sourceId != b.sourceId) { return a.sourceId - b.sourceId; }
+		if(a.sourceLabelId != b.sourceLabelId) { return a.sourceLabelId - b.sourceLabelId; }
+		return 0;
+	});
 
 	next();
 }, render);
@@ -812,23 +999,4 @@ app.get('*', preProcess, (req, res) => {
 
 app.listen(config.connection.port, () => {
 	console.log(`Client server started listening on port ${config.connection.port}!`);
-
-	// getAddresses(roleId, limit, offset, havingData=false, sourceId=null, sourceLabelId=null, currencyId=null)
-	/*let addresses_a, addresses_b, addresses_c;
-	addresses_a = await databaseConnection.getAddresses(3, 5, 10, null, true, null, 4);
-	console.log(addresses_a.rows);
-	addresses_b = await databaseConnection.getAddresses(3, 5, 10, null, true, 4, 4);
-	console.log(addresses_b.rows);
-	addresses_c = await databaseConnection.getAddresses(3, 5, 10, null, true, 4, null);
-	console.log(addresses_c.rows);
-
-	console.log(JSON.stringify(addresses_a.rows) == JSON.stringify(addresses_b.rows));
-	console.log(JSON.stringify(addresses_b.rows) == JSON.stringify(addresses_c.rows));
-
-	addresses_a = await databaseConnection.getAddressesCount(3, null, true, null, 4);
-	console.log(addresses_a.rows);
-	addresses_b = await databaseConnection.getAddressesCount(3, null, true, 4, 4);
-	console.log(addresses_b.rows);
-	addresses_c = await databaseConnection.getAddressesCount(3, null, true, 4, null);
-	console.log(addresses_c.rows);*/
 });

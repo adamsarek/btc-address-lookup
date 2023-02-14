@@ -2,8 +2,10 @@
 const BCRYPT = require('bcrypt');
 
 class DatabaseConnection {
-	constructor(connection) {
+	constructor(connection, config) {
 		this._connection = connection;
+		this._config = config;
+		this._sql = {};
 	}
 
 	getConnection() {
@@ -14,7 +16,14 @@ class DatabaseConnection {
 		let cursor = [];
 
 		try {
-			cursor = this._connection.query(query, args);
+			if(typeof this._sql[query] === 'undefined' || this._sql[query].updatedAt + this._config.db.cache_timeout < Date.now()) {
+				this._sql[query] = {
+					updatedAt: Date.now(),
+					cursor: this._connection.query(query, args)
+				};
+			}
+
+			cursor = this._sql[query].cursor;
 		}
 		catch(error) {
 			console.error(error);

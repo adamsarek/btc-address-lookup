@@ -7,11 +7,14 @@
 	},
 	"api": {
 		"role": {
-			"1": { "use_count_limit": 100, "reset_use_count_after": 86400 },
+			"1": { "use_count_limit": 100,  "reset_use_count_after": 86400 },
 			"2": { "use_count_limit": 3600, "reset_use_count_after": 3600 },
 			"3": { "use_count_limit": 1800, "reset_use_count_after": 600 },
-			"4": { "use_count_limit": 300, "reset_use_count_after": 60 }
+			"4": { "use_count_limit": 300,  "reset_use_count_after": 60 }
 		}
+	},
+	"db": {
+		"cache_timeout": 300000
 	},
 	"session": {
 		"secret_timeout": 86400000,

@@ -5,18 +5,35 @@
 			<table>
 				<% if(data.length > 0) { %>
 					<tr><th align="left"><label>Data / Currency</label></th><th align="left"><label>Addresses</label></th></tr>
-					<% for(const dataItem of data) { %>
-						<% if(dataItem.addressesCount > 0) { %>	
-							<%- '<tr><td align="left"><label><a class="no-wrap" href="' + dataItem.link + '"><div>' + dataItem.name + '</div></a></label></td><td align="left"><label>' + new Intl.NumberFormat().format(dataItem.addressesCount) + '</label></td></tr>' %>
-							<% for(const currencyItem of dataItem.currencies) { %>
-								<% if(currencyItem.addressesCount > 0) { %>
-									<%- '<tr><td align="left"><label><a class="no-wrap" href="' + currencyItem.link + '"><img src="' + currencyItem.logo + '" title="' + currencyItem.currency_name + (currencyItem.currency_code[0] != '_' ? ' (' + currencyItem.currency_code + ')' : '') + '"><div>' + currencyItem.currency_name + (currencyItem.currency_code[0] != '_' ? ' (' + currencyItem.currency_code + ')' : '') + '</div></a></label></td><td align="left"><label>' + new Intl.NumberFormat().format(currencyItem.addressesCount) + '</label></td></tr>' %>
+					<% for(let i = 0; i < data.length; i++) { %>
+						<% if(data[i].addressesCount > 0) { %>
+							<% if(data[i].sourceLabelId == null && i + 1 < data.length && data[i].sourceId == data[i + 1].sourceId) { %>
+								<% for(let j = i + 1; j < data.length; j++) { %>
+									<% if(data[i].sourceId != data[j].sourceId) { %>
+										<% break; %>
+									<% } %>
+									
+									<% if(data[i].addressesCount != data[j].addressesCount && data[j].addressesCount > 0) { %>
+										<%- '<tr><td align="left"><label><a class="no-wrap" href="' + data[i].link + '"><div>' + data[i].name + '</div></a></label></td><td align="left"><label>' + new Intl.NumberFormat().format(data[i].addressesCount) + '</label></td></tr>' %>
+										<% for(const currencyItem of data[i].currencies) { %>
+											<% if(currencyItem.addressesCount > 0) { %>
+												<%- '<tr><td align="left"><label><a class="no-wrap" href="' + currencyItem.link + '"><img src="' + currencyItem.logo + '" title="' + currencyItem.currency_name + (currencyItem.currency_code[0] != '_' ? ' (' + currencyItem.currency_code + ')' : '') + '"><div>' + currencyItem.currency_name + (currencyItem.currency_code[0] != '_' ? ' (' + currencyItem.currency_code + ')' : '') + '</div></a></label></td><td align="left"><label>' + new Intl.NumberFormat().format(currencyItem.addressesCount) + '</label></td></tr>' %>
+											<% } %>
+										<% } %>
+									<% } %>
+								<% } %>
+							<% } else { %>
+								<%- '<tr><td align="left"><label><a class="no-wrap" href="' + data[i].link + '"><div>' + data[i].name + '</div></a></label></td><td align="left"><label>' + new Intl.NumberFormat().format(data[i].addressesCount) + '</label></td></tr>' %>
+								<% for(const currencyItem of data[i].currencies) { %>
+									<% if(currencyItem.addressesCount > 0) { %>
+										<%- '<tr><td align="left"><label><a class="no-wrap" href="' + currencyItem.link + '"><img src="' + currencyItem.logo + '" title="' + currencyItem.currency_name + (currencyItem.currency_code[0] != '_' ? ' (' + currencyItem.currency_code + ')' : '') + '"><div>' + currencyItem.currency_name + (currencyItem.currency_code[0] != '_' ? ' (' + currencyItem.currency_code + ')' : '') + '</div></a></label></td><td align="left"><label>' + new Intl.NumberFormat().format(currencyItem.addressesCount) + '</label></td></tr>' %>
+									<% } %>
 								<% } %>
 							<% } %>
 						<% } %>
 					<% } %>
 				<% } else { %>
-					<tr><td align="center" colspan="2"><label>No source has been found.</label></td></tr>
+					<tr><td align="center" colspan="2"><label>No data has been found.</label></td></tr>
 				<% } %>
 			</table>
 		</div>
