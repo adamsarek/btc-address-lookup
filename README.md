@@ -109,7 +109,7 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   - :heavy_check_mark: Get currencies
   - :heavy_check_mark: Get currency
   - :x: Generate token (linked with the account or IP address)
-  - :x: Caching data
+  - :heavy_check_mark: Caching data
 - :hammer: Web pages
   - :heavy_check_mark: Index
   - :heavy_check_mark: Sign up
