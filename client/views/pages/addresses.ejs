@@ -12,14 +12,13 @@
 		<form class="flex-content content panel-row">
 			<div><div class="inline-content">Currency</div><div class="inline-content"><select name="currency_code">
 				<optgroup label="Currency">
-					<option value=""<%- currencyCode == '' ? ' selected' : '' %>>All</option>
+					<option value=""<%- currencyCode == null ? ' selected' : '' %>>All</option>
 					<% for(const currency of currencies.sort((a, b) => (a.currency_code > b.currency_code) ? 1 : ((b.currency_code > a.currency_code) ? -1 : 0))) { %>
 						<% if(currency.currency_code[0] != '_') { %>
 							<%- '<option value="' + currency.currency_code + '"' + (currencyCode == currency.currency_code ? ' selected' : '') + '>' + currency.currency_name + (currency.currency_code[0] != '_' ? ' (' + currency.currency_code + ')' : '') + '</option>' %>
 						<% } %>
 					<% } %>
 				</optgroup>
-				<!-- TODO - selected option -->
 				<optgroup label="Special cases">
 					<% for(const currency of currencies.sort((a, b) => (a.currency_code > b.currency_code) ? 1 : ((b.currency_code > a.currency_code) ? -1 : 0))) { %>
 						<% if(currency.currency_code[0] == '_') { %>

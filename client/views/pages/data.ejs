@@ -7,7 +7,7 @@
 					<tr><th align="left"><label>Data / Currency</label></th><th align="left"><label>Addresses</label></th></tr>
 					<% for(let i = 0; i < data.length; i++) { %>
 						<% if(data[i].addressesCount > 0) { %>
-							<% if(data[i].sourceLabelId == null && i + 1 < data.length && data[i].sourceId == data[i + 1].sourceId) { %>
+							<% if(data[i].sourceId != null && data[i].sourceLabelId == null && i + 1 < data.length && data[i].sourceId == data[i + 1].sourceId) { %>
 								<% for(let j = i + 1; j < data.length; j++) { %>
 									<% if(data[i].sourceId != data[j].sourceId) { %>
 										<% break; %>

@@ -12,18 +12,23 @@ class DatabaseConnection {
 		return this._connection;
 	}
 
-	#execute(query, args=[]) {
+	#execute(query, cache=false, args=[]) {
 		let cursor = [];
 
 		try {
-			if(typeof this._sql[query] === 'undefined' || this._sql[query].updatedAt + this._config.db.cache_timeout < Date.now()) {
-				this._sql[query] = {
-					updatedAt: Date.now(),
-					cursor: this._connection.query(query, args)
-				};
+			if(cache) {
+				if(typeof this._sql[query] === 'undefined' || this._sql[query].updatedAt + this._config.db.cache_timeout < Date.now()) {
+					this._sql[query] = {
+						updatedAt: Date.now(),
+						cursor: this._connection.query(query, args)
+					};
+				}
+	
+				cursor = this._sql[query].cursor;
 			}
-
-			cursor = this._sql[query].cursor;
+			else {
+				cursor = this._connection.query(query, args);
+			}
 		}
 		catch(error) {
 			console.error(error);
@@ -142,11 +147,11 @@ class DatabaseConnection {
 		return this.#execute(`
 			${this.#prepareSQL(0, roleId, havingData, sourceId, sourceLabelId, currencyId)}
 			LIMIT ${limit} OFFSET ${offset}
-		`);
+		`, true);
 	}
 
 	getAddressesCount(roleId, havingData=false, sourceId=null, sourceLabelId=null, currencyId=null) {
-		return this.#execute(this.#prepareSQL(1, roleId, havingData, sourceId, sourceLabelId, currencyId));
+		return this.#execute(this.#prepareSQL(1, roleId, havingData, sourceId, sourceLabelId, currencyId), true);
 	}
 
 	getAddress(roleId, address) {
@@ -328,6 +333,54 @@ class DatabaseConnection {
 		`);
 	}
 
+	getAccounts(limit, offset, email='', roleId=null) {
+		return this.#execute(`
+			SELECT
+				CAST(account_id AS INT),
+				CAST(role_id AS INT),
+				(
+					SELECT name
+					FROM role
+					WHERE role.role_id = account.role_id
+				) AS role_name,
+				email,
+				signed_up_at,
+				last_signed_in_at
+			FROM account
+			${email != '' && roleId != null ? (`
+				WHERE email = '${email}' AND role_id = ${roleId}
+			`) : (
+				email != '' ? (`
+					WHERE email = '${email}'
+				`) : (
+					roleId != null ? (`
+						WHERE role_id = ${roleId}
+					`) : ''
+				)
+			)}
+			ORDER BY CAST(account_id AS INT)
+			LIMIT ${limit} OFFSET ${offset}
+		`);
+	}
+
+	getAccountsCount(email='', roleId=null) {
+		return this.#execute(`
+			SELECT COUNT(*)
+			FROM account
+			${email != '' && roleId != null ? (`
+				WHERE email = '${email}' AND role_id = ${roleId}
+			`) : (
+				email != '' ? (`
+					WHERE email = '${email}'
+				`) : (
+					roleId != null ? (`
+						WHERE role_id = ${roleId}
+					`) : ''
+				)
+			)}
+		`);
+	}
+
 	getAccount(email) {
 		return this.#execute(`
 			SELECT
@@ -354,6 +407,32 @@ class DatabaseConnection {
 				last_signed_in_by_ip = '${ip}',
 				last_signed_in_at = CURRENT_TIMESTAMP
 			WHERE email = '${email}'
+		`);
+	}
+
+	editAccountRole(email, roleId) {
+		return this.#execute(`
+			UPDATE account
+			SET role_id = ${roleId}
+			WHERE email = '${email}'
+		`);
+	}
+
+	hasRole(roleId) {
+		return this.#execute(`
+			SELECT 1
+			FROM role
+			WHERE role_id = ${roleId}
+		`);
+	}
+
+	getRoles() {
+		return this.#execute(`
+			SELECT
+				CAST(role_id AS INT),
+				name AS role_name
+			FROM role
+			ORDER BY CAST(role_id AS INT)
 		`);
 	}
 }

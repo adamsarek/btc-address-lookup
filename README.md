@@ -118,7 +118,8 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   - :hammer: Forgotten password *- server-side not yet implemented*
   - :hammer: Reset password *- server-side not yet implemented*
   - :hammer: Change password *- server-side not yet implemented*
-  - :hammer: Account *- administration not yet implemented*
+  - :heavy_check_mark: Account
+  - :heavy_check_mark: Accounts (filterable by email & role) - admin only page
   - :heavy_check_mark: Addresses (filterable by currency & data)
   - :x: Address - all information related to the searched address
   - :heavy_check_mark: Data - statistics, contain links to the Addresses page

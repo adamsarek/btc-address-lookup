@@ -72,6 +72,27 @@ function preProcessAPI(req, res, next) {
 	next();
 }
 
+function usePage(req, res, next) {
+	// Page is not set
+	if(!req.query.hasOwnProperty('page') || req.query.page.length == 0) {
+		req.data.pageId = 1;
+	}
+	else {
+		req.data.pageId = parseInt(req.query.page);
+
+		// Page does not have a numeric value or is too low
+		if(isNaN(req.data.pageId) || req.data.pageId <= 0) {
+			res.status(404);
+			return render(req, res);
+		}
+	}
+
+	req.data.limit = config.router.page_limit;
+	req.data.offset = (req.data.pageId - 1) * req.data.limit;
+
+	next();
+}
+
 function useOffset(req, res, next) {
 	// Offset is not set
 	if(!req.query.hasOwnProperty('offset') || req.query.offset.length == 0) {
@@ -415,6 +436,23 @@ function getForm(req, inputs) {
 			form._success.formValidation = false;
 		}
 	}
+
+	// Role validation
+	if(typeof form.role !== 'undefined') {
+		if(form.role.data.length == 0) {
+			form.role.error = 'Role is empty.';
+			form._success.formValidation = false;
+		}
+		else {
+			form.role.data = parseInt(form.role.data);
+
+			// Role does not have a numeric value or is too low
+			if(isNaN(form.role.data) || form.role.data <= 0) {
+				form.role.error = 'Role is too low.';
+				form._success.formValidation = false;
+			}
+		}
+	}
 	
 	return form;
 }
@@ -441,6 +479,29 @@ async function signIn(req, res, next) {
 			req.data.form._error = 'Account does not exist.';
 			next();
 		}
+	}
+	else {
+		req.data.form._error = 'Account does not exist.';
+		next();
+	}
+}
+
+async function editAccountRole(req, res, next) {
+	req.data.form._success.overall = false;
+	
+	let account = await databaseConnection.getAccount(req.data.form.email.data);
+	
+	// Account found
+	if(account.rows.length > 0) {
+		await databaseConnection.editAccountRole(req.data.form.email.data, req.data.form.role.data);
+
+		account = await databaseConnection.getAccount(req.data.account.email);
+
+		req.session.account = account.rows[0];
+		req.session.save(() => {
+			req.data.form._success.overall = true;
+			return res.redirect('/accounts');
+		});
 	}
 	else {
 		req.data.form._error = 'Account does not exist.';
@@ -733,32 +794,98 @@ app.get('/account', preProcess, (req, res, next) => {
 	}
 }, render);
 
-app.get('/addresses', preProcess, (req, res, next) => {
-	// Page is not set
-	if(!req.query.hasOwnProperty('page') || req.query.page.length == 0) {
-		req.data.pageId = 1;
+app.get('/accounts', preProcess, (req, res, next) => {
+	if(typeof req.data.account === 'undefined' || req.data.account.role_id < 4) {
+		return res.redirect('/sign-in');
 	}
 	else {
-		req.data.pageId = parseInt(req.query.page);
+		next();
+	}
+}, usePage, async (req, res, next) => {
+	// Email is not set
+	if(!req.query.hasOwnProperty('email') || req.query.email.length == 0) {
+		req.data.email = '';
+	}
+	else {
+		req.data.email = req.query.email;
+	}
+	
+	// Role is not set
+	if(!req.query.hasOwnProperty('role') || req.query.role.length == 0) {
+		req.data.role = null;
+	}
+	else {
+		req.data.role = parseInt(req.query.role);
 
-		// Page does not have a numeric value or is too low
-		if(isNaN(req.data.pageId) || req.data.pageId <= 0) {
+		// Role does not have a numeric value or is too low
+		if(isNaN(req.data.role) || req.data.role <= 0) {
 			res.status(404);
 			return render(req, res);
 		}
 	}
 
-	req.data.limit = config.router.address_limit;
-	req.data.offset = (req.data.pageId - 1) * req.data.limit;
+	req.data.accountsCount = (await databaseConnection.getAccountsCount(req.data.email, req.data.role)).rows[0].count;
+	req.data.pageCount = Math.ceil(req.data.accountsCount / req.data.limit);
+	req.data.pageCount = req.data.pageCount > 0 ? req.data.pageCount : 1;
 
+	// Page is too high
+	if(req.data.pageId > req.data.pageCount) {
+		res.status(404);
+		return render(req, res);
+	}
+
+	req.data.accounts = (await databaseConnection.getAccounts(req.data.limit, req.data.offset, req.data.email, req.data.role)).rows;
+	req.data.roles = (await databaseConnection.getRoles()).rows;
+	
 	next();
-}, loadData, useData, useCurrencyCode, async (req, res, next) => {
+}, render);
+
+app.post('/accounts', preProcess, async (req, res, next) => {
+	if(typeof req.data.account === 'undefined' || req.data.account.role_id < 4) {
+		return res.redirect('/sign-in');
+	}
+	else {
+		req.data.form = getForm(req, ['email', 'role']);
+
+		// Form successfully validated
+		if(req.data.form._success.formValidation) {
+			try {
+				req.data.form._success.dataValidation = true;
+			
+				// Role does not exist
+				if((await databaseConnection.hasRole(req.data.form.role.data)).rows.length <= 0) {
+					req.data.form.role.error = 'Role does not exist.';
+					req.data.form._success.dataValidation = false;
+					next();
+				}
+
+				// Data successfully validated
+				if(req.data.form._success.dataValidation) {
+					editAccountRole(req, res, next);
+				}
+			}
+			catch(error) {
+				req.data.form._error = 'Could not edit the account role. Try again later.';
+				next();
+			}
+		}
+	}
+}, render);
+
+app.get('/addresses', preProcess, usePage, loadData, useData, useCurrencyCode, async (req, res, next) => {
 	const roleId = typeof req.data.account !== 'undefined' ? req.data.account.role_id : 1;
 
-	req.data.addresses = (await databaseConnection.getAddresses(roleId, req.data.limit, req.data.offset, req.data.havingData, req.data.sourceId, req.data.sourceLabelId, req.data.currencyId)).rows;
 	req.data.addressesCount = (await databaseConnection.getAddressesCount(roleId, req.data.havingData, req.data.sourceId, req.data.sourceLabelId, req.data.currencyId)).rows[0].count;
 	req.data.pageCount = Math.ceil(req.data.addressesCount / req.data.limit);
 	req.data.pageCount = req.data.pageCount > 0 ? req.data.pageCount : 1;
+
+	// Page is too high
+	if(req.data.pageId > req.data.pageCount) {
+		res.status(404);
+		return render(req, res);
+	}
+
+	req.data.addresses = (await databaseConnection.getAddresses(roleId, req.data.limit, req.data.offset, req.data.havingData, req.data.sourceId, req.data.sourceLabelId, req.data.currencyId)).rows;
 	req.data.currencies = (await databaseConnection.getCurrencies()).rows;
 	
 	next();

@@ -1,0 +1,64 @@
+<% const generateLink = (page) => { return '?' + ((email != '' ? '&email=' + email : '') + (role != null ? '&role=' + role : '') + '&page=' + page).slice(1); }; %>
+<% let leftButtonCount = pageId >= 3 ? 2 : pageId - 1; %>
+<% let rightButtonCount = pageId <= pageCount - 2 ? 2 : pageCount - pageId; %>
+<% if(pageCount >= 3) { %>
+	<% if(leftButtonCount > rightButtonCount) { leftButtonCount += leftButtonCount - rightButtonCount; } %>
+	<% if(rightButtonCount > leftButtonCount) { rightButtonCount += rightButtonCount - leftButtonCount; } %>
+<% } %>
+
+<div class="panels">
+	<div class="panel-w-8 panel">
+		<div class="title center panel-row">Accounts</div>
+		<form class="flex-content content panel-row">
+			<div><div class="inline-content">Email</div><div class="inline-content"><input name="email" type="email" type="email" placeholder="Email" value="<%= email != '' ? email : '' %>" maxlength="128" pattern="^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$"></div></div>
+			<div><div class="inline-content">Role</div><div class="inline-content"><select name="role">
+				<option value=""<%- role == null ? ' selected' : '' %>>All</option>
+				<% for(const roleItem of roles) { %>
+					<%- '<option value="' + roleItem.role_id + '"' + (role == roleItem.role_id ? ' selected' : '') + '>' + roleItem.role_name + '</option>' %>
+				<% } %>
+			</select></div></div>
+			<div><input type="submit" value="Filter"></div>
+		</form>
+		<div><hr></div>
+		<%- typeof form !== 'undefined' && form._error.length > 0 ? '<div class="error center panel-row">' + form._error + '</div>' : '' %>
+		<%- typeof form !== 'undefined' && typeof form.role !== 'undefined' && form.role.error.length > 0 ? '<div class="error center panel-row">' + form.role.error + '</div>' : '' %>
+		<div class="center panel-row">
+			<table>
+				<% if(accounts.length > 0) { %>
+					<tr><th align="left"><label>Email</label></th><th align="left"><label>Role</label></th></tr>
+					<% for(const accountItem of accounts) { %>
+						<%- '<tr><td align="left"><label><span class="no-wrap"><div>' + accountItem.email + '</div></span></label></td><td align="left"><form method="POST" class="flex-content"><div><div class="inline-content"><input name="email" type="hidden" value="' + accountItem.email + '"><select name="role">' %>
+							<% for(const roleItem of roles) { %>
+								<%- '<option value="' + roleItem.role_id + '"' + (accountItem.role_id == roleItem.role_id ? ' selected' : '') + '>' + roleItem.role_name + '</option>' %>
+							<% } %>
+						<%- '</select></div></div><div><input type="submit" value="Edit"></div></form></td></tr>' %>
+					<% } %>
+				<% } else { %>
+					<tr><td align="center" colspan="2"><label>No account has been found.</label></td></tr>
+				<% } %>
+			</table>
+		</div>
+		<div><hr></div>
+		<div class="flex-content content panel-row">
+			<div><div class="inline-content"><a class="button" href="<%- generateLink(1) %>">❮</a></div></div>
+			<div>
+				<% for(let i = 0; i < leftButtonCount; i++) { %>
+					<%- '<div class="inline-content"><a class="button" href="' + generateLink(pageId - leftButtonCount + i) + '">' + new Intl.NumberFormat().format(pageId - leftButtonCount + i) + '</a></div>' %>
+				<% } %>
+				<div class="inline-content"><a class="active button" href="<%- generateLink(pageId) %>"><%= new Intl.NumberFormat().format(pageId) %></a></div>
+				<% for(let i = 0; i < rightButtonCount; i++) { %>
+					<%- '<div class="inline-content"><a class="button" href="' + generateLink(pageId + i + 1) + '">' + new Intl.NumberFormat().format(pageId + i + 1) + '</a></div>' %>
+				<% } %>
+			</div>
+			<div><div class="inline-content"><a class="button" href="<%- generateLink(pageCount) %>">❯</a></div></div>
+		</div>
+		<div><hr></div>
+		<div class="panel-row">
+			<div class="flex-content">
+				<div class="inline-content"><div>Loading</div><div class="content"><%- new Intl.NumberFormat().format((Date.now() - startedAt) / 1000) + ' s' %></div></div>
+				<div class="inline-content"><div>Accounts (page)</div><div class="content"><%- accountsCount > 0 ? new Intl.NumberFormat().format(offset + 1) + ' - ' + new Intl.NumberFormat().format(accountsCount < (offset + limit) ? accountsCount : (offset + limit)) : 0 %></div></div>
+				<div class="inline-content"><div>Accounts (all pages)</div><div class="content"><%- new Intl.NumberFormat().format(accountsCount) %></div></div>
+			</div>
+		</div>
+	</div>
+</div>
