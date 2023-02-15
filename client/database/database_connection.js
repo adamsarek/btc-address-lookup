@@ -37,6 +37,17 @@ class DatabaseConnection {
 		return cursor;
 	}
 
+	addToken(accountId, token, ip) {
+		return this.#execute(`
+			INSERT INTO token (account_id, token, created_by_ip)
+			VALUES (
+				${accountId},
+				'${token}',
+				'${ip}'
+			)
+		`);
+	}
+
 	getToken(token) {
 		return this.#execute(`
 			SELECT
@@ -44,24 +55,25 @@ class DatabaseConnection {
 				(
 					SELECT name
 					FROM role
-					WHERE role_id = token.role_id
+					WHERE role_id = account.role_id
 				) AS role_name,
 				token,
 				CAST(use_count AS INT),
-				CAST(use_count_limit AS INT),
 				created_at,
 				last_used_at,
 				reset_use_count_at
 			FROM token
+			JOIN account ON account.account_id = token.account_id
 			WHERE token = '${token}'
 		`);
 	}
 
-	setToken(token) {
+	setToken(token, ip) {
 		return this.#execute(`
 			UPDATE token
 			SET
 				use_count = ${token.use_count},
+				last_used_by_ip = '${ip}',
 				last_used_at = TO_TIMESTAMP(${token.last_used_at / 1000}),
 				reset_use_count_at = TO_TIMESTAMP(${token.reset_use_count_at / 1000})
 			WHERE token = '${token.token}'
@@ -384,7 +396,7 @@ class DatabaseConnection {
 	getAccount(email) {
 		return this.#execute(`
 			SELECT
-				CAST(account_id AS INT),
+				CAST(account.account_id AS INT),
 				CAST(role_id AS INT),
 				(
 					SELECT name
@@ -394,8 +406,10 @@ class DatabaseConnection {
 				email,
 				password,
 				signed_up_at,
-				last_signed_in_at
+				last_signed_in_at,
+				token
 			FROM account
+			LEFT JOIN token ON token.account_id = account.account_id
 			WHERE email = '${email}'
 		`);
 	}

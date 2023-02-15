@@ -307,7 +307,7 @@ async function useToken(req, res, next) {
 			
 			if(now < resetUseCountAt) {
 				// Token use count limit reached
-				if(req.data.token.use_count >= req.data.token.use_count_limit) {
+				if(req.data.token.use_count >= config.api.role[req.data.token.role_id].use_count_limit) {
 					return res.status(400).json({error: 'Token use count limit reached!'});
 				}
 				else {
@@ -325,7 +325,7 @@ async function useToken(req, res, next) {
 		}
 		req.data.token.last_used_at = now;
 
-		await databaseConnection.setToken(req.data.token);
+		await databaseConnection.setToken(req.data.token, req.data.ip);
 
 		next();
 	}
@@ -465,6 +465,18 @@ async function signIn(req, res, next) {
 	// Account found
 	if(account.rows.length > 0) {
 		if(BCRYPT.compareSync(req.data.form.password.data, account.rows[0].password)) {
+			// Account does not have token
+			if(account.rows[0].token == null) {
+				while(true) {
+					try {
+						const token = CRYPTO.randomBytes(64).toString('hex');
+						await databaseConnection.addToken(account.rows[0].account_id, token, req.data.ip);
+						break;
+					}
+					catch(error) {}
+				}
+			}
+
 			await databaseConnection.signInAccount(req.data.form.email.data, req.data.ip);
 
 			account = await databaseConnection.getAccount(req.data.form.email.data);
@@ -493,14 +505,30 @@ async function editAccountRole(req, res, next) {
 	
 	// Account found
 	if(account.rows.length > 0) {
+		// Account is admin
+		if(account.rows[0].role_id == 4) {
+			const adminCount = (await databaseConnection.getAccountsCount('', 4)).rows[0].count;
+
+			// Edit role of last admin
+			if(adminCount <= 1) {
+				req.data.form._error = 'Your role could not be changed because there has to be at least 1 admin.';
+				return res.redirect('/accounts');
+			}
+		}
+		
 		await databaseConnection.editAccountRole(req.data.form.email.data, req.data.form.role.data);
 
 		account = await databaseConnection.getAccount(req.data.account.email);
 
 		req.session.account = account.rows[0];
 		req.session.save(() => {
-			req.data.form._success.overall = true;
-			return res.redirect('/accounts');
+			if(req.data.account.role_id == req.session.account.role_id) {
+				req.data.form._success.overall = true;
+				return res.redirect('/accounts');
+			}
+			else {
+				return res.redirect('/account');
+			}
 		});
 	}
 	else {

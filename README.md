@@ -21,6 +21,7 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   - :heavy_check_mark: **account** *- contains information about the user account*
   - :heavy_check_mark: **token** *- contains API tokens with various levels of access to the crawled data*
   - :heavy_check_mark: **address_data** *- contains connection between cryptocurrency addresses and their respective crawled data*
+  - :heavy_check_mark: **session** *- contains account sessions*
 - :hammer: Crawling all addresses / reports from the following sources[^robots_txt]:
   - :heavy_check_mark: [LoyceV](http://alladdresses.loyce.club "LoyceV")
     - :heavy_check_mark: Weekly updates with all BTC addresses (GZIP)
@@ -96,7 +97,7 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
 
 ## :earth_americas: Web Client [[client](client "Web Client")]
 ### Features:
-- :hammer: REST API
+- :heavy_check_mark: REST API
   - :heavy_check_mark: Get token
   - :heavy_check_mark: Limit access to addresses data by user roles
   - :heavy_check_mark: Get addresses (filterable by having data, source, source label & currency)
@@ -108,7 +109,7 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   - :heavy_check_mark: Get source label
   - :heavy_check_mark: Get currencies
   - :heavy_check_mark: Get currency
-  - :x: Generate token (linked with the account or IP address)
+  - :heavy_check_mark: Generate token (linked with the account, generated during first sign in)
   - :heavy_check_mark: Caching data
 - :hammer: Web pages
   - :heavy_check_mark: Index
@@ -123,7 +124,7 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   - :heavy_check_mark: Addresses (filterable by currency & data)
   - :x: Address - all information related to the searched address
   - :heavy_check_mark: Data - statistics, contain links to the Addresses page
-  - :x: API - listed API features, token generation
+  - :x: API - listed API features
   - :x: FAQ - answered questions related to the website & thesis
   - :heavy_check_mark: Error - 404 Not Found
 
