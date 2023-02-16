@@ -3,7 +3,7 @@
 		<div class="title center panel-row">Data</div>
 		<div class="center panel-row">
 			<table>
-				<% if(data.length > 0) { %>
+				<% if(data.length > 0 && data[0].addressesCount > 0) { %>
 					<tr><th align="left"><label>Data / Currency</label></th><th align="left"><label>Addresses</label></th></tr>
 					<% for(let i = 0; i < data.length; i++) { %>
 						<% if(data[i].addressesCount > 0) { %>

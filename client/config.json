@@ -33,6 +33,7 @@
 			"/accounts":           { "class": "sign-form", "file": "accounts",           "title": "Accounts" },
 			"/addresses":          { "class": "sign-form", "file": "addresses",          "title": "Addresses" },
 			"/data":               { "class": "sign-form", "file": "data",               "title": "Data" },
+			"/api":                { "class": "sign-form", "file": "api",                "title": "API" },
 			"*":                   { "class": "sign-form", "file": "error",              "title": "Page not found" }
 		},
 		"page_limit": 20

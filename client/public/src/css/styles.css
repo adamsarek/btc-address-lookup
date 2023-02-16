@@ -21,6 +21,8 @@
 }
 
 :root {
+	--search-width: 32rem;
+	--nav-width: 20rem;
 	--body-color: #1F1911;
 	--body-background-color: #DFD9D1;
 	--a-color: #3F3931;
@@ -50,6 +52,7 @@
 	--panel-background-color: #EFE9E1;
 	--panel-border-color: #CFC9C1;
 	--error-color: #CF3931;
+	--info-color: #0F39F1;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -83,6 +86,7 @@
 		--panel-background-color: #2F2921;
 		--panel-border-color: #0F0901;
 		--error-color: #CF3931;
+		--info-color: #0FC9F1;
 	}
 }
 
@@ -288,7 +292,7 @@ a.search-logo {
 
 .search-bar {
 	position: relative;
-	max-width: 32rem;
+	max-width: var(--search-width);
 	height: 3rem;
 	padding-block: 0.5rem;
 	margin: 0 auto;
@@ -329,7 +333,7 @@ a.search-logo {
 	left: 0;
 	right: 0;
 	background-color: var(--header-background-color);
-	width: 14.5rem;
+	width: var(--nav-width);
 	padding: 0.5rem;
 	display: grid;
 	grid-auto-flow: column;
@@ -394,8 +398,17 @@ main {
 	width: 100%;
 }
 
-.panel .error {
+.panel .error,
+.panel .info {
 	font-size: 0.8rem;
+}
+
+.panel .error {
+	color: var(--error-color);
+}
+
+.panel .info {
+	color: var(--info-color);
 }
 
 .panel .flex-content {
@@ -473,15 +486,10 @@ main {
 	margin-block: 2rem 1rem;
 }
 
-.sign-form .panel-row {
+.sign-form .panel .panel-row {
 	padding-inline: 4rem;
 	text-overflow: ellipsis;
 	overflow: hidden;
-}
-
-.sign-form .panel .error {
-	color: var(--error-color);
-	margin-top: 0.25rem;
 }
 
 .sign-form .panel .content {
@@ -531,13 +539,13 @@ main {
 	margin-top: 0;
 }
 
-@media only screen and (max-width: calc(61rem + 7px)) {
+@media only screen and (max-width: calc(32rem + 20rem * 2 + 7px)) {
 	.container {
 		padding-top: 2rem;
 	}
 
 	header {
-		padding-inline: 4rem 14.5rem;
+		padding-inline: 4rem var(--nav-width);
 	}
 
 	.search-panel,
@@ -546,7 +554,336 @@ main {
 	}
 }
 
-@media only screen and (max-width: 30rem) {
+@media only screen and (max-height: 32rem) {
+	.container {
+		padding-top: 2rem;
+	}
+
+	.search-panel,
+	.search-logo {
+		display: none;
+	}
+}
+
+@media only screen and (max-width: 80rem) {
+	.sign-form .panel-w-10 {
+		border-inline: 0;
+		padding-block: 1rem;
+	}
+
+	.sign-form .panel-w-10 .title {
+		padding-bottom: 0.5rem;
+	}
+
+	.sign-form .panel-w-10 label {
+		margin-top: 0.5rem;
+	}
+
+	.sign-form .panel-w-10 .input {
+		margin-top: 0.25rem;
+	}
+
+	.sign-form .panel-w-10 .button {
+		margin-top: 0.5rem;
+	}
+
+	.sign-form .panel-w-10 hr {
+		margin-block: 1rem 0.5rem;
+	}
+
+	.sign-form .panel-w-10 .panel-row {
+		padding-inline: 0.5rem;
+	}
+
+	.sign-form .panel-w-10 .content {
+		margin-top: 0.125rem;
+	}
+
+	.sign-form .panel-w-10 .flex-content {
+		margin-top: 0.5rem;
+		grid-gap: 0.5rem 0.25rem;
+	}
+
+	.sign-form .panel-w-10 table tr th,
+	.sign-form .panel-w-10 table tr td {
+		padding-right: 0.5rem;
+	}
+
+	.sign-form .panel-w-10 img {
+		margin-right: 0.25rem;
+	}
+
+	.sign-form .panel-w-10 .flex-content .inline-content {
+		padding-right: 0.25rem;
+	}
+}
+
+@media only screen and (max-width: 72rem) {
+	.sign-form .panel-w-9 {
+		border-inline: 0;
+		padding-block: 1rem;
+	}
+
+	.sign-form .panel-w-9 .title {
+		padding-bottom: 0.5rem;
+	}
+
+	.sign-form .panel-w-9 label {
+		margin-top: 0.5rem;
+	}
+
+	.sign-form .panel-w-9 .input {
+		margin-top: 0.25rem;
+	}
+
+	.sign-form .panel-w-9 .button {
+		margin-top: 0.5rem;
+	}
+
+	.sign-form .panel-w-9 hr {
+		margin-block: 1rem 0.5rem;
+	}
+
+	.sign-form .panel-w-9 .panel-row {
+		padding-inline: 0.5rem;
+	}
+
+	.sign-form .panel-w-9 .content {
+		margin-top: 0.125rem;
+	}
+
+	.sign-form .panel-w-9 .flex-content {
+		margin-top: 0.5rem;
+		grid-gap: 0.5rem 0.25rem;
+	}
+
+	.sign-form .panel-w-9 table tr th,
+	.sign-form .panel-w-9 table tr td {
+		padding-right: 0.5rem;
+	}
+
+	.sign-form .panel-w-9 img {
+		margin-right: 0.25rem;
+	}
+
+	.sign-form .panel-w-9 .flex-content .inline-content {
+		padding-right: 0.25rem;
+	}
+}
+
+@media only screen and (max-width: 64rem) {
+	.sign-form .panel-w-8 {
+		border-inline: 0;
+		padding-block: 1rem;
+	}
+
+	.sign-form .panel-w-8 .title {
+		padding-bottom: 0.5rem;
+	}
+
+	.sign-form .panel-w-8 label {
+		margin-top: 0.5rem;
+	}
+
+	.sign-form .panel-w-8 .input {
+		margin-top: 0.25rem;
+	}
+
+	.sign-form .panel-w-8 .button {
+		margin-top: 0.5rem;
+	}
+
+	.sign-form .panel-w-8 hr {
+		margin-block: 1rem 0.5rem;
+	}
+
+	.sign-form .panel-w-8 .panel-row {
+		padding-inline: 0.5rem;
+	}
+
+	.sign-form .panel-w-8 .content {
+		margin-top: 0.125rem;
+	}
+
+	.sign-form .panel-w-8 .flex-content {
+		margin-top: 0.5rem;
+		grid-gap: 0.5rem 0.25rem;
+	}
+
+	.sign-form .panel-w-8 table tr th,
+	.sign-form .panel-w-8 table tr td {
+		padding-right: 0.5rem;
+	}
+
+	.sign-form .panel-w-8 img {
+		margin-right: 0.25rem;
+	}
+
+	.sign-form .panel-w-8 .flex-content .inline-content {
+		padding-right: 0.25rem;
+	}
+}
+
+@media only screen and (max-width: 56rem) {
+	.sign-form .panel-w-7 {
+		border-inline: 0;
+		padding-block: 1rem;
+	}
+
+	.sign-form .panel-w-7 .title {
+		padding-bottom: 0.5rem;
+	}
+
+	.sign-form .panel-w-7 label {
+		margin-top: 0.5rem;
+	}
+
+	.sign-form .panel-w-7 .input {
+		margin-top: 0.25rem;
+	}
+
+	.sign-form .panel-w-7 .button {
+		margin-top: 0.5rem;
+	}
+
+	.sign-form .panel-w-7 hr {
+		margin-block: 1rem 0.5rem;
+	}
+
+	.sign-form .panel-w-7 .panel-row {
+		padding-inline: 0.5rem;
+	}
+
+	.sign-form .panel-w-7 .content {
+		margin-top: 0.125rem;
+	}
+
+	.sign-form .panel-w-7 .flex-content {
+		margin-top: 0.5rem;
+		grid-gap: 0.5rem 0.25rem;
+	}
+
+	.sign-form .panel-w-7 table tr th,
+	.sign-form .panel-w-7 table tr td {
+		padding-right: 0.5rem;
+	}
+
+	.sign-form .panel-w-7 img {
+		margin-right: 0.25rem;
+	}
+
+	.sign-form .panel-w-7 .flex-content .inline-content {
+		padding-right: 0.25rem;
+	}
+}
+
+@media only screen and (max-width: 48rem) {
+	.sign-form .panel-w-6 {
+		border-inline: 0;
+		padding-block: 1rem;
+	}
+
+	.sign-form .panel-w-6 .title {
+		padding-bottom: 0.5rem;
+	}
+
+	.sign-form .panel-w-6 label {
+		margin-top: 0.5rem;
+	}
+
+	.sign-form .panel-w-6 .input {
+		margin-top: 0.25rem;
+	}
+
+	.sign-form .panel-w-6 .button {
+		margin-top: 0.5rem;
+	}
+
+	.sign-form .panel-w-6 hr {
+		margin-block: 1rem 0.5rem;
+	}
+
+	.sign-form .panel-w-6 .panel-row {
+		padding-inline: 0.5rem;
+	}
+
+	.sign-form .panel-w-6 .content {
+		margin-top: 0.125rem;
+	}
+
+	.sign-form .panel-w-6 .flex-content {
+		margin-top: 0.5rem;
+		grid-gap: 0.5rem 0.25rem;
+	}
+
+	.sign-form .panel-w-6 table tr th,
+	.sign-form .panel-w-6 table tr td {
+		padding-right: 0.5rem;
+	}
+
+	.sign-form .panel-w-6 img {
+		margin-right: 0.25rem;
+	}
+
+	.sign-form .panel-w-6 .flex-content .inline-content {
+		padding-right: 0.25rem;
+	}
+}
+
+@media only screen and (max-width: 40rem) {
+	.sign-form .panel-w-5 {
+		border-inline: 0;
+		padding-block: 1rem;
+	}
+
+	.sign-form .panel-w-5 .title {
+		padding-bottom: 0.5rem;
+	}
+
+	.sign-form .panel-w-5 label {
+		margin-top: 0.5rem;
+	}
+
+	.sign-form .panel-w-5 .input {
+		margin-top: 0.25rem;
+	}
+
+	.sign-form .panel-w-5 .button {
+		margin-top: 0.5rem;
+	}
+
+	.sign-form .panel-w-5 hr {
+		margin-block: 1rem 0.5rem;
+	}
+
+	.sign-form .panel-w-5 .panel-row {
+		padding-inline: 0.5rem;
+	}
+
+	.sign-form .panel-w-5 .content {
+		margin-top: 0.125rem;
+	}
+
+	.sign-form .panel-w-5 .flex-content {
+		margin-top: 0.5rem;
+		grid-gap: 0.5rem 0.25rem;
+	}
+
+	.sign-form .panel-w-5 table tr th,
+	.sign-form .panel-w-5 table tr td {
+		padding-right: 0.5rem;
+	}
+
+	.sign-form .panel-w-5 img {
+		margin-right: 0.25rem;
+	}
+
+	.sign-form .panel-w-5 .flex-content .inline-content {
+		padding-right: 0.25rem;
+	}
+}
+
+@media only screen and (max-width: 32rem) {
 	header {
 		padding-inline: 4rem;
 	}
@@ -578,76 +915,218 @@ main {
 	.header-sign-in {
 		margin-left: 0;
 	}
-}
 
-@media only screen and (max-width: 24rem) {
 	.sign-form main {
 		padding-block: 0 0.5rem;
 	}
 
-	.sign-form .panel {
+	.sign-form .panel-w-4 {
 		border-inline: 0;
 		padding-block: 1rem;
 	}
 
-	.sign-form .panel .title {
+	.sign-form .panel-w-4 .title {
 		padding-bottom: 0.5rem;
 	}
 
-	.sign-form .panel label {
+	.sign-form .panel-w-4 label {
 		margin-top: 0.5rem;
 	}
 
-	.sign-form .panel .input {
+	.sign-form .panel-w-4 .input {
 		margin-top: 0.25rem;
 	}
 
-	.sign-form .panel .button {
+	.sign-form .panel-w-4 .button {
 		margin-top: 0.5rem;
 	}
 
-	.sign-form .panel hr {
+	.sign-form .panel-w-4 hr {
 		margin-block: 1rem 0.5rem;
 	}
 
-	.sign-form .panel-row {
+	.sign-form .panel-w-4 .panel-row {
 		padding-inline: 0.5rem;
 	}
 
-	.sign-form .panel .error {
+	.sign-form .panel-w-4 .content {
 		margin-top: 0.125rem;
 	}
 
-	.sign-form .panel .content {
-		margin-top: 0.125rem;
-	}
-
-	.sign-form .panel .flex-content {
+	.sign-form .panel-w-4 .flex-content {
 		margin-top: 0.5rem;
 		grid-gap: 0.5rem 0.25rem;
 	}
 
-	.sign-form .panel table tr th,
-	.sign-form .panel table tr td {
+	.sign-form .panel-w-4 table tr th,
+	.sign-form .panel-w-4 table tr td {
 		padding-right: 0.5rem;
 	}
 
-	.sign-form .panel img {
+	.sign-form .panel-w-4 img {
 		margin-right: 0.25rem;
 	}
 
-	.sign-form .panel .flex-content .inline-content {
+	.sign-form .panel-w-4 .flex-content .inline-content {
 		padding-right: 0.25rem;
 	}
 }
 
-@media only screen and (max-height: 32rem) {
-	.container {
-		padding-top: 2rem;
+@media only screen and (max-width: 24rem) {
+	.sign-form .panel-w-3 {
+		border-inline: 0;
+		padding-block: 1rem;
 	}
 
-	.search-panel,
-	.search-logo {
-		display: none;
+	.sign-form .panel-w-3 .title {
+		padding-bottom: 0.5rem;
+	}
+
+	.sign-form .panel-w-3 label {
+		margin-top: 0.5rem;
+	}
+
+	.sign-form .panel-w-3 .input {
+		margin-top: 0.25rem;
+	}
+
+	.sign-form .panel-w-3 .button {
+		margin-top: 0.5rem;
+	}
+
+	.sign-form .panel-w-3 hr {
+		margin-block: 1rem 0.5rem;
+	}
+
+	.sign-form .panel-w-3 .panel-row {
+		padding-inline: 0.5rem;
+	}
+
+	.sign-form .panel-w-3 .content {
+		margin-top: 0.125rem;
+	}
+
+	.sign-form .panel-w-3 .flex-content {
+		margin-top: 0.5rem;
+		grid-gap: 0.5rem 0.25rem;
+	}
+
+	.sign-form .panel-w-3 table tr th,
+	.sign-form .panel-w-3 table tr td {
+		padding-right: 0.5rem;
+	}
+
+	.sign-form .panel-w-3 img {
+		margin-right: 0.25rem;
+	}
+
+	.sign-form .panel-w-3 .flex-content .inline-content {
+		padding-right: 0.25rem;
+	}
+}
+
+@media only screen and (max-width: 16rem) {
+	.sign-form .panel-w-2 {
+		border-inline: 0;
+		padding-block: 1rem;
+	}
+
+	.sign-form .panel-w-2 .title {
+		padding-bottom: 0.5rem;
+	}
+
+	.sign-form .panel-w-2 label {
+		margin-top: 0.5rem;
+	}
+
+	.sign-form .panel-w-2 .input {
+		margin-top: 0.25rem;
+	}
+
+	.sign-form .panel-w-2 .button {
+		margin-top: 0.5rem;
+	}
+
+	.sign-form .panel-w-2 hr {
+		margin-block: 1rem 0.5rem;
+	}
+
+	.sign-form .panel-w-2 .panel-row {
+		padding-inline: 0.5rem;
+	}
+
+	.sign-form .panel-w-2 .content {
+		margin-top: 0.125rem;
+	}
+
+	.sign-form .panel-w-2 .flex-content {
+		margin-top: 0.5rem;
+		grid-gap: 0.5rem 0.25rem;
+	}
+
+	.sign-form .panel-w-2 table tr th,
+	.sign-form .panel-w-2 table tr td {
+		padding-right: 0.5rem;
+	}
+
+	.sign-form .panel-w-2 img {
+		margin-right: 0.25rem;
+	}
+
+	.sign-form .panel-w-2 .flex-content .inline-content {
+		padding-right: 0.25rem;
+	}
+}
+
+@media only screen and (max-width: 8rem) {
+	.sign-form .panel-w-1 {
+		border-inline: 0;
+		padding-block: 1rem;
+	}
+
+	.sign-form .panel-w-1 .title {
+		padding-bottom: 0.5rem;
+	}
+
+	.sign-form .panel-w-1 label {
+		margin-top: 0.5rem;
+	}
+
+	.sign-form .panel-w-1 .input {
+		margin-top: 0.25rem;
+	}
+
+	.sign-form .panel-w-1 .button {
+		margin-top: 0.5rem;
+	}
+
+	.sign-form .panel-w-1 hr {
+		margin-block: 1rem 0.5rem;
+	}
+
+	.sign-form .panel-w-1 .panel-row {
+		padding-inline: 0.5rem;
+	}
+
+	.sign-form .panel-w-1 .content {
+		margin-top: 0.125rem;
+	}
+
+	.sign-form .panel-w-1 .flex-content {
+		margin-top: 0.5rem;
+		grid-gap: 0.5rem 0.25rem;
+	}
+
+	.sign-form .panel-w-1 table tr th,
+	.sign-form .panel-w-1 table tr td {
+		padding-right: 0.5rem;
+	}
+
+	.sign-form .panel-w-1 img {
+		margin-right: 0.25rem;
+	}
+
+	.sign-form .panel-w-1 .flex-content .inline-content {
+		padding-right: 0.25rem;
 	}
 }

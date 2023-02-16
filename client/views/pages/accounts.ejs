@@ -20,8 +20,8 @@
 			<div><input type="submit" value="Filter"></div>
 		</form>
 		<div><hr></div>
-		<%- typeof form !== 'undefined' && form._error.length > 0 ? '<div class="error center panel-row">' + form._error + '</div>' : '' %>
-		<%- typeof form !== 'undefined' && typeof form.role !== 'undefined' && form.role.error.length > 0 ? '<div class="error center panel-row">' + form.role.error + '</div>' : '' %>
+		<%- typeof form !== 'undefined' && form._error.length > 0 ? '<div class="error content center panel-row">' + form._error + '</div>' : '' %>
+		<%- typeof form !== 'undefined' && typeof form.role !== 'undefined' && form.role.error.length > 0 ? '<div class="error content center panel-row">' + form.role.error + '</div>' : '' %>
 		<div class="center panel-row">
 			<table>
 				<% if(accounts.length > 0) { %>

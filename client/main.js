@@ -213,7 +213,7 @@ async function useCurrencyCode(req, res, next) {
 
 async function loadData(req, res, next) {
 	req.data.data = [
-		{ name: 'All sources', sourceId: null, sourceLabelId: null }
+		{ name: 'All (with data)', sourceId: null, sourceLabelId: null }
 	];
 	
 	const sources = (await databaseConnection.getSources()).rows;
@@ -1142,6 +1142,11 @@ app.get('/data', preProcess, loadData, async (req, res, next) => {
 		return 0;
 	});
 
+	next();
+}, render);
+
+app.get('/api', preProcess, loadData, async (req, res, next) => {
+	req.data.currencies = (await databaseConnection.getCurrencies()).rows;
 	next();
 }, render);
 

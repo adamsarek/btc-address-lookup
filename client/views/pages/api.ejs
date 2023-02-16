@@ -1,0 +1,38 @@
+<div class="panels">
+	<div class="panel-w-6 panel">
+		<div class="title center panel-row">API</div>
+		<%- typeof account === 'undefined' ? '<div class="info content center panel-row">You need to have an API token, which you get by signing into your account.</div>' : '' %>
+		<div class="center panel-row">
+			<table>
+				<tr><th align="left"><label>Action</label></th><th align="left"><label>URL</label></th><th align="left"><label>Parameters</label></th></tr>
+				<tr><td align="left"><label>Get token</label></td><td align="left"><label>/api/token/[TOKEN]</label></td><td align="left"><label></label></td></tr>
+				<tr><td align="left"><label>Get currencies</label></td><td align="left"><label>/api/currencies</label></td><td align="left"><label>token</label></td></tr>
+				<tr><td align="left"><label>Get currency</label></td><td align="left"><label>/api/currencies/[CURRENCY]</label></td><td align="left"><label>token</label></td></tr>
+				<tr><td align="left"><label>Get sources</label></td><td align="left"><label>/api/sources</label></td><td align="left"><label>token</label></td></tr>
+				<tr><td align="left"><label>Get source</label></td><td align="left"><label>/api/sources/[SOURCE]</label></td><td align="left"><label>token</label></td></tr>
+				<tr><td align="left"><label>Get stats</label></td><td align="left"><label>/api/stats</label></td><td align="left"><label>token, currency, source</label></td></tr>
+				<tr><td align="left"><label>Get addresses</label></td><td align="left"><label>/api/addresses</label></td><td align="left"><label>token, page, currency, source</label></td></tr>
+				<tr><td align="left"><label>Get address</label></td><td align="left"><label>/api/addresses/[ADDRESS]</label></td><td align="left"><label>token</label></td></tr>
+				<tr><td align="left"><label>Get data</label></td><td align="left"><label>/api/data/[DATA]</label></td><td align="left"><label>token</label></td></tr>
+				<tr><td colspan="3"><hr></td></tr>
+				<tr><th align="left" colspan="2"><label>Token</label></th><th align="left"><label>Parameter</label></th></tr>
+				<tr><td align="left" colspan="2"><label><div class="no-wrap"><div>Your account API token required to use the API.</div></div></label></td><td align="left"><label>token=[TOKEN]</label></td></tr>
+				<tr><td colspan="3"><hr></td></tr>
+				<tr><th align="left" colspan="2"><label>Page</label></th><th align="left"><label>Parameter</label></th></tr>
+				<tr><td align="left" colspan="2"><label><div class="no-wrap"><div>First</div></div></label></td><td align="left"><label>page=1</label></td></tr>
+				<tr><td colspan="3"><hr></td></tr>
+				<tr><th align="left" colspan="2"><label>Currency</label></th><th align="left"><label>Parameter</label></th></tr>
+				<tr><td align="left" colspan="2"><label><div class="no-wrap"><div>All</div></div></label></td><td align="left"><label>currency=</label></td></tr>
+				<% for(const currency of currencies.sort((a, b) => (a.currency_code > b.currency_code) ? 1 : ((b.currency_code > a.currency_code) ? -1 : 0))) { %>
+					<%- '<tr><td align="left" colspan="2"><label><div class="no-wrap"><img src="' + currency.logo + '" title="' + currency.currency_name + (currency.currency_code[0] != '_' ? ' (' + currency.currency_code + ')' : '') + '"><div>' + currency.currency_name + (currency.currency_code[0] != '_' ? ' (' + currency.currency_code + ')' : '') + '</div></div></label></td><td align="left"><label>currency=' + currency.currency_code + '</label></td></tr>' %>
+				<% } %>
+				<tr><td colspan="3"><hr></td></tr>
+				<tr><th align="left" colspan="2"><label>Source</label></th><th align="left"><label>Parameter</label></th></tr>
+				<tr><td align="left" colspan="2"><label><div class="no-wrap"><div>All</div></div></label></td><td align="left"><label>source=</label></td></tr>
+				<% for(let i = 0; i < data.length; i++) { %>
+					<%- '<tr><td align="left" colspan="2"><label><div class="no-wrap"><div>' + data[i].name + '</div></div></label></td><td align="left"><label>source=' + i + '</label></td></tr>' %>
+				<% } %>
+			</table>
+		</div>
+	</div>
+</div>
