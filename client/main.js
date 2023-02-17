@@ -1019,6 +1019,8 @@ app.get('/api', preProcess, loadSource, async (req, res, next) => {
 	next();
 }, render);
 
+app.get('/faq', preProcess, render);
+
 app.get('*', preProcess, (req, res) => {
 	res.status(404);
 	return render(req, res);

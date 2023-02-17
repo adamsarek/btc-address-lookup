@@ -54,9 +54,9 @@
 		<div><hr></div>
 		<div class="panel-row">
 			<div class="flex-content">
-				<div class="inline-content"><div>Loading</div><div class="content"><%- new Intl.NumberFormat().format((Date.now() - startedAt) / 1000) + ' s' %></div></div>
-				<div class="inline-content"><div>Addresses (page)</div><div class="content"><%- addressesCount > 0 ? new Intl.NumberFormat().format(offset + 1) + ' - ' + new Intl.NumberFormat().format(addressesCount < (offset + limit) ? addressesCount : (offset + limit)) : 0 %></div></div>
-				<div class="inline-content"><div>Addresses (all pages)</div><div class="content"><%- new Intl.NumberFormat().format(addressesCount) %></div></div>
+				<div class="inline-content"><div><b>Loading</b></div><div class="content"><%- new Intl.NumberFormat().format((Date.now() - startedAt) / 1000) + ' s' %></div></div>
+				<div class="inline-content"><div><b>Addresses (page)</b></div><div class="content"><%- addressesCount > 0 ? new Intl.NumberFormat().format(offset + 1) + ' - ' + new Intl.NumberFormat().format(addressesCount < (offset + limit) ? addressesCount : (offset + limit)) : 0 %></div></div>
+				<div class="inline-content"><div><b>Addresses (all pages)</b></div><div class="content"><%- new Intl.NumberFormat().format(addressesCount) %></div></div>
 			</div>
 		</div>
 	</div>

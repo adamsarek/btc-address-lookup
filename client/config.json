@@ -34,6 +34,7 @@
 			"/addresses":          { "class": "sign-form", "file": "addresses",          "title": "Addresses" },
 			"/statistics":         { "class": "sign-form", "file": "statistics",         "title": "Statistics" },
 			"/api":                { "class": "sign-form", "file": "api",                "title": "API" },
+			"/faq":                { "class": "sign-form", "file": "faq",                "title": "FAQ" },
 			"*":                   { "class": "sign-form", "file": "error",              "title": "Page not found" }
 		},
 		"page_limit": 20

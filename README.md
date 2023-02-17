@@ -121,7 +121,7 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   - :x: Address *- all information related to the searched address*
   - :heavy_check_mark: Statistics
   - :heavy_check_mark: API *- listed API features*
-  - :x: FAQ *- answered questions related to the website & thesis*
+  - :heavy_check_mark: FAQ *- answered questions related to the website*
   - :heavy_check_mark: Error *- 404 Not Found*
 
 ### Requirements:

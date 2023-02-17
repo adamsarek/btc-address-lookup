@@ -55,9 +55,9 @@
 		<div><hr></div>
 		<div class="panel-row">
 			<div class="flex-content">
-				<div class="inline-content"><div>Loading</div><div class="content"><%- new Intl.NumberFormat().format((Date.now() - startedAt) / 1000) + ' s' %></div></div>
-				<div class="inline-content"><div>Accounts (page)</div><div class="content"><%- accountsCount > 0 ? new Intl.NumberFormat().format(offset + 1) + ' - ' + new Intl.NumberFormat().format(accountsCount < (offset + limit) ? accountsCount : (offset + limit)) : 0 %></div></div>
-				<div class="inline-content"><div>Accounts (all pages)</div><div class="content"><%- new Intl.NumberFormat().format(accountsCount) %></div></div>
+				<div class="inline-content"><div><b>Loading</b></div><div class="content"><%- new Intl.NumberFormat().format((Date.now() - startedAt) / 1000) + ' s' %></div></div>
+				<div class="inline-content"><div><b>Accounts (page)</b></div><div class="content"><%- accountsCount > 0 ? new Intl.NumberFormat().format(offset + 1) + ' - ' + new Intl.NumberFormat().format(accountsCount < (offset + limit) ? accountsCount : (offset + limit)) : 0 %></div></div>
+				<div class="inline-content"><div><b>Accounts (all pages)</b></div><div class="content"><%- new Intl.NumberFormat().format(accountsCount) %></div></div>
 			</div>
 		</div>
 	</div>
