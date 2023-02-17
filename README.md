@@ -97,18 +97,14 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
 
 ## :earth_americas: Web Client [[client](client "Web Client")]
 ### Features:
-- :hammer: REST API *- update needed*
+- :heavy_check_mark: REST API
   - :heavy_check_mark: Get token
-  - :heavy_check_mark: Limit access to addresses data by user roles
-  - :heavy_check_mark: Get addresses (filterable by having data, source, source label & currency)
+  - :heavy_check_mark: Get currencies
+  - :heavy_check_mark: Get sources
+  - :heavy_check_mark: Get addresses (filterable by currency & source)
   - :heavy_check_mark: Get address
   - :heavy_check_mark: Get data
-  - :heavy_check_mark: Get sources
-  - :heavy_check_mark: Get source
-  - :heavy_check_mark: Get source labels
-  - :heavy_check_mark: Get source label
-  - :heavy_check_mark: Get currencies
-  - :heavy_check_mark: Get currency
+  - :heavy_check_mark: Limit access by user roles
   - :heavy_check_mark: Generate token (linked with the account, generated during first sign in)
   - :heavy_check_mark: Caching data
 - :hammer: Web pages
@@ -120,13 +116,13 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   - :hammer: Reset password *- server-side not yet implemented*
   - :hammer: Change password *- server-side not yet implemented*
   - :heavy_check_mark: Account
-  - :heavy_check_mark: Accounts (filterable by email & role) - admin only page
-  - :heavy_check_mark: Addresses (filterable by currency & data)
-  - :x: Address - all information related to the searched address
-  - :heavy_check_mark: Data - statistics, contain links to the Addresses page
-  - :heavy_check_mark: API - listed API features
-  - :x: FAQ - answered questions related to the website & thesis
-  - :heavy_check_mark: Error - 404 Not Found
+  - :heavy_check_mark: Accounts (filterable by email & role) *- admin only page*
+  - :heavy_check_mark: Addresses (filterable by currency & source)
+  - :x: Address *- all information related to the searched address*
+  - :heavy_check_mark: Statistics
+  - :heavy_check_mark: API *- listed API features*
+  - :x: FAQ *- answered questions related to the website & thesis*
+  - :heavy_check_mark: Error *- 404 Not Found*
 
 ### Requirements:
 - [Node.js 18.13.0 LTS for Windows (64-bit)](https://nodejs.org/en/download/ "Node.js 18.13.0 LTS for Windows (64-bit)")
@@ -157,5 +153,5 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
 ### Features:
 - :heavy_check_mark: CRUD operations with the MySQL database
 - :heavy_check_mark: Multi-threaded downloading and processing
-- :heavy_check_mark: Crawling tree limitation - max level (depth), max serial number (count), max delay (crawling frequency)
+- :heavy_check_mark: Crawling tree limitation *- max level (depth), max serial number (count), max delay (crawling frequency)*
 - :heavy_check_mark: Parsing the data collected by the Crawler

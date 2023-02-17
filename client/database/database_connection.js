@@ -80,7 +80,7 @@ class DatabaseConnection {
 		`);
 	}
 
-	#prepareSQL(sqlOption, roleId, havingData=false, sourceId=null, sourceLabelId=null, currencyId=null) {
+	#prepareSQL(sqlOption, roleId, withData=false, sourceId=null, sourceLabelId=null, currencyId=null) {
 		const sql = [];
 		sql[0] = `WHERE ${currencyId != null ? 'currency_id ' + (currencyId > 0 ? '= ' + currencyId : 'IS NULL') + ' AND ' : ''}`;
 		sql[1] = `address_data.address_id = address.address_id`;
@@ -102,7 +102,7 @@ class DatabaseConnection {
 						SELECT 1 FROM source_label WHERE source_label.source_label_id = source_label_url.source_label_id AND source_label.source_id = ${sourceId}
 					))))
 				`) : (
-					havingData ? (`
+					withData ? (`
 						${sql[0]}${sql[3]}
 						)
 					`) : (
@@ -134,7 +134,7 @@ class DatabaseConnection {
 								SELECT 1 FROM source_label WHERE source_label.source_label_id = source_label_url.source_label_id AND source_label.source_id = ${sourceId}
 							)))
 						`) : (
-							havingData ? (`
+							withData ? (`
 								${sql[0]}${sql[1]}${sql[2]}
 							`) : (
 								currencyId != null ? (`
@@ -155,15 +155,15 @@ class DatabaseConnection {
 		}
 	}
 
-	getAddresses(roleId, limit, offset, havingData=false, sourceId=null, sourceLabelId=null, currencyId=null) {
+	getAddresses(roleId, limit, offset, withData=false, sourceId=null, sourceLabelId=null, currencyId=null) {
 		return this.#execute(`
-			${this.#prepareSQL(0, roleId, havingData, sourceId, sourceLabelId, currencyId)}
+			${this.#prepareSQL(0, roleId, withData, sourceId, sourceLabelId, currencyId)}
 			LIMIT ${limit} OFFSET ${offset}
 		`, true);
 	}
 
-	getAddressesCount(roleId, havingData=false, sourceId=null, sourceLabelId=null, currencyId=null) {
-		return this.#execute(this.#prepareSQL(1, roleId, havingData, sourceId, sourceLabelId, currencyId), true);
+	getAddressesCount(roleId, withData=false, sourceId=null, sourceLabelId=null, currencyId=null) {
+		return this.#execute(this.#prepareSQL(1, roleId, withData, sourceId, sourceLabelId, currencyId), true);
 	}
 
 	getAddress(roleId, address) {

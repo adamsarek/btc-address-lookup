@@ -22,7 +22,7 @@
 
 :root {
 	--search-width: 32rem;
-	--nav-width: 20rem;
+	--nav-width: 22rem;
 	--body-color: #1F1911;
 	--body-background-color: #DFD9D1;
 	--a-color: #3F3931;
@@ -539,7 +539,7 @@ main {
 	margin-top: 0;
 }
 
-@media only screen and (max-width: calc(32rem + 20rem * 2 + 7px)) {
+@media only screen and (max-width: calc(32rem + 22rem * 2 + 7px)) {
 	.container {
 		padding-top: 2rem;
 	}

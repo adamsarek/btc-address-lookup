@@ -1,4 +1,4 @@
-<% const generateLink = (page) => { return '?' + ((currencyCode != null ? '&currency_code=' + currencyCode : '') + (dataSelected != '' ? '&data=' + dataSelected : '') + '&page=' + page).slice(1); }; %>
+<% const generateLink = (page) => { return '?' + ((currencyCode != null ? '&currency=' + currencyCode : '') + (source != '' ? '&source=' + source : '') + '&page=' + page).slice(1); }; %>
 <% let leftButtonCount = pageId >= 3 ? 2 : pageId - 1; %>
 <% let rightButtonCount = pageId <= pageCount - 2 ? 2 : pageCount - pageId; %>
 <% if(pageCount >= 3) { %>
@@ -10,32 +10,17 @@
 	<div class="panel-w-8 panel">
 		<div class="title center panel-row">Addresses</div>
 		<form class="flex-content content panel-row">
-			<div><div class="inline-content">Currency</div><div class="inline-content"><select name="currency_code">
-				<optgroup label="Currency">
-					<option value=""<%- currencyCode == null ? ' selected' : '' %>>All</option>
-					<% for(const currency of currencies.sort((a, b) => (a.currency_code > b.currency_code) ? 1 : ((b.currency_code > a.currency_code) ? -1 : 0))) { %>
-						<% if(currency.currency_code[0] != '_') { %>
-							<%- '<option value="' + currency.currency_code + '"' + (currencyCode == currency.currency_code ? ' selected' : '') + '>' + currency.currency_name + (currency.currency_code[0] != '_' ? ' (' + currency.currency_code + ')' : '') + '</option>' %>
-						<% } %>
-					<% } %>
-				</optgroup>
-				<optgroup label="Special cases">
-					<% for(const currency of currencies.sort((a, b) => (a.currency_code > b.currency_code) ? 1 : ((b.currency_code > a.currency_code) ? -1 : 0))) { %>
-						<% if(currency.currency_code[0] == '_') { %>
-							<%- '<option value="' + currency.currency_code + '"' + (currencyCode == currency.currency_code ? ' selected' : '') + '>' + currency.currency_name + (currency.currency_code[0] != '_' ? ' (' + currency.currency_code + ')' : '') + '</option>' %>
-						<% } %>
-					<% } %>
-				</optgroup>
+			<div><div class="inline-content">Currency</div><div class="inline-content"><select name="currency">
+				<option value=""<%- currencyCode == null ? ' selected' : '' %>>All</option>
+				<% for(const currency of currencies.sort((a, b) => (a.currency_code > b.currency_code) ? 1 : ((b.currency_code > a.currency_code) ? -1 : 0))) { %>
+					<%- '<option value="' + currency.currency_code + '"' + (currencyCode == currency.currency_code ? ' selected' : '') + '>' + currency.currency_name + (currency.currency_code[0] != '_' ? ' (' + currency.currency_code + ')' : '') + '</option>' %>
+				<% } %>
 			</select></div></div>
-			<div><div class="inline-content">Data</div><div class="inline-content"><select name="data">
-				<optgroup label="Data: optional">
-					<option value=""<%- dataSelected == '' ? ' selected' : '' %>>All</option>
-				</optgroup>
-				<optgroup label="Data: included">
-					<% for(let i = 0; i < data.length; i++) { %>
-						<%- '<option value="' + i + '"' + (dataSelected == i.toString() ? ' selected' : '') + '>' + data[i].name + '</option>' %>
-					<% } %>
-				</optgroup>
+			<div><div class="inline-content">Source</div><div class="inline-content"><select name="source">
+				<option value=""<%- source == '' ? ' selected' : '' %>>All</option>
+				<% for(let i = 0; i < sources.length; i++) { %>
+					<%- '<option value="' + i + '"' + (source == i.toString() ? ' selected' : '') + '>' + sources[i].name + '</option>' %>
+				<% } %>
 			</select></div></div>
 			<div><input type="submit" value="Filter"></div>
 		</form>

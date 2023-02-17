@@ -93,109 +93,14 @@ function usePage(req, res, next) {
 	next();
 }
 
-function useOffset(req, res, next) {
-	// Offset is not set
-	if(!req.query.hasOwnProperty('offset') || req.query.offset.length == 0) {
-		req.data.offset = 0;
-	}
-	else {
-		req.data.offset = parseInt(req.query.offset);
-
-		// Offset does not have a numeric value
-		if(isNaN(req.data.offset)) {
-			return res.status(400).json({error: 'Offset has to have a numeric value!'});
-		}
-		// Offset is too low
-		else if(req.data.offset <= -1) {
-			return res.status(400).json({error: 'Offset has to be at least 0!'});
-		}
-	}
-
-	next();
-}
-
-function useLimit(req, res, next) {
-	// Limit is not set
-	if(!req.query.hasOwnProperty('limit') || req.query.limit.length == 0) {
-		return res.status(400).json({error: 'Limit has to be set!'});
-	}
-	else {
-		req.data.limit = parseInt(req.query.limit);
-
-		// Limit does not have a numeric value
-		if(isNaN(req.data.limit)) {
-			return res.status(400).json({error: 'Limit has to have a numeric value!'});
-		}
-		// Limit is too low
-		else if(req.data.limit <= 0) {
-			return res.status(400).json({error: 'Limit has to be at least 1!'});
-		}
-		// Limit is too high
-		else if(req.data.limit > 100) {
-			return res.status(400).json({error: 'Limit has to be at most 100!'});
-		}
-		else {
-			next();
-		}
-	}
-}
-
-function useHavingData(req, res, next) {
-	// Having data is not set or is not true
-	if(!req.query.hasOwnProperty('having_data') || req.query.having_data.length == 0 || req.query.having_data != '1') {
-		req.data.havingData = false;
-	}
-	else {
-		req.data.havingData = true;
-	}
-
-	next();
-}
-
-function useSourceId(req, res, next) {
-	// Source ID is not set
-	if(!req.query.hasOwnProperty('source_id') || req.query.source_id.length == 0) {
-		req.data.sourceId = null;
-	}
-	else {
-		req.data.sourceId = parseInt(req.query.source_id);
-
-		// Source ID does not have a numeric value or is too low
-		if(isNaN(req.data.sourceId) || req.data.sourceId <= 0) {
-			res.status(404);
-			return render(req, res);
-		}
-	}
-
-	next();
-}
-
-function useSourceLabelId(req, res, next) {
-	// Source label ID is not set
-	if(!req.query.hasOwnProperty('source_label_id') || req.query.source_label_id.length == 0) {
-		req.data.sourceLabelId = null;
-	}
-	else {
-		req.data.sourceLabelId = parseInt(req.query.source_label_id);
-
-		// Source label ID does not have a numeric value or is too low
-		if(isNaN(req.data.sourceLabelId) || req.data.sourceLabelId <= 0) {
-			res.status(404);
-			return render(req, res);
-		}
-	}
-
-	next();
-}
-
-async function useCurrencyCode(req, res, next) {
+async function useCurrency(req, res, next) {
 	// Currency code is not set
-	if(!req.query.hasOwnProperty('currency_code') || req.query.currency_code.length == 0) {
+	if(!req.query.hasOwnProperty('currency') || req.query.currency.length == 0) {
 		req.data.currencyId = null;
 		req.data.currencyCode = null;
 	}
 	else {
-		const currency = (await databaseConnection.getCurrency(req.query.currency_code)).rows;
+		const currency = (await databaseConnection.getCurrency(req.query.currency)).rows;
 
 		// Currency found
 		if(currency.length > 0) {
@@ -211,8 +116,8 @@ async function useCurrencyCode(req, res, next) {
 	next();
 }
 
-async function loadData(req, res, next) {
-	req.data.data = [
+async function loadSource(req, res, next) {
+	req.data.sources = [
 		{ name: 'All (with data)', sourceId: null, sourceLabelId: null }
 	];
 	
@@ -222,7 +127,7 @@ async function loadData(req, res, next) {
 
 	for(const source of sources) {
 		if(source.source_label_ids.length > 1) {
-			req.data.data.push({
+			req.data.sources.push({
 				name: source.source_name,
 				sourceId: source.source_id,
 				sourceLabelId: null
@@ -234,12 +139,12 @@ async function loadData(req, res, next) {
 				sourceId: source.source_id,
 				sourceLabelId: null
 			};
-			req.data.data.push(data);
+			req.data.sources.push(data);
 			promises.push(databaseConnection.getSourceLabel(sourceLabelId).then((result) => {
-				for(let i = 0; i < req.data.data.length; i++) {
-					if(req.data.data[i] == data) {
-						req.data.data[i].name += result.rows[0].source_label_name;
-						req.data.data[i].sourceLabelId = result.rows[0].source_label_id;
+				for(let i = 0; i < req.data.sources.length; i++) {
+					if(req.data.sources[i] == data) {
+						req.data.sources[i].name += result.rows[0].source_label_name;
+						req.data.sources[i].sourceLabelId = result.rows[0].source_label_id;
 						break;
 					}
 				}
@@ -252,34 +157,34 @@ async function loadData(req, res, next) {
 	});
 }
 
-function useData(req, res, next) {
-	// Data is not set
-	if(!req.query.hasOwnProperty('data') || req.query.data.length == 0) {
-		req.data.dataSelected = '';
-		req.data.havingData = false;
+function useSource(req, res, next) {
+	// Source is not set
+	if(!req.query.hasOwnProperty('source') || req.query.source.length == 0) {
+		req.data.source = '';
+		req.data.withData = false;
 		req.data.sourceId = null;
 		req.data.sourceLabelId = null;
 	}
 	else {
-		const data = parseInt(req.query.data);
+		const source = parseInt(req.query.source);
 
-		// Data does not have a numeric value or is too low or is too high
-		if(isNaN(data) || data < 0 || data >= req.data.data.length) {
+		// Source does not have a numeric value or is too low or is too high
+		if(isNaN(source) || source < 0 || source >= req.data.sources.length) {
 			res.status(404);
 			return render(req, res);
 		}
 		else {
-			req.data.dataSelected = req.query.data;
-			req.data.havingData = true;
-			req.data.sourceId = req.data.data[data].sourceId;
-			req.data.sourceLabelId = req.data.data[data].sourceLabelId;
+			req.data.source = req.query.source;
+			req.data.withData = true;
+			req.data.sourceId = req.data.sources[source].sourceId;
+			req.data.sourceLabelId = req.data.sources[source].sourceLabelId;
 		}
 	}
 
 	next();
 }
 
-async function loadToken(req, res, next) {
+function loadToken(req, res, next) {
 	// Token is not set
 	if(!req.query.hasOwnProperty('token') || req.query.token.length == 0) {
 		return res.status(400).json({error: 'Token has to be set!'});
@@ -582,7 +487,7 @@ app.set('view engine', 'ejs');
 
 
 // REST API
-app.get('/api/tokens/:token([a-zA-Z0-9]{1,})', preProcessAPI, (req, res, next) => {
+app.get('/api/tokens/:token([a-zA-Z0-9]{0,})', preProcessAPI, (req, res, next) => {
 	// Token is not set
 	if(!req.params.hasOwnProperty('token') || req.params.token.length == 0) {
 		return res.status(400).json({error: 'Token has to be set!'});
@@ -594,17 +499,46 @@ app.get('/api/tokens/:token([a-zA-Z0-9]{1,})', preProcessAPI, (req, res, next) =
 }, useToken, (req, res) => {
 	req.data.token.last_used_at = new Date(req.data.token.last_used_at).toISOString();
 	req.data.token.reset_use_count_at = new Date(req.data.token.reset_use_count_at).toISOString();
+	delete req.data.token.role_id;
+	delete req.data.token.role_name;
 	
 	return res.json(req.data.token);
 });
 
-app.get('/api/addresses', preProcessAPI, useOffset, useLimit, useHavingData, useSourceId, useSourceLabelId, useCurrencyCode, loadToken, useToken, async (req, res) => {
-	const addresses = (await databaseConnection.getAddresses(req.data.token.role_id, req.data.limit, req.data.offset, req.data.havingData, req.data.sourceId, req.data.sourceLabelId, req.data.currencyId)).rows;
+app.get('/api/currencies', preProcessAPI, loadToken, useToken, async (req, res) => {
+	const currencies = await databaseConnection.getCurrencies();
+
+	for(let i = 0; i < currencies.rows.length; i++) {
+		delete currencies.rows[i].currency_id;
+		delete currencies.rows[i].logo;
+	}
+
+	return res.json(currencies.rows);
+});
+
+app.get('/api/sources', preProcessAPI, loadToken, useToken, loadSource, (req, res) => {
+	for(let i = 0; i < req.data.sources.length; i++) {
+		req.data.sources[i].source_id = i;
+		req.data.sources[i].source_name = req.data.sources[i].name;
+		delete req.data.sources[i].name;
+		delete req.data.sources[i].sourceId;
+		delete req.data.sources[i].sourceLabelId;
+	}
+
+	return res.json(req.data.sources);
+});
+
+app.get('/api/addresses', preProcessAPI, usePage, loadSource, useSource, useCurrency, loadToken, useToken, async (req, res) => {
+	const addresses = (await databaseConnection.getAddresses(req.data.token.role_id, req.data.limit, req.data.offset, req.data.withData, req.data.sourceId, req.data.sourceLabelId, req.data.currencyId)).rows;
+
+	for(let i = 0; i < addresses.length; i++) {
+		addresses[i].currency.pop();
+	}
 	
 	return res.json(addresses);
 });
 
-app.get('/api/addresses/:address([a-zA-Z0-9]{1,})', preProcessAPI, (req, res, next) => {
+app.get('/api/addresses/:address([a-zA-Z0-9]{0,})', preProcessAPI, (req, res, next) => {
 	// Address is not set
 	if(!req.params.hasOwnProperty('address') || req.params.address.length == 0) {
 		return res.status(400).json({error: 'Address has to be set!'});
@@ -621,21 +555,29 @@ app.get('/api/addresses/:address([a-zA-Z0-9]{1,})', preProcessAPI, (req, res, ne
 		return res.status(404).json({error: 'Address has not been found!'});
 	}
 	else {
+		address.rows[0].currency.pop();
+
 		return res.json(address.rows[0]);
 	}
 });
 
-app.get('/api/data/:data_id([0-9]{1,})', preProcessAPI, (req, res, next) => {
-	// Data ID is not set
-	if(!req.params.hasOwnProperty('data_id') || req.params.data_id.length == 0) {
-		return res.status(400).json({error: 'Data ID has to be set!'});
+app.get('/api/data/:data([0-9]{0,})', preProcessAPI, (req, res, next) => {
+	// Data is not set
+	if(!req.params.hasOwnProperty('data') || req.params.data.length == 0) {
+		return res.status(400).json({error: 'Data has to be set!'});
 	}
 	else {
-		req.data.dataId = req.params.data_id;
+		req.data.data = parseInt(req.params.data);
+
+		// Data does not have a numeric value or is too low
+		if(isNaN(req.data.data) || req.data.data <= 0) {
+			return res.status(400).json({error: 'Data is too low!'});
+		}
+		
 		next();
 	}
 }, loadToken, useToken, async (req, res) => {
-	let data = await databaseConnection.getData(req.data.token.role_id, req.data.dataId);
+	let data = await databaseConnection.getData(req.data.token.role_id, req.data.data);
 
 	// Data not found
 	if(data.rows.length == 0) {
@@ -650,86 +592,13 @@ app.get('/api/data/:data_id([0-9]{1,})', preProcessAPI, (req, res, next) => {
 		}
 		else {
 			data.content = FS.readFileSync(path, { encoding: 'utf-8' });
+			delete data.source_id;
+			delete data.source_name;
+			delete data.source_label_id;
+			delete data.source_label_name;
+			delete data.path;
 			return res.json(data);
 		}
-	}
-});
-
-app.get('/api/sources', preProcessAPI, loadToken, useToken, async (req, res) => {
-	const sources = await databaseConnection.getSources();
-
-	return res.json(sources.rows);
-});
-
-app.get('/api/sources/:source_id([0-9]{1,})', preProcessAPI, loadToken, useToken, async (req, res) => {
-	// Source ID is not set
-	if(!req.params.hasOwnProperty('source_id') || req.params.source_id.length == 0) {
-		return res.status(400).json({error: 'Source ID has to be set!'});
-	}
-	else {
-		req.data.sourceId = req.params.source_id;
-	}
-
-	const source = await databaseConnection.getSource(req.data.sourceId);
-
-	// Source not found
-	if(source.rows.length == 0) {
-		return res.status(404).json({error: 'Source has not been found!'});
-	}
-	else {
-		return res.json(source.rows[0]);
-	}
-});
-
-app.get('/api/source_labels', preProcessAPI, loadToken, useToken, async (req, res) => {
-	const sourceLabels = await databaseConnection.getSourceLabels();
-
-	return res.json(sourceLabels.rows);
-});
-
-app.get('/api/source_labels/:source_label_id([0-9]{1,})', preProcessAPI, loadToken, useToken, async (req, res) => {
-	// Source label ID is not set
-	if(!req.params.hasOwnProperty('source_label_id') || req.params.source_label_id.length == 0) {
-		return res.status(400).json({error: 'Source label ID has to be set!'});
-	}
-	else {
-		req.data.sourceLabelId = req.params.source_label_id;
-	}
-
-	const sourceLabel = await databaseConnection.getSourceLabel(req.data.sourceLabelId);
-
-	// Source label not found
-	if(sourceLabel.rows.length == 0) {
-		return res.status(404).json({error: 'Source label has not been found!'});
-	}
-	else {
-		return res.json(sourceLabel.rows[0]);
-	}
-});
-
-app.get('/api/currencies', preProcessAPI, loadToken, useToken, async (req, res) => {
-	const currencies = await databaseConnection.getCurrencies();
-
-	return res.json(currencies.rows);
-});
-
-app.get('/api/currencies/:currency_code([a-zA-Z0-9_]{1,})', preProcessAPI, loadToken, useToken, async (req, res) => {
-	// Currency code is not set
-	if(!req.params.hasOwnProperty('currency_code') || req.params.currency_code.length == 0) {
-		return res.status(400).json({error: 'Currency code has to be set!'});
-	}
-	else {
-		req.data.currencyCode = req.params.currency_code;
-	}
-
-	const currency = await databaseConnection.getCurrency(req.data.currencyCode);
-
-	// Currency not found
-	if(currency.rows.length == 0) {
-		return res.status(404).json({error: 'Currency has not been found!'});
-	}
-	else {
-		return res.json(currency.rows[0]);
 	}
 });
 
@@ -900,10 +769,10 @@ app.post('/accounts', preProcess, async (req, res, next) => {
 	}
 }, render);
 
-app.get('/addresses', preProcess, usePage, loadData, useData, useCurrencyCode, async (req, res, next) => {
+app.get('/addresses', preProcess, usePage, loadSource, useSource, useCurrency, async (req, res, next) => {
 	const roleId = typeof req.data.account !== 'undefined' ? req.data.account.role_id : 1;
 
-	req.data.addressesCount = (await databaseConnection.getAddressesCount(roleId, req.data.havingData, req.data.sourceId, req.data.sourceLabelId, req.data.currencyId)).rows[0].count;
+	req.data.addressesCount = (await databaseConnection.getAddressesCount(roleId, req.data.withData, req.data.sourceId, req.data.sourceLabelId, req.data.currencyId)).rows[0].count;
 	req.data.pageCount = Math.ceil(req.data.addressesCount / req.data.limit);
 	req.data.pageCount = req.data.pageCount > 0 ? req.data.pageCount : 1;
 
@@ -913,7 +782,7 @@ app.get('/addresses', preProcess, usePage, loadData, useData, useCurrencyCode, a
 		return render(req, res);
 	}
 
-	req.data.addresses = (await databaseConnection.getAddresses(roleId, req.data.limit, req.data.offset, req.data.havingData, req.data.sourceId, req.data.sourceLabelId, req.data.currencyId)).rows;
+	req.data.addresses = (await databaseConnection.getAddresses(roleId, req.data.limit, req.data.offset, req.data.withData, req.data.sourceId, req.data.sourceLabelId, req.data.currencyId)).rows;
 	req.data.currencies = (await databaseConnection.getCurrencies()).rows;
 	
 	next();
@@ -1068,39 +937,39 @@ app.get('/addresses', preProcess, usePage, loadData, useData, useCurrencyCode, a
 	});
 }, render);*/
 
-app.get('/data', preProcess, loadData, async (req, res, next) => {
+app.get('/statistics', preProcess, loadSource, async (req, res, next) => {
 	const roleId = typeof req.data.account !== 'undefined' ? req.data.account.role_id : 1;
 
 	req.data.currencies = (await databaseConnection.getCurrencies()).rows;
 	
-	for(let i = 0; i < req.data.data.length; i++) {
-		req.data.data[i].havingData = true;
-		req.data.data[i].addressesCount = (await databaseConnection.getAddressesCount(roleId, true, req.data.data[i].sourceId, req.data.data[i].sourceLabelId, null)).rows[0].count;
-		req.data.data[i].link = '/addresses?data=' + i;
-		req.data.data[i].currencies = [];
+	for(let i = 0; i < req.data.sources.length; i++) {
+		req.data.sources[i].withData = true;
+		req.data.sources[i].addressesCount = (await databaseConnection.getAddressesCount(roleId, true, req.data.sources[i].sourceId, req.data.sources[i].sourceLabelId, null)).rows[0].count;
+		req.data.sources[i].link = '/addresses?data=' + i;
+		req.data.sources[i].currencies = [];
 
 		let addressesCount = 0;
 
 		for(let j = 0; j < req.data.currencies.length; j++) {
-			if(addressesCount >= req.data.data[i].addressesCount) {
+			if(addressesCount >= req.data.sources[i].addressesCount) {
 				for(let k = j; k < req.data.currencies.length; k++) {
-					req.data.data[i].currencies[k] = { ...req.data.currencies[k] };
-					req.data.data[i].currencies[k].addressesCount = 0;
-					req.data.data[i].currencies[k].link = '/addresses?currency_code=' + req.data.currencies[k].currency_code + '&data=' + i;
+					req.data.sources[i].currencies[k] = { ...req.data.currencies[k] };
+					req.data.sources[i].currencies[k].addressesCount = 0;
+					req.data.sources[i].currencies[k].link = '/addresses?currency=' + req.data.currencies[k].currency_code + '&source=' + i;
 				}
 				break;
 			}
 
-			req.data.data[i].currencies[j] = { ...req.data.currencies[j] };
-			req.data.data[i].currencies[j].addressesCount = (await databaseConnection.getAddressesCount(roleId, true, req.data.data[i].sourceId, req.data.data[i].sourceLabelId, req.data.currencies[j].currency_id)).rows[0].count;
-			req.data.data[i].currencies[j].link = '/addresses?currency_code=' + req.data.currencies[j].currency_code + '&data=' + i;
-			addressesCount += req.data.data[i].currencies[j].addressesCount;
+			req.data.sources[i].currencies[j] = { ...req.data.currencies[j] };
+			req.data.sources[i].currencies[j].addressesCount = (await databaseConnection.getAddressesCount(roleId, true, req.data.sources[i].sourceId, req.data.sources[i].sourceLabelId, req.data.currencies[j].currency_id)).rows[0].count;
+			req.data.sources[i].currencies[j].link = '/addresses?currency=' + req.data.currencies[j].currency_code + '&source=' + i;
+			addressesCount += req.data.sources[i].currencies[j].addressesCount;
 		}
 	}
 
-	req.data.data.unshift({
+	req.data.sources.unshift({
 		name: 'All',
-		havingData: false,
+		withData: false,
 		sourceId: null,
 		sourceLabelId: null,
 		addressesCount: (await databaseConnection.getAddressesCount(roleId, false, null, null, null)).rows[0].count,
@@ -1111,23 +980,23 @@ app.get('/data', preProcess, loadData, async (req, res, next) => {
 	let addressesCount = 0;
 
 	for(let i = 0; i < req.data.currencies.length; i++) {
-		if(addressesCount >= req.data.data[0].addressesCount) {
+		if(addressesCount >= req.data.sources[0].addressesCount) {
 			for(let j = i; j < req.data.currencies.length; j++) {
-				req.data.data[0].currencies[j] = { ...req.data.currencies[j] };
-				req.data.data[0].currencies[j].addressesCount = 0;
-				req.data.data[0].currencies[j].link = '/addresses?currency_code=' + req.data.currencies[j].currency_code;
+				req.data.sources[0].currencies[j] = { ...req.data.currencies[j] };
+				req.data.sources[0].currencies[j].addressesCount = 0;
+				req.data.sources[0].currencies[j].link = '/addresses?currency=' + req.data.currencies[j].currency_code;
 			}
 			break;
 		}
 		
-		req.data.data[0].currencies[i] = { ...req.data.currencies[i] };
-		req.data.data[0].currencies[i].addressesCount = (await databaseConnection.getAddressesCount(roleId, false, null, null, req.data.currencies[i].currency_id)).rows[0].count;
-		req.data.data[0].currencies[i].link = '/addresses?currency_code=' + req.data.currencies[i].currency_code;
-		addressesCount += req.data.data[0].currencies[i].addressesCount;
+		req.data.sources[0].currencies[i] = { ...req.data.currencies[i] };
+		req.data.sources[0].currencies[i].addressesCount = (await databaseConnection.getAddressesCount(roleId, false, null, null, req.data.currencies[i].currency_id)).rows[0].count;
+		req.data.sources[0].currencies[i].link = '/addresses?currency=' + req.data.currencies[i].currency_code;
+		addressesCount += req.data.sources[0].currencies[i].addressesCount;
 	}
 
-	for(let i = 0; i < req.data.data.length; i++) {
-		req.data.data[i].currencies = req.data.data[i].currencies.sort((a, b) => {
+	for(let i = 0; i < req.data.sources.length; i++) {
+		req.data.sources[i].currencies = req.data.sources[i].currencies.sort((a, b) => {
 			if(a.addressesCount != b.addressesCount) { return b.addressesCount - a.addressesCount; }
 			if(a.currency_code > b.currency_code) { return 1; }
 			if(a.currency_code < b.currency_code) { return -1; }
@@ -1135,7 +1004,7 @@ app.get('/data', preProcess, loadData, async (req, res, next) => {
 		});
 	}
 
-	req.data.data = req.data.data.sort((a, b) => {
+	req.data.sources = req.data.sources.sort((a, b) => {
 		if(a.addressesCount != b.addressesCount) { return b.addressesCount - a.addressesCount; }
 		if(a.sourceId != b.sourceId) { return a.sourceId - b.sourceId; }
 		if(a.sourceLabelId != b.sourceLabelId) { return a.sourceLabelId - b.sourceLabelId; }
@@ -1145,7 +1014,7 @@ app.get('/data', preProcess, loadData, async (req, res, next) => {
 	next();
 }, render);
 
-app.get('/api', preProcess, loadData, async (req, res, next) => {
+app.get('/api', preProcess, loadSource, async (req, res, next) => {
 	req.data.currencies = (await databaseConnection.getCurrencies()).rows;
 	next();
 }, render);
