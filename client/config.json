@@ -32,6 +32,7 @@
 			"/account":            { "class": "sign-form", "file": "account",            "title": "Account" },
 			"/accounts":           { "class": "sign-form", "file": "accounts",           "title": "Accounts" },
 			"/addresses":          { "class": "sign-form", "file": "addresses",          "title": "Addresses" },
+			"/address":            { "class": "sign-form", "file": "address",            "title": "Address" },
 			"/statistics":         { "class": "sign-form", "file": "statistics",         "title": "Statistics" },
 			"/api":                { "class": "sign-form", "file": "api",                "title": "API" },
 			"/faq":                { "class": "sign-form", "file": "faq",                "title": "FAQ" },

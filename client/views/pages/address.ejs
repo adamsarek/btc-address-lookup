@@ -1,0 +1,145 @@
+<% const generateExplorerLink = (currencyCode) => {
+	let url = ['https://'];
+	
+	switch(currencyCode) {
+		case 'ADA':
+			url.push(...['cexplorer.io', '/address/']);
+			break;
+		case 'BNB':
+			url.push(...['bscscan.com', '/address/']);
+			break;
+		case 'DASH':
+			url.push(...['explorer.dash.org', '/insight/address/']);
+			break;
+		case 'DOGE':
+			url.push(...['dogechain.info', '/address/']);
+			break;
+		case 'DOT':
+			url.push(...['polkadot.subscan.io', '/account/']);	
+			break;
+		case 'GRS':
+			url.push(...['blockbook.groestlcoin.org', '/address/']);
+			break;
+		case 'KSM':
+			url.push(...['kusama.subscan.io', '/account/']);
+			break;
+		case 'LTC':
+			url.push(...['blockexplorer.one', '/litecoin/mainnet/address/']);
+			break;
+		case 'XEC':
+			url.push(...['explorer.e.cash', '/address/']);
+			break;
+		case 'XLM':
+			url.push(...['stellarchain.io', '/accounts/']);
+			break;
+		case 'XMR':
+			url.push(...['localmonero.co', '/blocks/search/']);
+			break;
+		case 'XRP':
+			url.push(...['xrpscan.com', '/account/']);
+			break;
+		case 'ZEC':
+			url.push(...['blockexplorer.one', '/zcash/mainnet/address/']);
+			break;
+		case 'BCH':
+		case 'BTC':
+		case 'ETH':
+			url.push(...['blockchain.com', '/explorer/addresses/' + currencyCode.toLowerCase() + '/']);
+			break;
+		default:
+			return '';
+	}
+
+	return '<a href="' + url.join('') + address.address + '" target="_blank" title="' + url[1] + '">View on ' + url[1] + '</a>';
+};
+
+const generateBlockchairLink = (currencyCode) => {
+	let url = ['https://', 'blockchair.com'];
+	
+	switch(currencyCode) {
+		case 'ADA':
+			url.push('/cardano');
+			break;
+		case 'BCH':
+			url.push('/bitcoin-cash');
+			break;
+		case 'BNB':
+			url.push('/bnb');
+			break;
+		case 'BTC':
+			url.push('/bitcoin');
+			break;
+		case 'DASH':
+			url.push('/dash');
+			break;
+		case 'DOGE':
+			url.push('/dogecoin');
+			break;
+		case 'DOT':
+			url.push('/polkadot');
+			break;
+		case 'ETH':
+			url.push('/ethereum');
+			break;
+		case 'GRS':
+			url.push('/groestlcoin');
+			break;
+		case 'KSM':
+			url.push('/kusama');
+			break;
+		case 'LTC':
+			url.push('/litecoin');
+			break;
+		case 'XEC':
+			url.push('/ecash');
+			break;
+		case 'XIN':
+			url.push('/mixin');
+			break;
+		case 'XLM':
+			url.push('/stellar');
+			break;
+		case 'XMR':
+			url.push('/monero');
+			break;
+		case 'XRP':
+			url.push('/ripple');
+			break;
+		case 'ZEC':
+			url.push('/zcash');
+			break;
+		default:
+			return '';
+	}
+
+	return '<a href="' + url.join('') + '/address/' + address.address + '" target="_blank" title="' + url[1] + '">View on ' + url[1] + '</a>';
+}; %>
+
+<div class="panels">
+	<div class="panel-w-6 panel">
+		<!--<div class="title center panel-row"><div class="no-wrap"><img src="<%= address.currency[2] %>" title="<%- address.currency[0] + (address.currency[1][0] != '_' ? ' (' + address.currency[1] + ')' : '') %>"><div title="<%= address.address %>"><%= address.address %></div></div></div>-->
+		<div class="title center panel-row">Address</div>
+		<div class="center panel-row">
+			<table>
+				<tr><th align="left"><label>Address</label></th></tr>
+				<tr><td align="left"><label><div class="no-wrap"><img src="<%= address.currency[2] %>" title="<%- address.currency[0] + (address.currency[1][0] != '_' ? ' (' + address.currency[1] + ')' : '') %>"><div title="<%= address.address %>"><%= address.address %></div></div></label></td></tr>
+				<%- generateExplorerLink(address.currency[1]).length > 0 || generateBlockchairLink(address.currency[1]).length > 0 ? '<tr><th align="left"><label>Blockchain explorers</label></th></tr>' : '' %>
+				<%- generateExplorerLink(address.currency[1]).length > 0 ? '<tr><td align="left"><label>' + generateExplorerLink(address.currency[1]) + '</label></td></tr>' : '' %>
+				<%- generateBlockchairLink(address.currency[1]).length > 0 ? '<tr><td align="left"><label>' + generateBlockchairLink(address.currency[1]) + '</label></td></tr>' : '' %>
+				<tr><th align="left"><label>Currency</label></th></tr>
+				<tr><td align="left"><label><div class="no-wrap"><img src="<%= address.currency[2] %>" title="<%- address.currency[0] + (address.currency[1][0] != '_' ? ' (' + address.currency[1] + ')' : '') %>"><div title="<%- address.currency[0] + (address.currency[1][0] != '_' ? ' (' + address.currency[1] + ')' : '') %>"><%- address.currency[0] + (address.currency[1][0] != '_' ? ' (' + address.currency[1] + ')' : '') %></div></div></label></td></tr>
+				<tr><th align="left"><label>Data count</label></th></tr>
+				<tr><td align="left"><label><%- new Intl.NumberFormat().format(address.data_ids.length) %></label></td></tr>
+				<% if(address.data_ids.length > 0) { %>
+					<tr><td align="left"><hr></td></tr>
+					<tr><td align="center"><label class="title">Data</label></td></tr>
+					<tr><th align="left"><label>Source</label></th></tr>
+				<% } %>
+				<!--
+					bc1pxz2q6pkd399m4vf6ndrqkzmqntck53lgvmeece932duwp5a906gqz5wwaw
+					MM4bVEjFvmzuypwJzji9h4yGHMBZpQATY7
+				-->
+			</table>
+		</div>
+	</div>
+</div>

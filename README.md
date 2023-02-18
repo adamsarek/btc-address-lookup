@@ -118,7 +118,7 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   - :heavy_check_mark: Account
   - :heavy_check_mark: Accounts (filterable by email & role) *- admin only page*
   - :heavy_check_mark: Addresses (filterable by currency & source)
-  - :x: Address *- all information related to the searched address*
+  - :hammer: Address *- all information related to the searched address*
   - :heavy_check_mark: Statistics
   - :heavy_check_mark: API *- listed API features*
   - :heavy_check_mark: FAQ *- answered questions related to the website*

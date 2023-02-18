@@ -187,7 +187,7 @@ function useSource(req, res, next) {
 function loadToken(req, res, next) {
 	// Token is not set
 	if(!req.query.hasOwnProperty('token') || req.query.token.length == 0) {
-		return res.status(400).json({error: 'Token has to be set!'});
+		return res.status(400).json({ error: 'Token has to be set!' });
 	}
 	else {
 		req.data.token = req.query.token;
@@ -200,7 +200,7 @@ async function useToken(req, res, next) {
 
 	// Token does not exist
 	if(req.data.token.rows.length == 0) {
-		return res.status(400).json({error: 'Token does not exist!'});
+		return res.status(400).json({ error: 'Token does not exist!' });
 	}
 	else {
 		req.data.token = req.data.token.rows[0];
@@ -213,7 +213,7 @@ async function useToken(req, res, next) {
 			if(now < resetUseCountAt) {
 				// Token use count limit reached
 				if(req.data.token.use_count >= config.api.role[req.data.token.role_id].use_count_limit) {
-					return res.status(400).json({error: 'Token use count limit reached!'});
+					return res.status(400).json({ error: 'Token use count limit reached!' });
 				}
 				else {
 					req.data.token.use_count++;
@@ -490,7 +490,7 @@ app.set('view engine', 'ejs');
 app.get('/api/tokens/:token([a-zA-Z0-9]{0,})', preProcessAPI, (req, res, next) => {
 	// Token is not set
 	if(!req.params.hasOwnProperty('token') || req.params.token.length == 0) {
-		return res.status(400).json({error: 'Token has to be set!'});
+		return res.status(400).json({ error: 'Token has to be set!' });
 	}
 	else {
 		req.data.token = req.params.token;
@@ -541,7 +541,7 @@ app.get('/api/addresses', preProcessAPI, usePage, loadSource, useSource, useCurr
 app.get('/api/addresses/:address([a-zA-Z0-9]{0,})', preProcessAPI, (req, res, next) => {
 	// Address is not set
 	if(!req.params.hasOwnProperty('address') || req.params.address.length == 0) {
-		return res.status(400).json({error: 'Address has to be set!'});
+		return res.status(400).json({ error: 'Address has to be set!' });
 	}
 	else {
 		req.data.address = req.params.address;
@@ -552,7 +552,7 @@ app.get('/api/addresses/:address([a-zA-Z0-9]{0,})', preProcessAPI, (req, res, ne
 
 	// Address not found
 	if(address.rows.length == 0) {
-		return res.status(404).json({error: 'Address has not been found!'});
+		return res.status(404).json({ error: 'Address has not been found!' });
 	}
 	else {
 		address.rows[0].currency.pop();
@@ -564,14 +564,14 @@ app.get('/api/addresses/:address([a-zA-Z0-9]{0,})', preProcessAPI, (req, res, ne
 app.get('/api/data/:data([0-9]{0,})', preProcessAPI, (req, res, next) => {
 	// Data is not set
 	if(!req.params.hasOwnProperty('data') || req.params.data.length == 0) {
-		return res.status(400).json({error: 'Data has to be set!'});
+		return res.status(400).json({ error: 'Data has to be set!' });
 	}
 	else {
 		req.data.data = parseInt(req.params.data);
 
 		// Data does not have a numeric value or is too low
 		if(isNaN(req.data.data) || req.data.data <= 0) {
-			return res.status(400).json({error: 'Data is too low!'});
+			return res.status(400).json({ error: 'Data is too low!' });
 		}
 		
 		next();
@@ -581,14 +581,14 @@ app.get('/api/data/:data([0-9]{0,})', preProcessAPI, (req, res, next) => {
 
 	// Data not found
 	if(data.rows.length == 0) {
-		return res.status(404).json({error: 'Data has not been found!'});
+		return res.status(404).json({ error: 'Data has not been found!' });
 	}
 	else {
 		data = data.rows[0];
 		const path = PATH.join(config.crawler.data_path, data.path);
 		
 		if(!FS.existsSync(path)) {
-			return res.status(404).json({error: 'Data file is missing!'});
+			return res.status(404).json({ error: 'Data file is missing!' });
 		}
 		else {
 			data.content = FS.readFileSync(path, { encoding: 'utf-8' });
@@ -603,7 +603,7 @@ app.get('/api/data/:data([0-9]{0,})', preProcessAPI, (req, res, next) => {
 });
 
 app.get('/api/*', (req, res) => {
-	return res.status(404).json({error: 'Page not found'});
+	return res.status(404).json({ error: 'Page not found' });
 });
 
 
@@ -786,6 +786,30 @@ app.get('/addresses', preProcess, usePage, loadSource, useSource, useCurrency, a
 	req.data.currencies = (await databaseConnection.getCurrencies()).rows;
 	
 	next();
+}, render);
+
+app.get('/address/:address([a-zA-Z0-9]{0,})', preProcess, loadSource, async (req, res, next) => {
+	// Address is not set
+	if(!req.params.hasOwnProperty('address') || req.params.address.length == 0) {
+		res.status(404);
+		return render(req, res);
+	}
+	else {
+		const address = req.params.address;
+		const roleId = typeof req.data.account !== 'undefined' ? req.data.account.role_id : 1;
+
+		req.data.address = (await databaseConnection.getAddress(roleId, address)).rows;
+
+		// Address found
+		if(req.data.address.length > 0) {
+			req.data.address = req.data.address[0];
+			next();
+		}
+		else {
+			res.status(404);
+			return render(req, res);
+		}
+	}
 }, render);
 
 /*app.get('/data', preProcess, (req, res, next) => {
