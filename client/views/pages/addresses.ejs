@@ -28,9 +28,9 @@
 		<div class="center panel-row">
 			<table>
 				<% if(addresses.length > 0) { %>
-					<tr><th align="left"><label>Address</label></th><th align="left"><label>Data count</label></th></tr>
+					<tr><th align="left"><label>Address</label></th><!--<th align="left"><label>Data count</label></th>--></tr>
 					<% for(const address of addresses) { %>
-						<%- '<tr><td align="left"><label><a class="no-wrap" href="/address/' + address.address + '"><img src="' + address.currency[2] + '" title="' + address.currency[0] + (address.currency[1][0] != '_' ? ' (' + address.currency[1] + ')' : '') + '"><div>' + address.address + '</div></a></label></td><td align="left"><label>' + new Intl.NumberFormat().format(address.data_ids.length) + '</label></td></tr>' %>
+						<%- '<tr><td align="left"><label><a class="no-wrap" href="/address/' + address.address + '"><img src="' + address.currency[2] + '" title="' + address.currency[0] + (address.currency[1][0] != '_' ? ' (' + address.currency[1] + ')' : '') + '"><div>' + address.address + '</div></a></label></td><!--<td align="left"><label>' + new Intl.NumberFormat().format(address.data_ids.length) + '</label></td>--></tr>' %>
 					<% } %>
 				<% } else { %>
 					<tr><td align="center" colspan="2"><label>No address has been found.</label></td></tr>

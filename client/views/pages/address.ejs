@@ -1,4 +1,12 @@
-<% const generateExplorerLink = (currencyCode) => {
+<% const generateLink = (page) => { return '?&page=' + page; };
+let leftButtonCount = pageId >= 3 ? 2 : pageId - 1;
+let rightButtonCount = pageId <= pageCount - 2 ? 2 : pageCount - pageId;
+if(pageCount >= 3) {
+	if(leftButtonCount > rightButtonCount) { leftButtonCount += leftButtonCount - rightButtonCount; }
+	if(rightButtonCount > leftButtonCount) { rightButtonCount += rightButtonCount - leftButtonCount; }
+}
+
+const generateExplorerLink = (currencyCode) => {
 	let url = ['https://'];
 	
 	switch(currencyCode) {
@@ -116,30 +124,124 @@ const generateBlockchairLink = (currencyCode) => {
 }; %>
 
 <div class="panels">
-	<div class="panel-w-6 panel">
+	<div class="panel-w-7 panel">
 		<!--<div class="title center panel-row"><div class="no-wrap"><img src="<%= address.currency[2] %>" title="<%- address.currency[0] + (address.currency[1][0] != '_' ? ' (' + address.currency[1] + ')' : '') %>"><div title="<%= address.address %>"><%= address.address %></div></div></div>-->
 		<div class="title center panel-row">Address</div>
 		<div class="center panel-row">
 			<table>
-				<tr><th align="left"><label>Address</label></th></tr>
-				<tr><td align="left"><label><div class="no-wrap"><img src="<%= address.currency[2] %>" title="<%- address.currency[0] + (address.currency[1][0] != '_' ? ' (' + address.currency[1] + ')' : '') %>"><div title="<%= address.address %>"><%= address.address %></div></div></label></td></tr>
+				<tr>
+					<th align="left"><label>Address</label></th>
+					<!--<th align="left"><label>Data count</label></th>-->
+				</tr>
+				<tr>
+					<td align="left"><label><div class="no-wrap"><img src="<%= address.currency[2] %>" title="<%- address.currency[0] + (address.currency[1][0] != '_' ? ' (' + address.currency[1] + ')' : '') %>"><div title="<%= address.address %>"><%= address.address %></div></div></label></td>
+					<!--<td align="left"><label><%- new Intl.NumberFormat().format(address.data_ids.length) %></label></td>-->
+				</tr>
 				<%- generateExplorerLink(address.currency[1]).length > 0 || generateBlockchairLink(address.currency[1]).length > 0 ? '<tr><th align="left"><label>Blockchain explorers</label></th></tr>' : '' %>
-				<%- generateExplorerLink(address.currency[1]).length > 0 ? '<tr><td align="left"><label>' + generateExplorerLink(address.currency[1]) + '</label></td></tr>' : '' %>
-				<%- generateBlockchairLink(address.currency[1]).length > 0 ? '<tr><td align="left"><label>' + generateBlockchairLink(address.currency[1]) + '</label></td></tr>' : '' %>
-				<tr><th align="left"><label>Currency</label></th></tr>
-				<tr><td align="left"><label><div class="no-wrap"><img src="<%= address.currency[2] %>" title="<%- address.currency[0] + (address.currency[1][0] != '_' ? ' (' + address.currency[1] + ')' : '') %>"><div title="<%- address.currency[0] + (address.currency[1][0] != '_' ? ' (' + address.currency[1] + ')' : '') %>"><%- address.currency[0] + (address.currency[1][0] != '_' ? ' (' + address.currency[1] + ')' : '') %></div></div></label></td></tr>
-				<tr><th align="left"><label>Data count</label></th></tr>
-				<tr><td align="left"><label><%- new Intl.NumberFormat().format(address.data_ids.length) %></label></td></tr>
-				<% if(address.data_ids.length > 0) { %>
-					<tr><td align="left"><hr></td></tr>
-					<tr><td align="center"><label class="title">Data</label></td></tr>
-					<tr><th align="left"><label>Source</label></th></tr>
-				<% } %>
-				<!--
-					bc1pxz2q6pkd399m4vf6ndrqkzmqntck53lgvmeece932duwp5a906gqz5wwaw
-					MM4bVEjFvmzuypwJzji9h4yGHMBZpQATY7
-				-->
+				<%- generateExplorerLink(address.currency[1]).length > 0 ? '<tr><td align="left"><div class="content">' + generateExplorerLink(address.currency[1]) + '</div></td></tr>' : '' %>
+				<%- generateBlockchairLink(address.currency[1]).length > 0 ? '<tr><td align="left"><div class="content">' + generateBlockchairLink(address.currency[1]) + '</div></td></tr>' : '' %>
 			</table>
+		</div>
+		<div><hr></div>
+		<div class="center panel-row">
+			<table>
+				<% if(address.reports.rows.length > 0) { %>
+					<tr><td><table>
+						<% for(let i = 0; i < address.reports.rows.length; i++) {
+							let colspan = 0;
+							for(let j = 0; j < address.reports.cols.length; j++) {
+								for(let k = 0; k < Object.values(address.reports.cols[j]).length; k++) {
+									if(Object.values(address.reports.cols[j])[k].count > 0) {
+										if(j == 0) { colspan++; }
+										else { break; }
+									}
+								} %>
+								<tr>
+									<% for(let k = 0; k < Object.keys(address.reports.cols[j]).length; k++) { %>
+										<% if(typeof address.reports.rows[i][Object.keys(address.reports.cols[j])[k]] !== 'undefined') { %>
+											<% let subspan = 1;
+											for(let l = k + 1; l < Object.keys(address.reports.cols[j]).length; l++) {
+												if(typeof address.reports.rows[i][Object.keys(address.reports.cols[j])[l]] !== 'undefined') {
+													break;
+												}
+												else if(Object.values(address.reports.cols[j])[l].count > 0) {
+													subspan++;
+												}
+											}
+											for(let l = k - 1; l >= 0; l--) {
+												if(typeof address.reports.rows[i][Object.keys(address.reports.cols[j])[l]] !== 'undefined') {
+													break;
+												}
+												else if(Object.values(address.reports.cols[j])[l].count > 0) {
+													subspan++;
+												}
+											} %>
+											<%- '<th align="left"' + (j > 0 ? ' colspan="' + colspan + '"' : ' colspan="' + subspan + '"') + '><label>' + address.reports.cols[j][Object.keys(address.reports.cols[j])[k]].name + '</label></th>' %>
+										<% } %>
+									<% } %>
+								</tr>
+								<tr>
+									<% for(let k = 0; k < Object.keys(address.reports.cols[j]).length; k++) { %>
+										<% if(typeof address.reports.rows[i][Object.keys(address.reports.cols[j])[k]] !== 'undefined') { %>
+											<% let subspan = 1;
+											for(let l = k + 1; l < Object.keys(address.reports.cols[j]).length; l++) {
+												if(typeof address.reports.rows[i][Object.keys(address.reports.cols[j])[l]] !== 'undefined') {
+													break;
+												}
+												else if(Object.values(address.reports.cols[j])[l].count > 0) {
+													subspan++;
+												}
+											}
+											for(let l = k - 1; l >= 0; l--) {
+												if(typeof address.reports.rows[i][Object.keys(address.reports.cols[j])[l]] !== 'undefined') {
+													break;
+												}
+												else if(Object.values(address.reports.cols[j])[l].count > 0) {
+													subspan++;
+												}
+											} %>
+											<% if(Object.keys(address.reports.cols[j])[k] == 'date') { %>
+												<%- '<td align="left" valign="top"' + (j > 0 ? ' colspan="' + colspan + '"' : ' colspan="' + subspan + '"') + '><div class="content">' + address.reports.rows[i][Object.keys(address.reports.cols[j])[k]].toLocaleString() + '</div></td>' %>
+											<% } else if(Object.keys(address.reports.cols[j])[k] == 'url') { %>
+												<%- '<td align="left" valign="top"' + (j > 0 ? ' colspan="' + colspan + '"' : ' colspan="' + subspan + '"') + '><div class="content"><a href="' + address.reports.rows[i][Object.keys(address.reports.cols[j])[k]] + '">View</a></div></td>' %>
+											<% } else { %>
+												<%- '<td align="left" valign="top"' + (j > 0 ? ' colspan="' + colspan + '"' : ' colspan="' + subspan + '"') + '><div class="content">' + address.reports.rows[i][Object.keys(address.reports.cols[j])[k]] + '</div></td>' %>
+											<% } %>
+										<% } %>
+									<% } %>
+								</tr>
+							<% } %>
+							<% if(i < address.reports.rows.length - 1) { %>
+								<tr><td align="left"<%- colspan > 0 ? ' colspan="' + colspan + '"' : '' %>><hr></td></tr>
+							<% } %>
+						<% } %>
+					</table></td></tr>
+				<% } else { %>
+					<tr><td align="center"><label>No report has been found.</label></td></tr>
+				<% } %>
+			</table>
+		</div>
+		<div><hr></div>
+		<div class="flex-content content panel-row">
+			<div><div class="inline-content"><a class="button" href="<%- generateLink(1) %>">❮</a></div></div>
+			<div>
+				<% for(let i = 0; i < leftButtonCount; i++) { %>
+					<%- '<div class="inline-content"><a class="button" href="' + generateLink(pageId - leftButtonCount + i) + '">' + new Intl.NumberFormat().format(pageId - leftButtonCount + i) + '</a></div>' %>
+				<% } %>
+				<div class="inline-content"><a class="active button" href="<%- generateLink(pageId) %>"><%= new Intl.NumberFormat().format(pageId) %></a></div>
+				<% for(let i = 0; i < rightButtonCount; i++) { %>
+					<%- '<div class="inline-content"><a class="button" href="' + generateLink(pageId + i + 1) + '">' + new Intl.NumberFormat().format(pageId + i + 1) + '</a></div>' %>
+				<% } %>
+			</div>
+			<div><div class="inline-content"><a class="button" href="<%- generateLink(pageCount) %>">❯</a></div></div>
+		</div>
+		<div><hr></div>
+		<div class="panel-row">
+			<div class="flex-content">
+				<div class="inline-content"><div><b>Loading</b></div><div class="content"><%- new Intl.NumberFormat().format((Date.now() - startedAt) / 1000) + ' s' %></div></div>
+				<div class="inline-content"><div><b>Reports (page)</b></div><div class="content"><%- address.data_ids.length > 0 ? new Intl.NumberFormat().format(offset + 1) + ' - ' + new Intl.NumberFormat().format(address.data_ids.length < (offset + limit) ? address.data_ids.length : (offset + limit)) : 0 %></div></div>
+				<div class="inline-content"><div><b>Reports (all pages)</b></div><div class="content"><%- new Intl.NumberFormat().format(address.data_ids.length) %></div></div>
+			</div>
 		</div>
 	</div>
 </div>

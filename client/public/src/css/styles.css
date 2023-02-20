@@ -104,6 +104,7 @@
 /* Chrome, Edge, and Safari */
 *::-webkit-scrollbar {
 	width: 7px;
+	height: 7px;
 }
 
 *::-webkit-scrollbar-track {
@@ -116,6 +117,16 @@
 
 *::-webkit-scrollbar-thumb:hover {
 	background-color: var(--button-hover-background-color);
+}
+
+*::-webkit-scrollbar-corner {
+	background: transparent;
+}
+
+*::-webkit-resizer {
+	border-width: 7px;
+	border-style: solid;
+	border-color: var(--body-background-color) var(--button-background-color) var(--button-background-color) var(--body-background-color);
 }
 
 html {
@@ -148,6 +159,7 @@ label {
 }
 
 input,
+textarea,
 select,
 .input,
 button,
@@ -155,9 +167,6 @@ input[type="button"],
 input[type="submit"],
 .button {
 	font-size: 0.8rem;
-	border-radius: 0.5rem;
-	height: 3rem;
-	line-height: 1.5rem;
 	padding: 0.75rem;
 	margin: 0;
 	display: inline-block;
@@ -167,6 +176,19 @@ input[type="submit"],
 
 input,
 select,
+.input,
+button,
+input[type="button"],
+input[type="submit"],
+.button {
+	border-radius: 0.5rem;
+	height: 3rem;
+	line-height: 1.5rem;
+}
+
+input,
+textarea,
+select,
 .input {
 	color: var(--input-color);
 	background-color: var(--input-background-color);
@@ -174,6 +196,7 @@ select,
 }
 
 input:hover,
+textarea:hover,
 select:hover,
 .input:hover {
 	color: var(--input-hover-color);
@@ -182,6 +205,7 @@ select:hover,
 }
 
 input:focus,
+textarea:focus,
 select:focus,
 .input:focus {
 	color: var(--input-focus-color);

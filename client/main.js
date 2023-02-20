@@ -788,7 +788,7 @@ app.get('/addresses', preProcess, usePage, loadSource, useSource, useCurrency, a
 	next();
 }, render);
 
-app.get('/address/:address([a-zA-Z0-9]{0,})', preProcess, loadSource, async (req, res, next) => {
+app.get('/address/:address([a-zA-Z0-9]{0,})', preProcess, usePage, loadSource, async (req, res, next) => {
 	// Address is not set
 	if(!req.params.hasOwnProperty('address') || req.params.address.length == 0) {
 		res.status(404);
@@ -803,7 +803,68 @@ app.get('/address/:address([a-zA-Z0-9]{0,})', preProcess, loadSource, async (req
 		// Address found
 		if(req.data.address.length > 0) {
 			req.data.address = req.data.address[0];
-			next();
+			
+			req.data.address.reports = {
+				cols: [
+					{
+						error: { name: 'Error', count: 0 },
+						date: { name: 'Date', count: 0 },
+						type: { name: 'Type', count: 0 },
+						platform: { name: 'Platform', count: 0 },
+						country: { name: 'Country', count: 0 },
+						url: { name: 'URL', count: 0 }
+					},
+					{ abuser: { name: 'Abuser', count: 0 } },
+					{ description: { name: 'Description', count: 0 } }
+				],
+				rows: []
+			};
+			
+			for(let i = req.data.offset; i < (req.data.offset + req.data.limit < req.data.address.data_ids.length ? req.data.offset + req.data.limit : req.data.address.data_ids.length); i++) {
+				const data = (await databaseConnection.getData(roleId, req.data.address.data_ids[i])).rows[0];
+
+				// Bitcoin Generator Scam
+				if(data.source_id == 5) {
+					req.data.address.reports.cols[0].type.count++;
+					req.data.address.reports.cols[0].url.count++;
+					req.data.address.reports.rows.push({
+						type: 'Bitcoin Generator Scam',
+						url: data.url
+					});
+				}
+				else {
+					const path = PATH.join(config.crawler.data_path, data.path);
+					if(FS.existsSync(path)) {
+						const content = FS.readFileSync(path, { encoding: 'utf-8' });
+						// #TODO - parse
+						/*
+						bc1pxz2q6pkd399m4vf6ndrqkzmqntck53lgvmeece932duwp5a906gqz5wwaw
+						MM4bVEjFvmzuypwJzji9h4yGHMBZpQATY7 - 
+						1L15W6b9vkxV81xW5HDtmMBycrdiettHEL - multiple pages on BitcoinAbuse
+						*/
+					}
+					else {
+						req.data.address.reports.cols[0].error.count++;
+						req.data.address.reports.cols[0].url.count++;
+						req.data.address.reports.rows.push({
+							error: 'Data file is missing!',
+							url: data.url
+						});
+					}
+				}
+			}
+
+			req.data.pageCount = Math.ceil(req.data.address.data_ids.length / req.data.limit);
+			req.data.pageCount = req.data.pageCount > 0 ? req.data.pageCount : 1;
+
+			// Page is too high
+			if(req.data.pageId > req.data.pageCount) {
+				res.status(404);
+				return render(req, res);
+			}
+			else {
+				next();
+			}
 		}
 		else {
 			res.status(404);
