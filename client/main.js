@@ -22,6 +22,7 @@ const CRYPTO = require('crypto');
 const EXPRESS = require('express');
 const EXPRESS_SESSION = require('express-session');
 const FS = require('fs');
+const NODE_HTML_PARSER = require('node-html-parser');
 const PATH = require('path');
 
 // Internal imports
@@ -788,6 +789,59 @@ app.get('/addresses', preProcess, usePage, loadSource, useSource, useCurrency, a
 	next();
 }, render);
 
+function parseDateTime(dateTimeString) {
+	let dateTimeParts = [];
+
+	if(dateTimeString.indexOf('-') > -1) {
+		const dateTimeStringParts = dateTimeString.split(' ');
+		dateTimeParts.push(...dateTimeStringParts[0].split('-').slice(0,3));
+		if(dateTimeStringParts.length > 1) { dateTimeParts.push(...dateTimeStringParts[1].split(':')); }
+	}
+	else if(dateTimeString.indexOf('. ') > -1) {
+		const dateTimeStringParts = dateTimeString.split('. ');
+		const yearStringParts = dateTimeStringParts[2].split(' ');
+		dateTimeParts.push(yearStringParts[0]);
+		dateTimeParts.push(dateTimeStringParts[1]);
+		dateTimeParts.push(dateTimeStringParts[0]);
+		if(yearStringParts.length > 1) { dateTimeParts.push(...yearStringParts[1].split(':')); }
+	}
+	else if(dateTimeString.indexOf('.') > -1) {
+		const dateTimeStringParts = dateTimeString.split(' ');
+		dateTimeParts.push(...dateTimeStringParts[0].split('.').slice(0,3).reverse());
+		if(dateTimeStringParts.length > 1) { dateTimeParts.push(...dateTimeStringParts[1].split(':')); }
+	}
+	else if(dateTimeString.indexOf(',') > -1) {
+		const dateTimeStringParts = dateTimeString.split(' ');
+		const monthWordString = dateTimeStringParts[0].slice(0,3);
+		let monthNumberString;
+		if(monthWordString      == 'Jan') { monthNumberString = '1'; }
+		else if(monthWordString == 'Feb') { monthNumberString = '2'; }
+		else if(monthWordString == 'Mar') { monthNumberString = '3'; }
+		else if(monthWordString == 'Apr') { monthNumberString = '4'; }
+		else if(monthWordString == 'May') { monthNumberString = '5'; }
+		else if(monthWordString == 'Jun') { monthNumberString = '6'; }
+		else if(monthWordString == 'Jul') { monthNumberString = '7'; }
+		else if(monthWordString == 'Aug') { monthNumberString = '8'; }
+		else if(monthWordString == 'Sep') { monthNumberString = '9'; }
+		else if(monthWordString == 'Oct') { monthNumberString = '10'; }
+		else if(monthWordString == 'Nov') { monthNumberString = '11'; }
+		else if(monthWordString == 'Dec') { monthNumberString = '12'; }
+		dateTimeParts.push(dateTimeStringParts[2]);
+		dateTimeParts.push(monthNumberString);
+		dateTimeParts.push(dateTimeStringParts[1].split(',')[0]);
+		if(dateTimeStringParts.length > 3) { dateTimeParts.push(...dateTimeStringParts[3].split(':')); }
+	}
+	console.log(dateTimeParts);
+	dateTimeParts = dateTimeParts.map(Number);
+	if(dateTimeParts.length > 1) { dateTimeParts[1]--; }
+
+	if(dateTimeParts.length > 0) {
+		return new Date(...dateTimeParts);
+	}
+
+	return null;
+}
+
 app.get('/address/:address([a-zA-Z0-9]{0,})', preProcess, usePage, loadSource, async (req, res, next) => {
 	// Address is not set
 	if(!req.params.hasOwnProperty('address') || req.params.address.length == 0) {
@@ -820,13 +874,14 @@ app.get('/address/:address([a-zA-Z0-9]{0,})', preProcess, usePage, loadSource, a
 				rows: []
 			};
 			
-			for(let i = req.data.offset; i < (req.data.offset + req.data.limit < req.data.address.data_ids.length ? req.data.offset + req.data.limit : req.data.address.data_ids.length); i++) {
+			for(let i = 0; i < req.data.address.data_ids.length; i++) {
 				const data = (await databaseConnection.getData(roleId, req.data.address.data_ids[i])).rows[0];
 
 				// Bitcoin Generator Scam
 				if(data.source_id == 5) {
 					req.data.address.reports.cols[0].type.count++;
 					req.data.address.reports.cols[0].url.count++;
+					
 					req.data.address.reports.rows.push({
 						type: 'Bitcoin Generator Scam',
 						url: data.url
@@ -835,13 +890,82 @@ app.get('/address/:address([a-zA-Z0-9]{0,})', preProcess, usePage, loadSource, a
 				else {
 					const path = PATH.join(config.crawler.data_path, data.path);
 					if(FS.existsSync(path)) {
-						const content = FS.readFileSync(path, { encoding: 'utf-8' });
-						// #TODO - parse
-						/*
-						bc1pxz2q6pkd399m4vf6ndrqkzmqntck53lgvmeece932duwp5a906gqz5wwaw
-						MM4bVEjFvmzuypwJzji9h4yGHMBZpQATY7 - 
-						1L15W6b9vkxV81xW5HDtmMBycrdiettHEL - multiple pages on BitcoinAbuse
-						*/
+						if(PATH.extname(path) == '.html') {
+							const content = FS.readFileSync(path, { encoding: 'utf-8' });
+							const root = NODE_HTML_PARSER.parse(content);
+							
+							// BitcoinAbuse
+							if(data.source_id == 2) {
+								for(const row of root.querySelectorAll('.table-responsive-lg tbody tr')) {
+									const cols = row.querySelectorAll('td');
+
+									req.data.address.reports.cols[0].date.count++;
+									req.data.address.reports.cols[0].type.count++;
+									req.data.address.reports.cols[0].url.count++;
+									req.data.address.reports.cols[2].description.count++;
+
+									req.data.address.reports.rows.push({
+										date: parseDateTime(cols[0].innerHTML.trim()),
+										type: cols[1].innerHTML.trim(),
+										url: data.url,
+										description: cols[2].innerHTML.trim()
+									});
+								}
+							}
+							// CheckBitcoinAddress
+							else if(data.source_id == 3) {
+								for(const row of root.querySelectorAll('.card-body')) {
+									const countryDateString = row.querySelector('span.text-muted').innerText.trim().split(', ');
+									const dateTimeString = countryDateString.pop();
+									const countryString = countryDateString.join(', ');
+									
+									req.data.address.reports.cols[0].date.count++;
+									req.data.address.reports.cols[0].type.count++;
+									req.data.address.reports.cols[0].country.count++;
+									req.data.address.reports.cols[0].url.count++;
+									req.data.address.reports.cols[1].abuser.count++;
+									req.data.address.reports.cols[2].description.count++;
+
+									req.data.address.reports.rows.push({
+										date: parseDateTime(dateTimeString.trim()),
+										type: row.querySelector('.card-title').innerHTML.trim(),
+										country: countryString.trim(),
+										url: data.url,
+										abuser: row.querySelector('.card-subtitle').innerHTML.trim().split('Abuser: ').slice(1),
+										description: row.querySelector('.card-text').innerHTML.trim()
+									});
+								}
+							}
+							// CryptoBlacklist
+							else if(data.source_id == 4) {
+								for(const row of root.querySelectorAll('table tbody tr')) {
+									const cols = row.querySelectorAll('td');
+									
+									req.data.address.reports.cols[0].date.count++;
+									req.data.address.reports.cols[0].type.count++;
+									req.data.address.reports.cols[0].platform.count++;
+									req.data.address.reports.cols[0].url.count++;
+									req.data.address.reports.cols[1].abuser.count++;
+									req.data.address.reports.cols[2].description.count++;
+									
+									req.data.address.reports.rows.push({
+										date: parseDateTime(cols[0].innerHTML.trim()),
+										type: cols[1].innerHTML.trim(),
+										platform: cols[3].innerHTML.trim(),
+										url: data.url,
+										abuser: cols[2].innerHTML.trim(),
+										description: cols[4].innerHTML.trim()
+									});
+								}
+							}
+							
+							// #TODO - parse
+							/*
+							bc1pxz2q6pkd399m4vf6ndrqkzmqntck53lgvmeece932duwp5a906gqz5wwaw
+							MM4bVEjFvmzuypwJzji9h4yGHMBZpQATY7 - 
+							1L15W6b9vkxV81xW5HDtmMBycrdiettHEL - multiple pages on BitcoinAbuse
+							*/
+						}
 					}
 					else {
 						req.data.address.reports.cols[0].error.count++;
@@ -854,7 +978,10 @@ app.get('/address/:address([a-zA-Z0-9]{0,})', preProcess, usePage, loadSource, a
 				}
 			}
 
-			req.data.pageCount = Math.ceil(req.data.address.data_ids.length / req.data.limit);
+			req.data.address.reports.count = req.data.address.reports.rows.length;
+			req.data.address.reports.rows = req.data.address.reports.rows.slice(req.data.offset, (req.data.offset + req.data.limit < req.data.address.reports.rows.length ? req.data.offset + req.data.limit : req.data.address.reports.rows.length));
+
+			req.data.pageCount = Math.ceil(req.data.address.reports.count / req.data.limit);
 			req.data.pageCount = req.data.pageCount > 0 ? req.data.pageCount : 1;
 
 			// Page is too high

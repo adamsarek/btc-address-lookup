@@ -203,7 +203,7 @@ const generateBlockchairLink = (currencyCode) => {
 											<% if(Object.keys(address.reports.cols[j])[k] == 'date') { %>
 												<%- '<td align="left" valign="top"' + (j > 0 ? ' colspan="' + colspan + '"' : ' colspan="' + subspan + '"') + '><div class="content">' + address.reports.rows[i][Object.keys(address.reports.cols[j])[k]].toLocaleString() + '</div></td>' %>
 											<% } else if(Object.keys(address.reports.cols[j])[k] == 'url') { %>
-												<%- '<td align="left" valign="top"' + (j > 0 ? ' colspan="' + colspan + '"' : ' colspan="' + subspan + '"') + '><div class="content"><a href="' + address.reports.rows[i][Object.keys(address.reports.cols[j])[k]] + '">View</a></div></td>' %>
+												<%- '<td align="left" valign="top"' + (j > 0 ? ' colspan="' + colspan + '"' : ' colspan="' + subspan + '"') + '><div class="content"><a href="' + address.reports.rows[i][Object.keys(address.reports.cols[j])[k]] + '" target="_blank">View</a></div></td>' %>
 											<% } else { %>
 												<%- '<td align="left" valign="top"' + (j > 0 ? ' colspan="' + colspan + '"' : ' colspan="' + subspan + '"') + '><div class="content">' + address.reports.rows[i][Object.keys(address.reports.cols[j])[k]] + '</div></td>' %>
 											<% } %>
@@ -239,8 +239,8 @@ const generateBlockchairLink = (currencyCode) => {
 		<div class="panel-row">
 			<div class="flex-content">
 				<div class="inline-content"><div><b>Loading</b></div><div class="content"><%- new Intl.NumberFormat().format((Date.now() - startedAt) / 1000) + ' s' %></div></div>
-				<div class="inline-content"><div><b>Reports (page)</b></div><div class="content"><%- address.data_ids.length > 0 ? new Intl.NumberFormat().format(offset + 1) + ' - ' + new Intl.NumberFormat().format(address.data_ids.length < (offset + limit) ? address.data_ids.length : (offset + limit)) : 0 %></div></div>
-				<div class="inline-content"><div><b>Reports (all pages)</b></div><div class="content"><%- new Intl.NumberFormat().format(address.data_ids.length) %></div></div>
+				<div class="inline-content"><div><b>Reports (page)</b></div><div class="content"><%- address.reports.rows.length > 0 ? new Intl.NumberFormat().format(offset + 1) + ' - ' + new Intl.NumberFormat().format(address.reports.rows.length < (offset + limit) ? address.reports.rows.length : (offset + limit)) : 0 %></div></div>
+				<div class="inline-content"><div><b>Reports (all pages)</b></div><div class="content"><%- new Intl.NumberFormat().format(address.reports.count) %></div></div>
 			</div>
 		</div>
 	</div>
