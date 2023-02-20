@@ -797,6 +797,28 @@ function parseDateTime(dateTimeString) {
 		dateTimeParts.push(...dateTimeStringParts[0].split('-').slice(0,3));
 		if(dateTimeStringParts.length > 1) { dateTimeParts.push(...dateTimeStringParts[1].split(':')); }
 	}
+	else if(dateTimeString.indexOf('UTC') > -1) {
+		const dateTimeStringParts = dateTimeString.split(' UTC')[0].split('. ');
+		const dateStringParts = dateTimeStringParts[0].split(' ');
+		const monthWordString = dateStringParts[1].slice(0,3).toLowerCase();
+		let monthNumberString;
+		if(monthWordString      == 'jan') { monthNumberString = '1'; }
+		else if(monthWordString == 'feb') { monthNumberString = '2'; }
+		else if(monthWordString == 'mar') { monthNumberString = '3'; }
+		else if(monthWordString == 'apr') { monthNumberString = '4'; }
+		else if(monthWordString == 'may') { monthNumberString = '5'; }
+		else if(monthWordString == 'jun') { monthNumberString = '6'; }
+		else if(monthWordString == 'jul') { monthNumberString = '7'; }
+		else if(monthWordString == 'aug') { monthNumberString = '8'; }
+		else if(monthWordString == 'sep') { monthNumberString = '9'; }
+		else if(monthWordString == 'oct') { monthNumberString = '10'; }
+		else if(monthWordString == 'nov') { monthNumberString = '11'; }
+		else if(monthWordString == 'dec') { monthNumberString = '12'; }
+		dateTimeParts.push(dateStringParts[2]);
+		dateTimeParts.push(monthNumberString);
+		dateTimeParts.push(dateStringParts[0]);
+		dateTimeParts.push(...dateTimeStringParts[1].split(':'));
+	}
 	else if(dateTimeString.indexOf('. ') > -1) {
 		const dateTimeStringParts = dateTimeString.split('. ');
 		const yearStringParts = dateTimeStringParts[2].split(' ');
@@ -812,20 +834,20 @@ function parseDateTime(dateTimeString) {
 	}
 	else if(dateTimeString.indexOf(',') > -1) {
 		const dateTimeStringParts = dateTimeString.split(' ');
-		const monthWordString = dateTimeStringParts[0].slice(0,3);
+		const monthWordString = dateTimeStringParts[0].slice(0,3).toLowerCase();
 		let monthNumberString;
-		if(monthWordString      == 'Jan') { monthNumberString = '1'; }
-		else if(monthWordString == 'Feb') { monthNumberString = '2'; }
-		else if(monthWordString == 'Mar') { monthNumberString = '3'; }
-		else if(monthWordString == 'Apr') { monthNumberString = '4'; }
-		else if(monthWordString == 'May') { monthNumberString = '5'; }
-		else if(monthWordString == 'Jun') { monthNumberString = '6'; }
-		else if(monthWordString == 'Jul') { monthNumberString = '7'; }
-		else if(monthWordString == 'Aug') { monthNumberString = '8'; }
-		else if(monthWordString == 'Sep') { monthNumberString = '9'; }
-		else if(monthWordString == 'Oct') { monthNumberString = '10'; }
-		else if(monthWordString == 'Nov') { monthNumberString = '11'; }
-		else if(monthWordString == 'Dec') { monthNumberString = '12'; }
+		if(monthWordString      == 'jan') { monthNumberString = '1'; }
+		else if(monthWordString == 'feb') { monthNumberString = '2'; }
+		else if(monthWordString == 'mar') { monthNumberString = '3'; }
+		else if(monthWordString == 'apr') { monthNumberString = '4'; }
+		else if(monthWordString == 'may') { monthNumberString = '5'; }
+		else if(monthWordString == 'jun') { monthNumberString = '6'; }
+		else if(monthWordString == 'jul') { monthNumberString = '7'; }
+		else if(monthWordString == 'aug') { monthNumberString = '8'; }
+		else if(monthWordString == 'sep') { monthNumberString = '9'; }
+		else if(monthWordString == 'oct') { monthNumberString = '10'; }
+		else if(monthWordString == 'nov') { monthNumberString = '11'; }
+		else if(monthWordString == 'dec') { monthNumberString = '12'; }
 		dateTimeParts.push(dateTimeStringParts[2]);
 		dateTimeParts.push(monthNumberString);
 		dateTimeParts.push(dateTimeStringParts[1].split(',')[0]);
@@ -839,7 +861,7 @@ function parseDateTime(dateTimeString) {
 		return new Date(...dateTimeParts);
 	}
 
-	return null;
+	return new Date(0);
 }
 
 app.get('/address/:address([a-zA-Z0-9]{0,})', preProcess, usePage, loadSource, async (req, res, next) => {
@@ -905,19 +927,19 @@ app.get('/address/:address([a-zA-Z0-9]{0,})', preProcess, usePage, loadSource, a
 									req.data.address.reports.cols[2].description.count++;
 
 									req.data.address.reports.rows.push({
-										date: parseDateTime(cols[0].innerHTML.trim()),
-										type: cols[1].innerHTML.trim(),
+										date: parseDateTime(cols[0].innerText.trim()),
+										type: cols[1].innerText.trim(),
 										url: data.url,
-										description: cols[2].innerHTML.trim()
+										description: cols[2].innerText.trim()
 									});
 								}
 							}
 							// CheckBitcoinAddress
 							else if(data.source_id == 3) {
 								for(const row of root.querySelectorAll('.card-body')) {
-									const countryDateString = row.querySelector('span.text-muted').innerText.trim().split(', ');
-									const dateTimeString = countryDateString.pop();
-									const countryString = countryDateString.join(', ');
+									const countryDateStringParts = row.querySelector('span.text-muted').innerText.trim().split(', ');
+									const dateTimeString = countryDateStringParts.pop();
+									const countryString = countryDateStringParts.join(', ');
 									
 									req.data.address.reports.cols[0].date.count++;
 									req.data.address.reports.cols[0].type.count++;
@@ -928,11 +950,11 @@ app.get('/address/:address([a-zA-Z0-9]{0,})', preProcess, usePage, loadSource, a
 
 									req.data.address.reports.rows.push({
 										date: parseDateTime(dateTimeString.trim()),
-										type: row.querySelector('.card-title').innerHTML.trim(),
+										type: row.querySelector('.card-title').innerText.trim(),
 										country: countryString.trim(),
 										url: data.url,
-										abuser: row.querySelector('.card-subtitle').innerHTML.trim().split('Abuser: ').slice(1),
-										description: row.querySelector('.card-text').innerHTML.trim()
+										abuser: row.querySelector('.card-subtitle').innerText.trim().split('Abuser: ').slice(1),
+										description: row.querySelector('.card-text').innerText.trim()
 									});
 								}
 							}
@@ -949,12 +971,56 @@ app.get('/address/:address([a-zA-Z0-9]{0,})', preProcess, usePage, loadSource, a
 									req.data.address.reports.cols[2].description.count++;
 									
 									req.data.address.reports.rows.push({
-										date: parseDateTime(cols[0].innerHTML.trim()),
-										type: cols[1].innerHTML.trim(),
-										platform: cols[3].innerHTML.trim(),
+										date: parseDateTime(cols[0].innerText.trim()),
+										type: cols[1].innerText.trim(),
+										platform: cols[3].innerText.trim(),
 										url: data.url,
-										abuser: cols[2].innerHTML.trim(),
-										description: cols[4].innerHTML.trim()
+										abuser: cols[2].innerText.trim(),
+										description: cols[4].innerText.trim()
+									});
+								}
+							}
+							// BitcoinAIS
+							else if(data.source_id == 6) {
+								for(const row of root.querySelectorAll('.commentwithdate')) {
+									const dateAbuserStringParts = row.querySelector('.review span').innerText.trim().split(' - Abuser: ');
+									const dateTimeString = dateAbuserStringParts[0];
+									const abuserString = dateAbuserStringParts[1];
+
+									req.data.address.reports.cols[0].date.count++;
+									req.data.address.reports.cols[0].platform.count++;
+									req.data.address.reports.cols[0].url.count++;
+									req.data.address.reports.cols[1].abuser.count++;
+									req.data.address.reports.cols[2].description.count++;
+
+									req.data.address.reports.rows.push({
+										date: parseDateTime(dateTimeString.trim()),
+										platform: row.querySelectorAll('span')[0].innerText.trim(),
+										url: data.url,
+										abuser: abuserString.trim(),
+										description: row.querySelector('.review div').innerText.trim()
+									});
+								}
+							}
+							// Cryptscam
+							else if(data.source_id == 8) {
+								for(const row of root.querySelectorAll('.card-body')) {
+									const cols = row.querySelectorAll('.row');
+									
+									req.data.address.reports.cols[0].date.count++;
+									req.data.address.reports.cols[0].type.count++;
+									req.data.address.reports.cols[0].country.count++;
+									req.data.address.reports.cols[0].url.count++;
+									req.data.address.reports.cols[1].abuser.count++;
+									req.data.address.reports.cols[2].description.count++;
+
+									req.data.address.reports.rows.push({
+										date: parseDateTime(cols[0].querySelector('h5').innerText.trim()),
+										type: cols[1].querySelector('h5').innerText.trim(),
+										country: cols[3].querySelector('h5').innerText.trim(),
+										url: data.url,
+										abuser: cols[2].querySelector('h5').innerText.trim(),
+										description: cols[4].querySelector('h5').innerText.trim()
 									});
 								}
 							}

@@ -168,12 +168,14 @@ const generateBlockchairLink = (currencyCode) => {
 													subspan++;
 												}
 											}
-											for(let l = k - 1; l >= 0; l--) {
-												if(typeof address.reports.rows[i][Object.keys(address.reports.cols[j])[l]] !== 'undefined') {
-													break;
-												}
-												else if(Object.values(address.reports.cols[j])[l].count > 0) {
-													subspan++;
+											if(k == 0) {
+												for(let l = k - 1; l >= 0; l--) {
+													if(typeof address.reports.rows[i][Object.keys(address.reports.cols[j])[l]] !== 'undefined') {
+														break;
+													}
+													else if(Object.values(address.reports.cols[j])[l].count > 0) {
+														subspan++;
+													}
 												}
 											} %>
 											<%- '<th align="left"' + (j > 0 ? ' colspan="' + colspan + '"' : ' colspan="' + subspan + '"') + '><label>' + address.reports.cols[j][Object.keys(address.reports.cols[j])[k]].name + '</label></th>' %>
@@ -192,12 +194,14 @@ const generateBlockchairLink = (currencyCode) => {
 													subspan++;
 												}
 											}
-											for(let l = k - 1; l >= 0; l--) {
-												if(typeof address.reports.rows[i][Object.keys(address.reports.cols[j])[l]] !== 'undefined') {
-													break;
-												}
-												else if(Object.values(address.reports.cols[j])[l].count > 0) {
-													subspan++;
+											if(k == 0) {
+												for(let l = k - 1; l >= 0; l--) {
+													if(typeof address.reports.rows[i][Object.keys(address.reports.cols[j])[l]] !== 'undefined') {
+														break;
+													}
+													else if(Object.values(address.reports.cols[j])[l].count > 0) {
+														subspan++;
+													}
 												}
 											} %>
 											<% if(Object.keys(address.reports.cols[j])[k] == 'date') { %>
@@ -239,7 +243,7 @@ const generateBlockchairLink = (currencyCode) => {
 		<div class="panel-row">
 			<div class="flex-content">
 				<div class="inline-content"><div><b>Loading</b></div><div class="content"><%- new Intl.NumberFormat().format((Date.now() - startedAt) / 1000) + ' s' %></div></div>
-				<div class="inline-content"><div><b>Reports (page)</b></div><div class="content"><%- address.reports.rows.length > 0 ? new Intl.NumberFormat().format(offset + 1) + ' - ' + new Intl.NumberFormat().format(address.reports.rows.length < (offset + limit) ? address.reports.rows.length : (offset + limit)) : 0 %></div></div>
+				<div class="inline-content"><div><b>Reports (page)</b></div><div class="content"><%- address.reports.rows.length > 0 ? new Intl.NumberFormat().format(offset + 1) + ' - ' + new Intl.NumberFormat().format(address.reports.rows.length < (offset + limit) ? offset + address.reports.rows.length : (offset + limit)) : 0 %></div></div>
 				<div class="inline-content"><div><b>Reports (all pages)</b></div><div class="content"><%- new Intl.NumberFormat().format(address.reports.count) %></div></div>
 			</div>
 		</div>
