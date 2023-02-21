@@ -125,17 +125,14 @@ const generateBlockchairLink = (currencyCode) => {
 
 <div class="panels">
 	<div class="panel-w-7 panel">
-		<!--<div class="title center panel-row"><div class="no-wrap"><img src="<%= address.currency[2] %>" title="<%- address.currency[0] + (address.currency[1][0] != '_' ? ' (' + address.currency[1] + ')' : '') %>"><div title="<%= address.address %>"><%= address.address %></div></div></div>-->
 		<div class="title center panel-row">Address</div>
 		<div class="center panel-row">
 			<table>
 				<tr>
 					<th align="left"><label>Address</label></th>
-					<!--<th align="left"><label>Data count</label></th>-->
 				</tr>
 				<tr>
 					<td align="left"><label><div class="no-wrap"><img src="<%= address.currency[2] %>" title="<%- address.currency[0] + (address.currency[1][0] != '_' ? ' (' + address.currency[1] + ')' : '') %>"><div title="<%= address.address %>"><%= address.address %></div></div></label></td>
-					<!--<td align="left"><label><%- new Intl.NumberFormat().format(address.data_ids.length) %></label></td>-->
 				</tr>
 				<%- generateExplorerLink(address.currency[1]).length > 0 || generateBlockchairLink(address.currency[1]).length > 0 ? '<tr><th align="left"><label>Blockchain explorers</label></th></tr>' : '' %>
 				<%- generateExplorerLink(address.currency[1]).length > 0 ? '<tr><td align="left"><div class="content">' + generateExplorerLink(address.currency[1]) + '</div></td></tr>' : '' %>

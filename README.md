@@ -22,7 +22,7 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   - :heavy_check_mark: **token** *- contains API tokens with various levels of access to the crawled data*
   - :heavy_check_mark: **address_data** *- contains connection between cryptocurrency addresses and their respective crawled data*
   - :heavy_check_mark: **session** *- contains account sessions*
-- :hammer: Crawling all addresses / reports from the following sources[^robots_txt]:
+- :heavy_check_mark: Crawling all addresses / reports from the following sources[^robots_txt]:
   - :heavy_check_mark: [LoyceV](http://alladdresses.loyce.club "LoyceV")
     - :heavy_check_mark: Weekly updates with all BTC addresses (GZIP)
     - :heavy_check_mark: Daily updates (TXT)
@@ -47,10 +47,8 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
     - :heavy_check_mark: Reported BTC addresses (HTML)[^useful_data]
   - :heavy_check_mark: [BitcoinWhosWho](https://www.bitcoinwhoswho.com "BitcoinWhosWho")
     - :heavy_check_mark: Searched reported BTC addresses (HTML)[^useful_data]
-  - :x: [WalletExplorer](https://www.walletexplorer.com "WalletExplorer")
-    - :x: Labeled BTC addresses (JSON + HTML)
 - :heavy_check_mark: Connecting the crawled addresses and data[^connecting_addresses_and_data]
-- :hammer: Exception handling
+- :heavy_check_mark: Exception handling
 
 [^setup]: Creates PostgreSQL users, database and its tables.\
   Fills the tables with the initial data.\
@@ -107,14 +105,11 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   - :heavy_check_mark: Limit access by user roles
   - :heavy_check_mark: Generate token (linked with the account, generated during first sign in)
   - :heavy_check_mark: Caching data
-- :hammer: Web pages
+- :heavy_check_mark: Web pages
   - :heavy_check_mark: Index
   - :heavy_check_mark: Sign up
   - :heavy_check_mark: Sign in
   - :heavy_check_mark: Sign out
-  - :hammer: Forgotten password *- server-side not yet implemented*
-  - :hammer: Reset password *- server-side not yet implemented*
-  - :hammer: Change password *- server-side not yet implemented*
   - :heavy_check_mark: Account
   - :heavy_check_mark: Accounts (filterable by email & role) *- admin only page*
   - :heavy_check_mark: Addresses (filterable by currency & source)

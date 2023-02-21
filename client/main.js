@@ -1,25 +1,5 @@
 'use strict';
 
-// https://blog.bitsrc.io/server-side-caching-in-expressjs-24038daec102
-
-// https://remarkablemark.medium.com/server-side-rendering-with-react-46715f501651
-// https://www.digitalocean.com/community/tutorials/react-server-side-rendering
-// https://dev.to/juhanakristian/basics-of-react-server-side-rendering-with-expressjs-phd
-// https://www.digitalocean.com/community/tutorials/how-to-use-ejs-to-template-your-node-application
-
-// https://stackabuse.com/bytes/how-to-get-a-users-ip-address-in-express-js/
-// https://heynode.com/blog/2020-04/salt-and-hash-passwords-bcrypt/
-// https://security.stackexchange.com/questions/17207/recommended-of-rounds-for-bcrypt
-// https://www.section.io/engineering-education/session-management-in-nodejs-using-expressjs-and-express-session/
-// https://stackoverflow.com/questions/29506253/best-session-storage-middleware-for-express-postgresql
-// https://www.npmjs.com/package/express-pg-session
-
-/*
-bc1pxz2q6pkd399m4vf6ndrqkzmqntck53lgvmeece932duwp5a906gqz5wwaw - longest address name
-MM4bVEjFvmzuypwJzji9h4yGHMBZpQATY7 - test
-1L15W6b9vkxV81xW5HDtmMBycrdiettHEL - multiple pages on BitcoinAbuse
-*/
-
 // External imports
 const BCRYPT = require('bcrypt');
 const BODY_PARSER = require('body-parser');
@@ -683,12 +663,6 @@ app.get('/sign-out', (req, res) => {
 	});
 });
 
-app.get('/forgotten-password', preProcess, render);
-
-app.get('/reset-password', preProcess, render);
-
-app.get('/change-password', preProcess, render);
-
 app.get('/account', preProcess, (req, res, next) => {
 	if(typeof req.data.account === 'undefined') {
 		return res.redirect('/sign-in');
@@ -1155,155 +1129,6 @@ app.get('/address/:address([a-zA-Z0-9]{0,})', preProcess, usePage, loadSource, a
 		}
 	}
 }, render);
-
-/*app.get('/data', preProcess, (req, res, next) => {
-	const roleId = typeof req.data.account !== 'undefined' ? req.data.account.role_id : 1;
-
-	const promises = [];
-	const nextPromises = [];
-	
-	req.data.currencies = (await databaseConnection.getCurrencies()).rows;
-
-	req.data.data = [
-		{
-			name: 'All',
-			sourceId: null,
-			sourceLabelId: null,
-			link: '/addresses',
-			currencies: []
-		},
-		{
-			name: 'All sources',
-			sourceId: null,
-			sourceLabelId: null,
-			link: '/addresses?data=0',
-			currencies: []
-		}
-	];
-
-	promises.push(databaseConnection.getAddressesCount(roleId, false, req.data.data[0].sourceId, req.data.data[0].sourceLabelId, null).then((result) => {
-		req.data.data[0].addressesCount = result.rows[0].count;
-	}));
-	for(let i = 0; i < req.data.currencies.length; i++) {
-		req.data.data[0].currencies[i] = { ...req.data.currencies[i] };
-		req.data.data[0].currencies[i].link = '/addresses?currency_code=' + req.data.currencies[i].currency_code;
-		const dataCurrency = req.data.data[0].currencies[i];
-		promises.push(databaseConnection.getAddressesCount(roleId, false, req.data.data[0].sourceId, req.data.data[0].sourceLabelId, req.data.currencies[i].currency_id).then((result) => {
-			for(let j = 0; j < req.data.data[0].currencies.length; j++) {
-				if(req.data.data[0].currencies[j] == dataCurrency) {
-					req.data.data[0].currencies[j].addressesCount = result.rows[0].count;
-					break;
-				}
-			}
-		}));
-	}
-
-	promises.push(databaseConnection.getAddressesCount(roleId, true, req.data.data[1].sourceId, req.data.data[1].sourceLabelId, null).then((result) => {
-		req.data.data[1].addressesCount = result.rows[0].count;
-	}));
-	for(let i = 0; i < req.data.currencies.length; i++) {
-		req.data.data[1].currencies[i] = { ...req.data.currencies[i] };
-		req.data.data[1].currencies[i].link = '/addresses?currency_code=' + req.data.currencies[i].currency_code + '&data=0';
-		const dataCurrency = req.data.data[1].currencies[i];
-		promises.push(databaseConnection.getAddressesCount(roleId, true, req.data.data[1].sourceId, req.data.data[1].sourceLabelId, req.data.currencies[i].currency_id).then((result) => {
-			for(let j = 0; j < req.data.data[1].currencies.length; j++) {
-				if(req.data.data[1].currencies[j] == dataCurrency) {
-					req.data.data[1].currencies[j].addressesCount = result.rows[0].count;
-					break;
-				}
-			}
-		}));
-	}
-	
-	const sources = (await databaseConnection.getSources()).rows;
-	for(const source of sources) {
-		if(source.source_label_ids.length > 1) {
-			req.data.data.push({
-				name: source.source_name,
-				sourceId: source.source_id,
-				sourceLabelId: null,
-				link: '/addresses?data=' + (req.data.data.length - 1),
-				currencies: []
-			});
-			let data = req.data.data[req.data.data.length - 1];
-			promises.push(databaseConnection.getAddressesCount(roleId, true, req.data.data[req.data.data.length - 1].sourceId, req.data.data[req.data.data.length - 1].sourceLabelId, null).then((result) => {
-				for(let i = 0; i < req.data.data.length; i++) {
-					if(req.data.data[i] == data) {
-						req.data.data[i].addressesCount = result.rows[0].count;
-						break;
-					}
-				}
-			}));
-		}
-		for(const sourceLabelId of source.source_label_ids) {
-			let data = {
-				name: source.source_name + ' / ',
-				sourceId: source.source_id,
-				sourceLabelId: null
-			};
-			req.data.data.push(data);
-			promises.push(databaseConnection.getSourceLabel(sourceLabelId).then((result) => {
-				for(let i = 0; i < req.data.data.length; i++) {
-					if(req.data.data[i] == data) {
-						req.data.data[i].name += result.rows[0].source_label_name;
-						req.data.data[i].sourceLabelId = result.rows[0].source_label_id;
-						req.data.data[i].link = i > 0 ? '/addresses?data=' + (i - 1) : '/addresses';
-						req.data.data[i].currencies = [];
-						let data = req.data.data[i];
-						nextPromises.push(databaseConnection.getAddressesCount(roleId, true, req.data.data[i].sourceId, req.data.data[i].sourceLabelId, null).then((result) => {
-							for(let j = 0; j < req.data.data.length; j++) {
-								if(req.data.data[j] == data) {
-									req.data.data[j].addressesCount = result.rows[0].count;
-									break;
-								}
-							}
-						}));
-						for(let j = 0; j < req.data.currencies.length; j++) {
-							req.data.data[i].currencies[j] = { ...req.data.currencies[j] };
-							const dataCurrency = req.data.data[i].currencies[j];
-							nextPromises.push(databaseConnection.getAddressesCount(roleId, true, req.data.data[i].sourceId, req.data.data[i].sourceLabelId, req.data.currencies[j].currency_id).then((result) => {
-								for(let k = 0; k < req.data.data.length; k++) {
-									if(req.data.data[k] == data) {
-										for(let l = 0; l < req.data.data[k].currencies.length; l++) {
-											if(req.data.data[k].currencies[l] == dataCurrency) {
-												req.data.data[k].currencies[l].addressesCount = result.rows[0].count;
-												break;
-											}
-										}
-										break;
-									}
-								}
-							}));
-						}
-						break;
-					}
-				}
-			}));
-		}
-	}
-
-	Promise.all(promises).then(() => {
-		Promise.all(nextPromises).then(() => {
-			for(let i = 0; i < req.data.data.length; i++) {
-				req.data.data[i].currencies = req.data.data[i].currencies.sort((a, b) => {
-					if(a.addressesCount != b.addressesCount) { return b.addressesCount - a.addressesCount; }
-					if(a.currency_code > b.currency_code) { return 1; }
-					if(a.currency_code < b.currency_code) { return -1; }
-					return 0;
-				});
-			}
-		
-			req.data.data = req.data.data.sort((a, b) => {
-				if(a.addressesCount != b.addressesCount) { return b.addressesCount - a.addressesCount; }
-				if(a.sourceId != b.sourceId) { return a.sourceId - b.sourceId; }
-				if(a.sourceLabelId != b.sourceLabelId) { return a.sourceLabelId - b.sourceLabelId; }
-				return 0;
-			});
-
-			next();
-		});
-	});
-}, render);*/
 
 app.get('/statistics', preProcess, loadSource, async (req, res, next) => {
 	const roleId = typeof req.data.account !== 'undefined' ? req.data.account.role_id : 1;

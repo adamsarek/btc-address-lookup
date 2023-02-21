@@ -1,58 +1,3 @@
-# TODO: https://stackoverflow.com/questions/12571913/python-ungzipping-stream-of-bytes
-# TODO: https://www.psycopg.org/psycopg3/docs/advanced/pool.html
-# TODO: https://pynative.com/psycopg2-python-postgresql-connection-pooling/
-# TODO: https://www.bluebirz.net/en/make-it-chunks/
-# TODO: https://stackoverflow.com/questions/19164332/converting-http-request-time-to-unix-timestamp-in-python
-# TODO: https://stackoverflow.com/questions/29314287/python-requests-download-only-if-newer
-
-# TODO: https://www.postgresql.org/docs/current/sql-copy.html
-# TODO: https://www.postgresql.org/docs/current/populate.html
-# TODO: https://www.psycopg.org/articles/2020/11/15/psycopg3-copy/
-# TODO: https://stackoverflow.com/questions/758945/whats-the-fastest-way-to-do-a-bulk-insert-into-postgres
-# TODO: https://stackoverflow.com/questions/7090243/sql-speed-up-performance-of-insert
-# TODO: https://stackoverflow.com/questions/12206600/how-to-speed-up-insertion-performance-in-postgresql
-# TODO: https://stackoverflow.com/questions/16694907/download-large-file-in-python-with-requests
-# TODO: https://www.dbi-services.com/blog/the-fastest-way-to-load-1m-rows-in-postgresql/
-
-# TODO: sending query failed another command is already in progress
-# TODO: https://stackoverflow.com/questions/3122145/zlib-error-error-3-while-decompressing-incorrect-header-check/22310760#22310760
-# TODO: io.DEFAULT_BUFFER_SIZE
-
-# TODO: could not extend file "base/52269/52311.5": No space left on device\nHINT:  Check free disk space.
-
-# TODO: Local MFT / FTP server
-
-# Implement Layers (Business, Data, etc.)
-
-# Robots: urllib.robotparser
-# https://stackoverflow.com/questions/43085744/parsing-robots-txt-in-python
-
-# When there is no timestamp (last-modified) of remote file, check size
-
-# Data (table) - whole remote file
-# SubData (table) - part of remote file (JSON - only 1 key = 1 address not whole JSON file)
-
-# UAC: https://www.xingyulei.com/post/py-admin/index.html
-
-# Robots.txt sitemap crawling: https://practicaldatascience.co.uk/data-science/how-to-parse-xml-sitemaps-using-python
-# https://github.com/scrapy/protego#comparison
-# https://github.com/python/cpython/blob/main/Lib/urllib/robotparser.py
-
-# Auto-generate db.json during setup
-# Get rid of setup.json, db.json & config.json to enable .exe only use
-
-# Crawl known address labels - Binance, Coinbase, etc.
-# https://www.walletexplorer.com/
-
-# ---------- TODO ----------
-# 14 SeeKoin
-# - all crypto or BTC only?
-
-# - 1 DB Connection for thread?
-# - Roles
-# - Add to Run/RunOnce
-# ---------- TODO ----------
-
 # List all requirements
 # pip freeze > requirements.txt
 
@@ -100,7 +45,7 @@ def main():
 
 	ARGS = {
 		"reset": False,
-		"restart_db": False,
+		"restart_db": True,
 		"delete_setup_config": False
 	}
 

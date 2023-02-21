@@ -324,18 +324,7 @@ a.search-logo {
 
 .search-bar-input {
 	width: 100%;
-	/*padding-right: 3.75rem;*/
 }
-
-/*.search-bar-submit {
-	position: absolute;
-	top: 50%;
-	right: 0;
-	border-top-left-radius: 0 !important;
-	border-bottom-left-radius: 0 !important;
-	width: 3rem;
-	transform: translateY(-50%);
-}*/
 
 .header-right {
 	position: fixed;
@@ -552,15 +541,6 @@ main {
 	vertical-align: middle;
 }
 
-/*.sign-form .panel .title img {
-	border-width: 3px;
-	border-radius: 2.25rem;
-	width: 2.25rem;
-	height: 2.25rem;
-	margin-right: 0.75rem;
-	box-shadow: 0 0 0.75rem 1.5px var(--img-box-shadow-color);
-}*/
-
 .sign-form .panel .flex-content .inline-content {
 	padding-right: 0.5rem;
 }
@@ -647,10 +627,6 @@ main {
 		margin-right: 0.25rem;
 	}
 
-	/*.sign-form .panel-w-10 .title img {
-		margin-right: 0.5rem;
-	}*/
-
 	.sign-form .panel-w-10 .flex-content .inline-content {
 		padding-right: 0.25rem;
 	}
@@ -703,10 +679,6 @@ main {
 	.sign-form .panel-w-9 img {
 		margin-right: 0.25rem;
 	}
-
-	/*.sign-form .panel-w-9 .title img {
-		margin-right: 0.5rem;
-	}*/
 
 	.sign-form .panel-w-9 .flex-content .inline-content {
 		padding-right: 0.25rem;
@@ -761,10 +733,6 @@ main {
 		margin-right: 0.25rem;
 	}
 
-	/*.sign-form .panel-w-8 .title img {
-		margin-right: 0.5rem;
-	}*/
-
 	.sign-form .panel-w-8 .flex-content .inline-content {
 		padding-right: 0.25rem;
 	}
@@ -817,10 +785,6 @@ main {
 	.sign-form .panel-w-7 img {
 		margin-right: 0.25rem;
 	}
-
-	/*.sign-form .panel-w-7 .title img {
-		margin-right: 0.5rem;
-	}*/
 
 	.sign-form .panel-w-7 .flex-content .inline-content {
 		padding-right: 0.25rem;
@@ -875,10 +839,6 @@ main {
 		margin-right: 0.25rem;
 	}
 
-	/*.sign-form .panel-w-6 .title img {
-		margin-right: 0.5rem;
-	}*/
-
 	.sign-form .panel-w-6 .flex-content .inline-content {
 		padding-right: 0.25rem;
 	}
@@ -931,10 +891,6 @@ main {
 	.sign-form .panel-w-5 img {
 		margin-right: 0.25rem;
 	}
-
-	/*.sign-form .panel-w-5 .title img {
-		margin-right: 0.5rem;
-	}*/
 
 	.sign-form .panel-w-5 .flex-content .inline-content {
 		padding-right: 0.25rem;
@@ -1025,10 +981,6 @@ main {
 		margin-right: 0.25rem;
 	}
 
-	/*.sign-form .panel-w-4 .title img {
-		margin-right: 0.5rem;
-	}*/
-
 	.sign-form .panel-w-4 .flex-content .inline-content {
 		padding-right: 0.25rem;
 	}
@@ -1081,10 +1033,6 @@ main {
 	.sign-form .panel-w-3 img {
 		margin-right: 0.25rem;
 	}
-
-	/*.sign-form .panel-w-3 .title img {
-		margin-right: 0.5rem;
-	}*/
 
 	.sign-form .panel-w-3 .flex-content .inline-content {
 		padding-right: 0.25rem;
@@ -1139,10 +1087,6 @@ main {
 		margin-right: 0.25rem;
 	}
 
-	/*.sign-form .panel-w-2 .title img {
-		margin-right: 0.5rem;
-	}*/
-
 	.sign-form .panel-w-2 .flex-content .inline-content {
 		padding-right: 0.25rem;
 	}
@@ -1195,10 +1139,6 @@ main {
 	.sign-form .panel-w-1 img {
 		margin-right: 0.25rem;
 	}
-
-	/*.sign-form .panel-w-1 .title img {
-		margin-right: 0.5rem;
-	}*/
 
 	.sign-form .panel-w-1 .flex-content .inline-content {
 		padding-right: 0.25rem;
