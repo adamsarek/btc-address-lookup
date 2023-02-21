@@ -14,6 +14,12 @@
 // https://stackoverflow.com/questions/29506253/best-session-storage-middleware-for-express-postgresql
 // https://www.npmjs.com/package/express-pg-session
 
+/*
+bc1pxz2q6pkd399m4vf6ndrqkzmqntck53lgvmeece932duwp5a906gqz5wwaw - longest address name
+MM4bVEjFvmzuypwJzji9h4yGHMBZpQATY7 - test
+1L15W6b9vkxV81xW5HDtmMBycrdiettHEL - multiple pages on BitcoinAbuse
+*/
+
 // External imports
 const BCRYPT = require('bcrypt');
 const BODY_PARSER = require('body-parser');
@@ -792,7 +798,29 @@ app.get('/addresses', preProcess, usePage, loadSource, useSource, useCurrency, a
 function parseDateTime(dateTimeString) {
 	let dateTimeParts = [];
 
-	if(dateTimeString.indexOf('-') > -1) {
+	if(dateTimeString.indexOf(' - ') > -1) {
+		const dateTimeStringParts = dateTimeString.split(' - ');
+		const dateStringParts = dateTimeStringParts[0].split(' ');
+		const monthWordString = dateStringParts[0].slice(0,3).toLowerCase();
+		let monthNumberString;
+		if(monthWordString      == 'jan') { monthNumberString = '1'; }
+		else if(monthWordString == 'feb') { monthNumberString = '2'; }
+		else if(monthWordString == 'mar') { monthNumberString = '3'; }
+		else if(monthWordString == 'apr') { monthNumberString = '4'; }
+		else if(monthWordString == 'may') { monthNumberString = '5'; }
+		else if(monthWordString == 'jun') { monthNumberString = '6'; }
+		else if(monthWordString == 'jul') { monthNumberString = '7'; }
+		else if(monthWordString == 'aug') { monthNumberString = '8'; }
+		else if(monthWordString == 'sep') { monthNumberString = '9'; }
+		else if(monthWordString == 'oct') { monthNumberString = '10'; }
+		else if(monthWordString == 'nov') { monthNumberString = '11'; }
+		else if(monthWordString == 'dec') { monthNumberString = '12'; }
+		dateTimeParts.push(dateStringParts[2]);
+		dateTimeParts.push(monthNumberString);
+		dateTimeParts.push(dateStringParts[1].split(',')[0]);
+		dateTimeParts.push(...dateTimeStringParts[1].split(':'));
+	}
+	else if(dateTimeString.indexOf('-') > -1) {
 		const dateTimeStringParts = dateTimeString.split(' ');
 		dateTimeParts.push(...dateTimeStringParts[0].split('-').slice(0,3));
 		if(dateTimeStringParts.length > 1) { dateTimeParts.push(...dateTimeStringParts[1].split(':')); }
@@ -848,12 +876,11 @@ function parseDateTime(dateTimeString) {
 		else if(monthWordString == 'oct') { monthNumberString = '10'; }
 		else if(monthWordString == 'nov') { monthNumberString = '11'; }
 		else if(monthWordString == 'dec') { monthNumberString = '12'; }
-		dateTimeParts.push(dateTimeStringParts[2]);
+		dateTimeParts.push((dateTimeStringParts[2].length == 2 ? '20' : '') + dateTimeStringParts[2]);
 		dateTimeParts.push(monthNumberString);
-		dateTimeParts.push(dateTimeStringParts[1].split(',')[0]);
+		dateTimeParts.push(dateTimeStringParts[1].split(',')[0].split('st')[0].split('nd')[0].split('rd')[0].split('th')[0]);
 		if(dateTimeStringParts.length > 3) { dateTimeParts.push(...dateTimeStringParts[3].split(':')); }
 	}
-	console.log(dateTimeParts);
 	dateTimeParts = dateTimeParts.map(Number);
 	if(dateTimeParts.length > 1) { dateTimeParts[1]--; }
 
@@ -1024,13 +1051,76 @@ app.get('/address/:address([a-zA-Z0-9]{0,})', preProcess, usePage, loadSource, a
 									});
 								}
 							}
+							// SeeKoin
+							else if(data.source_id == 9) {
+								const cols = root.querySelector('p').innerHTML.trim().split('<br><strong>');
+								const dateString = cols[3].split('</strong>')[1];
+								const typeString = cols[4].split('">')[1].split('</a>')[0];
+								const descriptionString = cols[6].split('</strong>')[1].split('<br>')[0];
+
+								req.data.address.reports.cols[0].date.count++;
+								req.data.address.reports.cols[0].type.count++;
+								req.data.address.reports.cols[0].url.count++;
+								req.data.address.reports.cols[2].description.count++;
+
+								req.data.address.reports.rows.push({
+									date: parseDateTime(dateString.trim()),
+									type: typeString.trim(),
+									url: data.url,
+									description: descriptionString.trim()
+								});
+							}
+							// BitcoinWhosWho
+							else if(data.source_id == 10) {
+								const rows = root.querySelectorAll('#scam_records_table .row:not(.bootstrap_grid_header)');
+								for(let j = 0; j < rows.length; j+=2) {
+									const dateString = rows[j].querySelectorAll('div')[rows[j].querySelectorAll('div').length - 1].innerText.trim();
+									const descriptionString = rows[j+1].querySelectorAll('div')[rows[j+1].querySelectorAll('div').length - 1].innerText.trim();
+									
+									req.data.address.reports.cols[0].date.count++;
+									req.data.address.reports.cols[0].url.count++;
+									req.data.address.reports.cols[2].description.count++;
+
+									req.data.address.reports.rows.push({
+										date: parseDateTime(dateString),
+										url: data.url,
+										description: descriptionString
+									});
+								}
+							}
+						}
+						else if(PATH.extname(path) == '.json') {
+							const content = require(path);
 							
-							// #TODO - parse
-							/*
-							bc1pxz2q6pkd399m4vf6ndrqkzmqntck53lgvmeece932duwp5a906gqz5wwaw
-							MM4bVEjFvmzuypwJzji9h4yGHMBZpQATY7 - 
-							1L15W6b9vkxV81xW5HDtmMBycrdiettHEL - multiple pages on BitcoinAbuse
-							*/
+							// CryptoScamDB
+							if(data.source_id == 7) {
+								for(const row of content.result[req.data.address.address]) {
+									let typeString = '';
+									if(row.category != null && row.subcategory != null) {
+										typeString = row.category.trim() + ' / ' + row.subcategory.trim();
+									}
+									else if(row.category != null) {
+										typeString = row.category.trim();
+									}
+									else if(row.subcategory != null) {
+										typeString = row.subcategory.trim();
+									}
+
+									req.data.address.reports.cols[0].date.count++;
+									req.data.address.reports.cols[0].type.count++;
+									req.data.address.reports.cols[0].url.count++;
+									req.data.address.reports.cols[1].abuser.count++;
+									req.data.address.reports.cols[2].description.count++;
+
+									req.data.address.reports.rows.push({
+										date: new Date(row.updated),
+										type: typeString,
+										url: data.url,
+										abuser: (row.name != null ? row.name.trim() : ''),
+										description: (row.description != null ? row.description.trim() : '')
+									});
+								}
+							}
 						}
 					}
 					else {

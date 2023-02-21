@@ -118,10 +118,7 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   - :heavy_check_mark: Account
   - :heavy_check_mark: Accounts (filterable by email & role) *- admin only page*
   - :heavy_check_mark: Addresses (filterable by currency & source)
-  - :hammer: Address *- all information related to the searched address*
-    - :hammer: (6 / 9) sources parsed
-    - :heavy_check_mark: BitcoinAbuse, CheckBitcoinAddress, CryptoBlacklist, Bitcoin Generator Scam, BitcoinAIS, Cryptscam
-    - :x: CryptoScamDB, SeeKoin, BitcoinWhosWho
+  - :heavy_check_mark: Address *- all information related to the searched address*
   - :heavy_check_mark: Statistics
   - :heavy_check_mark: API *- listed API features*
   - :heavy_check_mark: FAQ *- answered questions related to the website*
