@@ -67,7 +67,7 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
 [^connecting_addresses_and_data]: The Crawler connects the crawled addresses and data.
 
 ### Requirements:
-- [PostgreSQL 15.1 for Windows (64-bit)](https://www.enterprisedb.com/downloads/postgres-postgresql-downloads "PostgreSQL 15.1 for Windows (64-bit)")
+- [PostgreSQL 15.2 for Windows (64-bit)](https://www.enterprisedb.com/downloads/postgres-postgresql-downloads "PostgreSQL 15.2 for Windows (64-bit)")
 - [Python 3.11 for Windows (64-bit)](https://www.python.org/downloads/windows/ "Python 3.11 for Windows (64-bit)")
 
 ### Installation:
@@ -120,7 +120,7 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
   - :heavy_check_mark: Error *- 404 Not Found*
 
 ### Requirements:
-- [Node.js 18.13.0 LTS for Windows (64-bit)](https://nodejs.org/en/download/ "Node.js 18.13.0 LTS for Windows (64-bit)")
+- [Node.js 18.15 LTS for Windows (64-bit)](https://nodejs.org/en/download/ "Node.js 18.15 LTS for Windows (64-bit)")
 
 ### Installation:
 1. Download and install Node.js
@@ -140,8 +140,9 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
 ## :printer: Documentation [[documentation](documentation "Documentation")]
 ### Content:
 - :memo: [Database dump](documentation/db_dump.sql "Database dump")
-- :memo: [Database schema plan](documentation/db_schema_plan.png "Database schema plan")
-- :memo: [ER diagram](documentation/er_diagram.png "ER diagram")
+- :memo: [Entity Relationship diagram](documentation/er_diagram.png "Entity Relationship diagram")
+- :memo: [Component diagram](documentation/component_diagram.png "Component diagram")
+- :memo: [Use Case diagram](documentation/uc_diagram.png "Use Case diagram")
 
 ## :ice_cube: Crawler (Node.js) [[deprecated](deprecated "Crawler (Node.js)")]
 *Crawler (Node.js) is now deprecated and has been replaced by the newer [Database Builder](#hammer_and_wrench-database-builder-db_builder "Database Builder")!*
