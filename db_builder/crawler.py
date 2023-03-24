@@ -78,6 +78,7 @@ class Crawler:
 			source_label_urls_with_listed_data = []
 			source_label_urls_with_searched_data = []
 			for source_label_url in source_label_urls:
+				#if source_label_url["source_label_url_id"] != 1 and source_label_url["source_label_url_id"] != 7 and source_label_url["source_label_url_id"] != 8 and source_label_url["source_label_url_id"] != 14:
 				if source_label_url["source_label_url_id"] == 1:
 					# Crawl source label url
 					self.__crawl_source_label_url(db_connection, source_label_url)
@@ -415,7 +416,7 @@ class Crawler:
 		# LoyceV / All BTC Addresses - Weekly update
 		if add_address_option == 0:
 			if source_label_url_depth == 0:
-				with Database().get_copy(db_connection.get_connection(), "COPY address (address) FROM STDIN") as copy:
+				with Database().get_copy(db_connection.get_connection(), "COPY address (currency_id, source_label_id, address) FROM STDIN") as copy:
 					db_copy = DatabaseCopy(copy)
 
 					# Decompress object

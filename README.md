@@ -1,6 +1,21 @@
 # :mag: BTC Address Lookup (Master Thesis)
 The goal of the thesis is creation of a tool for pinpointing owners of the Bitcoin addresses found on the internet. The data are collected in a PostgreSQL database by continuously crawling provided URLs and obtained directly from the source code. The scripts are built in Python and running on a remote server.
 
+## :printer: Documentation [[documentation](documentation "Documentation")]
+<!--
+### Documents:
+- :memo: [Thesis](documentation/thesis.pdf "Thesis")
+- :memo: [Presentation](documentation/presentation.pdf "Presentation")
+-->
+
+### Diagrams:
+- :memo: [Use Case diagram](documentation/uc_diagram.png "Use Case diagram")
+- :memo: [Component diagram](documentation/component_diagram.png "Component diagram")
+- :memo: [Entity Relationship diagram](documentation/er_diagram.png "Entity Relationship diagram")
+
+### Other:
+- :memo: [Database dump](documentation/db_dump.sql "Database dump")
+
 ## :hammer_and_wrench: Database Builder [[db_builder](db_builder "Database Builder")]
 ### Features:
 - :heavy_check_mark: The PostgreSQL database initializer
@@ -136,13 +151,6 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
 1. Open a command prompt
 2. Change the current working directory to `client`
 3. Run the program using the command `node main.js`
-
-## :printer: Documentation [[documentation](documentation "Documentation")]
-### Content:
-- :memo: [Database dump](documentation/db_dump.sql "Database dump")
-- :memo: [Entity Relationship diagram](documentation/er_diagram.png "Entity Relationship diagram")
-- :memo: [Component diagram](documentation/component_diagram.png "Component diagram")
-- :memo: [Use Case diagram](documentation/uc_diagram.png "Use Case diagram")
 
 ## :ice_cube: Crawler (Node.js) [[deprecated](deprecated "Crawler (Node.js)")]
 *Crawler (Node.js) is now deprecated and has been replaced by the newer [Database Builder](#hammer_and_wrench-database-builder-db_builder "Database Builder")!*

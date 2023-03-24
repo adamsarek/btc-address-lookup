@@ -429,6 +429,102 @@ async function editAccountRole(req, res, next) {
 	}
 }
 
+function parseDateTime(dateTimeString) {
+	let dateTimeParts = [];
+
+	if(dateTimeString.indexOf(' - ') > -1) {
+		const dateTimeStringParts = dateTimeString.split(' - ');
+		const dateStringParts = dateTimeStringParts[0].split(' ');
+		const monthWordString = dateStringParts[0].slice(0,3).toLowerCase();
+		let monthNumberString;
+		if(monthWordString      == 'jan') { monthNumberString = '1'; }
+		else if(monthWordString == 'feb') { monthNumberString = '2'; }
+		else if(monthWordString == 'mar') { monthNumberString = '3'; }
+		else if(monthWordString == 'apr') { monthNumberString = '4'; }
+		else if(monthWordString == 'may') { monthNumberString = '5'; }
+		else if(monthWordString == 'jun') { monthNumberString = '6'; }
+		else if(monthWordString == 'jul') { monthNumberString = '7'; }
+		else if(monthWordString == 'aug') { monthNumberString = '8'; }
+		else if(monthWordString == 'sep') { monthNumberString = '9'; }
+		else if(monthWordString == 'oct') { monthNumberString = '10'; }
+		else if(monthWordString == 'nov') { monthNumberString = '11'; }
+		else if(monthWordString == 'dec') { monthNumberString = '12'; }
+		dateTimeParts.push(dateStringParts[2]);
+		dateTimeParts.push(monthNumberString);
+		dateTimeParts.push(dateStringParts[1].split(',')[0]);
+		dateTimeParts.push(...dateTimeStringParts[1].split(':'));
+	}
+	else if(dateTimeString.indexOf('-') > -1) {
+		const dateTimeStringParts = dateTimeString.split(' ');
+		dateTimeParts.push(...dateTimeStringParts[0].split('-').slice(0,3));
+		if(dateTimeStringParts.length > 1) { dateTimeParts.push(...dateTimeStringParts[1].split(':')); }
+	}
+	else if(dateTimeString.indexOf('UTC') > -1) {
+		const dateTimeStringParts = dateTimeString.split(' UTC')[0].split('. ');
+		const dateStringParts = dateTimeStringParts[0].split(' ');
+		const monthWordString = dateStringParts[1].slice(0,3).toLowerCase();
+		let monthNumberString;
+		if(monthWordString      == 'jan') { monthNumberString = '1'; }
+		else if(monthWordString == 'feb') { monthNumberString = '2'; }
+		else if(monthWordString == 'mar') { monthNumberString = '3'; }
+		else if(monthWordString == 'apr') { monthNumberString = '4'; }
+		else if(monthWordString == 'may') { monthNumberString = '5'; }
+		else if(monthWordString == 'jun') { monthNumberString = '6'; }
+		else if(monthWordString == 'jul') { monthNumberString = '7'; }
+		else if(monthWordString == 'aug') { monthNumberString = '8'; }
+		else if(monthWordString == 'sep') { monthNumberString = '9'; }
+		else if(monthWordString == 'oct') { monthNumberString = '10'; }
+		else if(monthWordString == 'nov') { monthNumberString = '11'; }
+		else if(monthWordString == 'dec') { monthNumberString = '12'; }
+		dateTimeParts.push(dateStringParts[2]);
+		dateTimeParts.push(monthNumberString);
+		dateTimeParts.push(dateStringParts[0]);
+		dateTimeParts.push(...dateTimeStringParts[1].split(':'));
+	}
+	else if(dateTimeString.indexOf('. ') > -1) {
+		const dateTimeStringParts = dateTimeString.split('. ');
+		const yearStringParts = dateTimeStringParts[2].split(' ');
+		dateTimeParts.push(yearStringParts[0]);
+		dateTimeParts.push(dateTimeStringParts[1]);
+		dateTimeParts.push(dateTimeStringParts[0]);
+		if(yearStringParts.length > 1) { dateTimeParts.push(...yearStringParts[1].split(':')); }
+	}
+	else if(dateTimeString.indexOf('.') > -1) {
+		const dateTimeStringParts = dateTimeString.split(' ');
+		dateTimeParts.push(...dateTimeStringParts[0].split('.').slice(0,3).reverse());
+		if(dateTimeStringParts.length > 1) { dateTimeParts.push(...dateTimeStringParts[1].split(':')); }
+	}
+	else if(dateTimeString.indexOf(',') > -1) {
+		const dateTimeStringParts = dateTimeString.split(' ');
+		const monthWordString = dateTimeStringParts[0].slice(0,3).toLowerCase();
+		let monthNumberString;
+		if(monthWordString      == 'jan') { monthNumberString = '1'; }
+		else if(monthWordString == 'feb') { monthNumberString = '2'; }
+		else if(monthWordString == 'mar') { monthNumberString = '3'; }
+		else if(monthWordString == 'apr') { monthNumberString = '4'; }
+		else if(monthWordString == 'may') { monthNumberString = '5'; }
+		else if(monthWordString == 'jun') { monthNumberString = '6'; }
+		else if(monthWordString == 'jul') { monthNumberString = '7'; }
+		else if(monthWordString == 'aug') { monthNumberString = '8'; }
+		else if(monthWordString == 'sep') { monthNumberString = '9'; }
+		else if(monthWordString == 'oct') { monthNumberString = '10'; }
+		else if(monthWordString == 'nov') { monthNumberString = '11'; }
+		else if(monthWordString == 'dec') { monthNumberString = '12'; }
+		dateTimeParts.push((dateTimeStringParts[2].length == 2 ? '20' : '') + dateTimeStringParts[2]);
+		dateTimeParts.push(monthNumberString);
+		dateTimeParts.push(dateTimeStringParts[1].split(',')[0].split('st')[0].split('nd')[0].split('rd')[0].split('th')[0]);
+		if(dateTimeStringParts.length > 3) { dateTimeParts.push(...dateTimeStringParts[3].split(':')); }
+	}
+	dateTimeParts = dateTimeParts.map(Number);
+	if(dateTimeParts.length > 1) { dateTimeParts[1]--; }
+
+	if(dateTimeParts.length > 0) {
+		return new Date(...dateTimeParts);
+	}
+
+	return new Date(0);
+}
+
 function postProcess(req, res, next) {
 	if(typeof req.data.form !== 'undefined') {
 		if(typeof req.data.form.password !== 'undefined') { req.data.form.password.data = ''; }
@@ -768,102 +864,6 @@ app.get('/addresses', preProcess, usePage, loadSource, useSource, useCurrency, a
 	
 	next();
 }, render);
-
-function parseDateTime(dateTimeString) {
-	let dateTimeParts = [];
-
-	if(dateTimeString.indexOf(' - ') > -1) {
-		const dateTimeStringParts = dateTimeString.split(' - ');
-		const dateStringParts = dateTimeStringParts[0].split(' ');
-		const monthWordString = dateStringParts[0].slice(0,3).toLowerCase();
-		let monthNumberString;
-		if(monthWordString      == 'jan') { monthNumberString = '1'; }
-		else if(monthWordString == 'feb') { monthNumberString = '2'; }
-		else if(monthWordString == 'mar') { monthNumberString = '3'; }
-		else if(monthWordString == 'apr') { monthNumberString = '4'; }
-		else if(monthWordString == 'may') { monthNumberString = '5'; }
-		else if(monthWordString == 'jun') { monthNumberString = '6'; }
-		else if(monthWordString == 'jul') { monthNumberString = '7'; }
-		else if(monthWordString == 'aug') { monthNumberString = '8'; }
-		else if(monthWordString == 'sep') { monthNumberString = '9'; }
-		else if(monthWordString == 'oct') { monthNumberString = '10'; }
-		else if(monthWordString == 'nov') { monthNumberString = '11'; }
-		else if(monthWordString == 'dec') { monthNumberString = '12'; }
-		dateTimeParts.push(dateStringParts[2]);
-		dateTimeParts.push(monthNumberString);
-		dateTimeParts.push(dateStringParts[1].split(',')[0]);
-		dateTimeParts.push(...dateTimeStringParts[1].split(':'));
-	}
-	else if(dateTimeString.indexOf('-') > -1) {
-		const dateTimeStringParts = dateTimeString.split(' ');
-		dateTimeParts.push(...dateTimeStringParts[0].split('-').slice(0,3));
-		if(dateTimeStringParts.length > 1) { dateTimeParts.push(...dateTimeStringParts[1].split(':')); }
-	}
-	else if(dateTimeString.indexOf('UTC') > -1) {
-		const dateTimeStringParts = dateTimeString.split(' UTC')[0].split('. ');
-		const dateStringParts = dateTimeStringParts[0].split(' ');
-		const monthWordString = dateStringParts[1].slice(0,3).toLowerCase();
-		let monthNumberString;
-		if(monthWordString      == 'jan') { monthNumberString = '1'; }
-		else if(monthWordString == 'feb') { monthNumberString = '2'; }
-		else if(monthWordString == 'mar') { monthNumberString = '3'; }
-		else if(monthWordString == 'apr') { monthNumberString = '4'; }
-		else if(monthWordString == 'may') { monthNumberString = '5'; }
-		else if(monthWordString == 'jun') { monthNumberString = '6'; }
-		else if(monthWordString == 'jul') { monthNumberString = '7'; }
-		else if(monthWordString == 'aug') { monthNumberString = '8'; }
-		else if(monthWordString == 'sep') { monthNumberString = '9'; }
-		else if(monthWordString == 'oct') { monthNumberString = '10'; }
-		else if(monthWordString == 'nov') { monthNumberString = '11'; }
-		else if(monthWordString == 'dec') { monthNumberString = '12'; }
-		dateTimeParts.push(dateStringParts[2]);
-		dateTimeParts.push(monthNumberString);
-		dateTimeParts.push(dateStringParts[0]);
-		dateTimeParts.push(...dateTimeStringParts[1].split(':'));
-	}
-	else if(dateTimeString.indexOf('. ') > -1) {
-		const dateTimeStringParts = dateTimeString.split('. ');
-		const yearStringParts = dateTimeStringParts[2].split(' ');
-		dateTimeParts.push(yearStringParts[0]);
-		dateTimeParts.push(dateTimeStringParts[1]);
-		dateTimeParts.push(dateTimeStringParts[0]);
-		if(yearStringParts.length > 1) { dateTimeParts.push(...yearStringParts[1].split(':')); }
-	}
-	else if(dateTimeString.indexOf('.') > -1) {
-		const dateTimeStringParts = dateTimeString.split(' ');
-		dateTimeParts.push(...dateTimeStringParts[0].split('.').slice(0,3).reverse());
-		if(dateTimeStringParts.length > 1) { dateTimeParts.push(...dateTimeStringParts[1].split(':')); }
-	}
-	else if(dateTimeString.indexOf(',') > -1) {
-		const dateTimeStringParts = dateTimeString.split(' ');
-		const monthWordString = dateTimeStringParts[0].slice(0,3).toLowerCase();
-		let monthNumberString;
-		if(monthWordString      == 'jan') { monthNumberString = '1'; }
-		else if(monthWordString == 'feb') { monthNumberString = '2'; }
-		else if(monthWordString == 'mar') { monthNumberString = '3'; }
-		else if(monthWordString == 'apr') { monthNumberString = '4'; }
-		else if(monthWordString == 'may') { monthNumberString = '5'; }
-		else if(monthWordString == 'jun') { monthNumberString = '6'; }
-		else if(monthWordString == 'jul') { monthNumberString = '7'; }
-		else if(monthWordString == 'aug') { monthNumberString = '8'; }
-		else if(monthWordString == 'sep') { monthNumberString = '9'; }
-		else if(monthWordString == 'oct') { monthNumberString = '10'; }
-		else if(monthWordString == 'nov') { monthNumberString = '11'; }
-		else if(monthWordString == 'dec') { monthNumberString = '12'; }
-		dateTimeParts.push((dateTimeStringParts[2].length == 2 ? '20' : '') + dateTimeStringParts[2]);
-		dateTimeParts.push(monthNumberString);
-		dateTimeParts.push(dateTimeStringParts[1].split(',')[0].split('st')[0].split('nd')[0].split('rd')[0].split('th')[0]);
-		if(dateTimeStringParts.length > 3) { dateTimeParts.push(...dateTimeStringParts[3].split(':')); }
-	}
-	dateTimeParts = dateTimeParts.map(Number);
-	if(dateTimeParts.length > 1) { dateTimeParts[1]--; }
-
-	if(dateTimeParts.length > 0) {
-		return new Date(...dateTimeParts);
-	}
-
-	return new Date(0);
-}
 
 app.get('/address/:address([a-zA-Z0-9]{0,})', preProcess, usePage, loadSource, async (req, res, next) => {
 	// Address is not set

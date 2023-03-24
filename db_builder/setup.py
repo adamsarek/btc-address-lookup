@@ -113,12 +113,12 @@ class Setup:
 			db_connection = DatabaseConnection(connection)
 			
 			# PostgreSQL default parameters
-			db_connection.alter_system("fsync=on")
+			#db_connection.alter_system("fsync=on")
 			db_connection.alter_system("synchronous_commit=on")
-			db_connection.alter_system("full_page_writes=on")
+			#db_connection.alter_system("full_page_writes=on")
 			db_connection.alter_system("bgwriter_lru_maxpages=100")
-			db_connection.alter_system("archive_mode=off")
-			db_connection.alter_system("log_checkpoints=off")
+			#db_connection.alter_system("archive_mode=off")
+			db_connection.alter_system("log_checkpoints=on")
 			db_connection.alter_system("min_wal_size=80")
 			db_connection.alter_system("max_wal_size=1024")
 			db_connection.alter_system("wal_level=replica")
@@ -139,24 +139,29 @@ class Setup:
 
 			# Get device memory
 			virtual_memory = psutil.virtual_memory().total
-			work_memory = virtual_memory // 8192 // 8
-			buffer_memory = virtual_memory // 8192 // 4
+			work_memory_bytes = virtual_memory   // 1024 # Work memory is set in 1 kB
+			buffer_memory_bytes = virtual_memory // 8192 # Buffer memory is set in 8 kB
+			
+			work_mem = work_memory_bytes // 4
+			maintenance_work_mem = work_memory_bytes // 16
+			shared_buffers = buffer_memory_bytes // 4
+			temp_buffers = buffer_memory_bytes // 16
 			
 			# PostgreSQL performance parameters
-			db_connection.alter_system("fsync=off")
+			#db_connection.alter_system("fsync=off") # Can cause data corruption
 			db_connection.alter_system("synchronous_commit=off")
-			db_connection.alter_system("full_page_writes=off")
+			#db_connection.alter_system("full_page_writes=off") # Can cause data corruption
 			db_connection.alter_system("bgwriter_lru_maxpages=0")
-			db_connection.alter_system("archive_mode=off")
+			#db_connection.alter_system("archive_mode=off") # Is already default value in PostgreSQL
 			db_connection.alter_system("log_checkpoints=off")
 			db_connection.alter_system("min_wal_size=4096")
 			db_connection.alter_system("max_wal_size=16384")
 			db_connection.alter_system("wal_level=minimal")
 			db_connection.alter_system("max_wal_senders=0")
-			db_connection.alter_system("work_mem=" + str(work_memory))
-			db_connection.alter_system("maintenance_work_mem=" + str(work_memory))
-			db_connection.alter_system("shared_buffers=" + str(buffer_memory))
-			db_connection.alter_system("temp_buffers=" + str(buffer_memory))
+			db_connection.alter_system("work_mem=" + str(work_mem))
+			db_connection.alter_system("maintenance_work_mem=" + str(maintenance_work_mem))
+			db_connection.alter_system("shared_buffers=" + str(shared_buffers))
+			db_connection.alter_system("temp_buffers=" + str(temp_buffers))
 
 			# Create / alter / drop users & databases
 			self.__setup_users_and_databases(db_connection)
