@@ -1,0 +1,7 @@
+uc_web_diagram.*
+
+*.svg
+
+*.bak*
+*.vpd
+*.vpp
