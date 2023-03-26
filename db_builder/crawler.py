@@ -7,6 +7,7 @@ import math
 import threading
 
 # Internal imports
+from console.console import Console
 from database.database import Database
 from database.database_connection import DatabaseConnection
 from database.database_copy import DatabaseCopy
@@ -423,6 +424,11 @@ class Crawler:
 					decompress_obj = isal_zlib.decompressobj(32 + isal_zlib.MAX_WBITS)
 
 					prev_text = ""
+
+					print(str(datetime.datetime.now()) + " - 0")
+					id = 0
+					id_cp = 1000_000
+					id_cp_next = id_cp
 					
 					for chunk in response:
 						# Write file
@@ -437,11 +443,22 @@ class Crawler:
 						# Add addresses
 						for text_line in text_lines[:-1]:
 							db_copy.copy_row([source_label_url["new_addresses_currency_id"], source_label_url["source_label_id"], text_line.strip()])
+							
+							id += 1
+							if id == id_cp_next:
+								print(str(datetime.datetime.now()) + " - " + f"{id:,}")
+								id_cp_next += id_cp
 					
 					# Add last address
 					if len(prev_text) > 0:
 						db_copy.copy_row([source_label_url["new_addresses_currency_id"], source_label_url["source_label_id"], prev_text.strip()])
+
+						id += 1
+					
+					print(str(datetime.datetime.now()) + " - " + f"{id:,}")
+					Console().print_info("Committing the transaction of writing all BTC addresses to the database...")
 				db_connection.commit()
+				Console().print_success("Transaction committed.")
 			else:
 				# Decompress object
 				decompress_obj = isal_zlib.decompressobj(32 + isal_zlib.MAX_WBITS)
@@ -614,6 +631,20 @@ class Crawler:
 		for thread in threads:
 			thread.join()
 
+	def __add_address_data(self, db_connection, source_label_url_id, address_datas, address_text, data_id):
+		address_id = Mapper("address").select(db_connection, ["address_id"], [], "address = '{}'".format(address_text.strip()))
+		
+		if len(address_id) > 0:
+			address_id = address_id[0]["address_id"]
+			address_datas.append([
+				address_id,
+				data_id
+			])
+		else:
+			Console().print_warn("Address \"" + address_text + "\" from source URL (" + source_label_url_id + ") was not found in the database and will be ignored!")
+		
+		return address_datas
+	
 	def __crawl_response(self, db_connection, response, source_label_url, source_label_url_depth=0):
 		response_last_modified_at = datetime.datetime.fromtimestamp(0)
 		if response.headers.get("last-modified"):
@@ -730,11 +761,7 @@ class Crawler:
 					or source_label_url["source_label_url_id"] == 5
 					or source_label_url["source_label_url_id"] == 12
 					or source_label_url["source_label_url_id"] == 15):
-						address_id = Mapper("address").select(db_connection, ["address_id"], [], "address = '{}'".format(data_file_name.split(".")[-2]))[0]["address_id"]
-						address_datas.append([
-							address_id,
-							data[0]["data_id"]
-						])
+						address_datas = self.__add_address_data(db_connection, source_label_url["source_label_url_id"], address_datas, data_file_name.split(".")[-2], data[0]["data_id"])
 					elif(source_label_url["source_label_url_id"] == 7
 					or   source_label_url["source_label_url_id"] == 8
 					or   source_label_url["source_label_url_id"] == 9):
@@ -752,25 +779,13 @@ class Crawler:
 								prev_text = text_lines[-1]
 
 								for address_text in text_lines[:-1]:
-									address_id = Mapper("address").select(db_connection, ["address_id"], [], "address = '{}'".format(address_text.strip()))[0]["address_id"]
-									address_datas.append([
-										address_id,
-										data[0]["data_id"]
-									])
+									address_datas = self.__add_address_data(db_connection, source_label_url["source_label_url_id"], address_datas, address_text, data[0]["data_id"])
 							
-							address_id = Mapper("address").select(db_connection, ["address_id"], [], "address = '{}'".format(prev_text.strip()))[0]["address_id"]
-							address_datas.append([
-								address_id,
-								data[0]["data_id"]
-							])
+							address_datas = self.__add_address_data(db_connection, source_label_url["source_label_url_id"], address_datas, prev_text, data[0]["data_id"])
 					elif source_label_url["source_label_url_id"] == 11:
 						text_json = JsonFile(local_data_file_path_parts).load()
 						for address_text in text_json["result"].keys():
-							address_id = Mapper("address").select(db_connection, ["address_id"], [], "address = '{}'".format(address_text.strip()))[0]["address_id"]
-							address_datas.append([
-								address_id,
-								data[0]["data_id"]
-							])
+							address_datas = self.__add_address_data(db_connection, source_label_url["source_label_url_id"], address_datas, address_text, data[0]["data_id"])
 
 					# Add address data
 					if len(address_datas) > 0:
