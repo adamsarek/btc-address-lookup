@@ -105,7 +105,7 @@ async function useCurrency(req, res, next) {
 
 async function loadSource(req, res, next) {
 	req.data.sources = [
-		{ name: 'All (with data)', sourceId: null, sourceLabelId: null }
+		{ name: 'All', sourceId: null, sourceLabelId: null }
 	];
 	
 	const sources = (await databaseConnection.getSources()).rows;
@@ -147,10 +147,10 @@ async function loadSource(req, res, next) {
 function useSource(req, res, next) {
 	// Source is not set
 	if(!req.query.hasOwnProperty('source') || req.query.source.length == 0) {
-		req.data.source = '';
-		req.data.withData = false;
-		req.data.sourceId = null;
-		req.data.sourceLabelId = null;
+		req.data.source = 0;
+		req.data.withData = true;
+		req.data.sourceId = req.data.sources[0].sourceId;
+		req.data.sourceLabelId = req.data.sources[0].sourceLabelId;
 	}
 	else {
 		const source = parseInt(req.query.source);
@@ -1138,7 +1138,7 @@ app.get('/statistics', preProcess, loadSource, async (req, res, next) => {
 	for(let i = 0; i < req.data.sources.length; i++) {
 		req.data.sources[i].withData = true;
 		req.data.sources[i].addressesCount = (await databaseConnection.getAddressesCount(roleId, true, req.data.sources[i].sourceId, req.data.sources[i].sourceLabelId, null)).rows[0].count;
-		req.data.sources[i].link = '/addresses?data=' + i;
+		req.data.sources[i].link = '/addresses?source=' + i;
 		req.data.sources[i].currencies = [];
 
 		let addressesCount = 0;
@@ -1158,34 +1158,6 @@ app.get('/statistics', preProcess, loadSource, async (req, res, next) => {
 			req.data.sources[i].currencies[j].link = '/addresses?currency=' + req.data.currencies[j].currency_code + '&source=' + i;
 			addressesCount += req.data.sources[i].currencies[j].addressesCount;
 		}
-	}
-
-	req.data.sources.unshift({
-		name: 'All',
-		withData: false,
-		sourceId: null,
-		sourceLabelId: null,
-		addressesCount: (await databaseConnection.getAddressesCount(roleId, false, null, null, null)).rows[0].count,
-		link: '/addresses',
-		currencies: []
-	});
-
-	let addressesCount = 0;
-
-	for(let i = 0; i < req.data.currencies.length; i++) {
-		if(addressesCount >= req.data.sources[0].addressesCount) {
-			for(let j = i; j < req.data.currencies.length; j++) {
-				req.data.sources[0].currencies[j] = { ...req.data.currencies[j] };
-				req.data.sources[0].currencies[j].addressesCount = 0;
-				req.data.sources[0].currencies[j].link = '/addresses?currency=' + req.data.currencies[j].currency_code;
-			}
-			break;
-		}
-		
-		req.data.sources[0].currencies[i] = { ...req.data.currencies[i] };
-		req.data.sources[0].currencies[i].addressesCount = (await databaseConnection.getAddressesCount(roleId, false, null, null, req.data.currencies[i].currency_id)).rows[0].count;
-		req.data.sources[0].currencies[i].link = '/addresses?currency=' + req.data.currencies[i].currency_code;
-		addressesCount += req.data.sources[0].currencies[i].addressesCount;
 	}
 
 	for(let i = 0; i < req.data.sources.length; i++) {

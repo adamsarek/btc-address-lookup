@@ -653,10 +653,24 @@ class Crawler:
 		for thread in threads:
 			thread.join()
 
-	def __add_address_data(self, db_connection, source_label_url_id, address_datas, address_text, data_id):
+	def __add_address_data(self, db_connection, source_label_url, address_datas, address_text, data_id):
 		address_id = Mapper("address").select(db_connection, ["address_id"], [], "address = '{}'".format(address_text.strip()))
 		
 		if len(address_id) > 0:
+			address_id = address_id[0]["address_id"]
+			address_datas.append([
+				address_id,
+				data_id
+			])
+		else:
+			currency_id = None
+			source_label_id = source_label_url["source_label_id"]
+
+			address = [currency_id, source_label_id, address_text.strip()]
+
+			Mapper("address").insert(db_connection, ["currency_id", "source_label_id", "address"], [address])
+
+			address_id = Mapper("address").select(db_connection, ["address_id"], [], "address = '{}'".format(address_text.strip()))
 			address_id = address_id[0]["address_id"]
 			address_datas.append([
 				address_id,
@@ -781,7 +795,7 @@ class Crawler:
 					or source_label_url["source_label_url_id"] == 5
 					or source_label_url["source_label_url_id"] == 12
 					or source_label_url["source_label_url_id"] == 15):
-						address_datas = self.__add_address_data(db_connection, source_label_url["source_label_url_id"], address_datas, data_file_name.split(".")[-2], data[0]["data_id"])
+						address_datas = self.__add_address_data(db_connection, source_label_url, address_datas, data_file_name.split(".")[-2], data[0]["data_id"])
 					elif(source_label_url["source_label_url_id"] == 7
 					or   source_label_url["source_label_url_id"] == 8
 					or   source_label_url["source_label_url_id"] == 9):
@@ -799,13 +813,13 @@ class Crawler:
 								prev_text = text_lines[-1]
 
 								for address_text in text_lines[:-1]:
-									address_datas = self.__add_address_data(db_connection, source_label_url["source_label_url_id"], address_datas, address_text, data[0]["data_id"])
+									address_datas = self.__add_address_data(db_connection, source_label_url, address_datas, address_text, data[0]["data_id"])
 							
-							address_datas = self.__add_address_data(db_connection, source_label_url["source_label_url_id"], address_datas, prev_text, data[0]["data_id"])
+							address_datas = self.__add_address_data(db_connection, source_label_url, address_datas, prev_text, data[0]["data_id"])
 					elif source_label_url["source_label_url_id"] == 11:
 						text_json = JsonFile(local_data_file_path_parts).load()
 						for address_text in text_json["result"].keys():
-							address_datas = self.__add_address_data(db_connection, source_label_url["source_label_url_id"], address_datas, address_text, data[0]["data_id"])
+							address_datas = self.__add_address_data(db_connection, source_label_url, address_datas, address_text, data[0]["data_id"])
 
 					# Add address data
 					if len(address_datas) > 0:

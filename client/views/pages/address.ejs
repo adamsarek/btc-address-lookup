@@ -204,7 +204,7 @@ const generateBlockchairLink = (currencyCode) => {
 											<% if(Object.keys(address.reports.cols[j])[k] == 'date') { %>
 												<%- '<td align="left" valign="top"' + (j > 0 ? ' colspan="' + colspan + '"' : ' colspan="' + subspan + '"') + '><div class="content">' + address.reports.rows[i][Object.keys(address.reports.cols[j])[k]].toLocaleString() + '</div></td>' %>
 											<% } else if(Object.keys(address.reports.cols[j])[k] == 'url') { %>
-												<%- '<td align="left" valign="top"' + (j > 0 ? ' colspan="' + colspan + '"' : ' colspan="' + subspan + '"') + '><div class="content"><a href="' + address.reports.rows[i][Object.keys(address.reports.cols[j])[k]] + '" target="_blank">View</a></div></td>' %>
+												<%- '<td align="left" valign="top"' + (j > 0 ? ' colspan="' + colspan + '"' : ' colspan="' + subspan + '"') + '><div class="content"><a href="' + address.reports.rows[i][Object.keys(address.reports.cols[j])[k]] + '" target="_blank">View on ' + address.reports.rows[i][Object.keys(address.reports.cols[j])[k]].split('/')[2] + '</a></div></td>' %>
 											<% } else { %>
 												<%- '<td align="left" valign="top"' + (j > 0 ? ' colspan="' + colspan + '"' : ' colspan="' + subspan + '"') + '><div class="content">' + address.reports.rows[i][Object.keys(address.reports.cols[j])[k]] + '</div></td>' %>
 											<% } %>

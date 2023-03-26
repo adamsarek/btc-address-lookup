@@ -17,7 +17,6 @@
 				<% } %>
 			</select></div></div>
 			<div><div class="inline-content">Source</div><div class="inline-content"><select name="source">
-				<option value=""<%- source == '' ? ' selected' : '' %>>All</option>
 				<% for(let i = 0; i < sources.length; i++) { %>
 					<%- '<option value="' + i + '"' + (source == i.toString() ? ' selected' : '') + '>' + sources[i].name + '</option>' %>
 				<% } %>
