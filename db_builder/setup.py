@@ -142,7 +142,7 @@ class Setup:
 			work_memory_bytes = virtual_memory   // 1024 # Work memory is set in 1 kB
 			buffer_memory_bytes = virtual_memory // 8192 # Buffer memory is set in 8 kB
 			
-			work_mem = work_memory_bytes // 4
+			work_mem = work_memory_bytes // 8
 			maintenance_work_mem = work_memory_bytes // 16
 			shared_buffers = buffer_memory_bytes // 4
 			temp_buffers = buffer_memory_bytes // 16

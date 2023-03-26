@@ -57,63 +57,40 @@ class Crawler:
 				"source_label_url.source_label_url_id"
 			)
 
-			db_connection.alter_table(
-				"address_data", [
-					"DROP CONSTRAINT address_data_address_id_fkey"
-				]
-			)
-			db_connection.alter_table(
-				"address", [
-					"ALTER source_label_id DROP NOT NULL",
-					"ALTER address DROP NOT NULL",
-					"DROP CONSTRAINT address_address_id_pkey",
-					"DROP CONSTRAINT address_currency_id_fkey",
-					"DROP CONSTRAINT address_source_label_id_fkey",
-					"DROP CONSTRAINT address_address_key",
-					"DROP CONSTRAINT address_currency_id_check",
-					"DROP CONSTRAINT address_source_label_id_check"
-				]
-			)
+			for source_label_url in source_label_urls:
+				if source_label_url["source_label_url_id"] == 1:
+					# Crawl source label url
+					self.__crawl_source_label_url(db_connection, source_label_url)
+					break
 			
+			Console().print_info("As crawling sources containing reports begins, changes should be visible on the website now.")
+			Console().print_info("Crawling sources with address lists...")
+
 			# Filter out source label urls
 			source_label_urls_with_listed_data = []
 			source_label_urls_with_searched_data = []
 			for source_label_url in source_label_urls:
-				#if source_label_url["source_label_url_id"] != 1 and source_label_url["source_label_url_id"] != 7 and source_label_url["source_label_url_id"] != 8 and source_label_url["source_label_url_id"] != 14:
-				if source_label_url["source_label_url_id"] == 1:
-					# Crawl source label url
-					self.__crawl_source_label_url(db_connection, source_label_url)
-				elif(source_label_url["new_addresses_currency_id"] is not None
-				or   source_label_url["search_data_by_address"] == False):
+				if(source_label_url["source_label_url_id"] != 1
+	 			and (source_label_url["new_addresses_currency_id"] is not None
+				or   source_label_url["search_data_by_address"] == False)):
 					source_label_urls_with_listed_data.append(source_label_url)
-				else:
+				elif(source_label_url["source_label_url_id"] != 1):
 					source_label_urls_with_searched_data.append(source_label_url)
-				
-			db_connection.alter_table("address", ["ADD CONSTRAINT address_address_key UNIQUE (address)"])
 			
 			# Crawl source label urls
 			self.__crawl_source_label_urls_in_threads(db_connection, source_label_urls_with_listed_data)
-			
-			db_connection.alter_table(
-				"address", [
-					"ALTER source_label_id SET NOT NULL",
-					"ALTER address SET NOT NULL",
-					"ADD CONSTRAINT address_address_id_pkey PRIMARY KEY (address_id)",
-					"ADD CONSTRAINT address_currency_id_fkey FOREIGN KEY (currency_id) REFERENCES currency (currency_id)",
-					"ADD CONSTRAINT address_source_label_id_fkey FOREIGN KEY (source_label_id) REFERENCES source_label (source_label_id)",
-					"ADD CONSTRAINT address_currency_id_check CHECK (currency_id > 0)",
-					"ADD CONSTRAINT address_source_label_id_check CHECK (source_label_id > 0)"
-				]
-			)
-			db_connection.alter_table(
-				"address_data", [
-					"ADD CONSTRAINT address_data_address_id_fkey FOREIGN KEY (address_id) REFERENCES address (address_id)"
-				]
-			)
 
+			Console().print_success("Crawling sources with address lists finished.")
+
+			Console().print_info("Crawling sources with search input...")
+			
 			# Crawl source label urls
 			self.__crawl_source_label_urls_in_threads(db_connection, source_label_urls_with_searched_data)
 
+			Console().print_success("Crawling sources with search input finished.")
+
+			Console().print_info("Determining addresses cryptocurrency...")
+			
 			# Get addresses without currency
 			address_count = Mapper("address").select_count(
 				db_connection,
@@ -151,6 +128,8 @@ class Crawler:
 				# Join threads
 				for thread in threads:
 					thread.join()
+
+			Console().print_success("Determining addresses cryptocurrency finished.")
 
 	def __crawl_source_label_urls_in_threads(self, db_connection, source_label_urls):
 		# Start threads
@@ -417,6 +396,27 @@ class Crawler:
 		# LoyceV / All BTC Addresses - Weekly update
 		if add_address_option == 0:
 			if source_label_url_depth == 0:
+				Console().print_info("Dropping primary, foreign & unique keys...")
+				db_connection.alter_table(
+					"address_data", [
+						"DROP CONSTRAINT IF EXISTS address_data_address_id_fkey"
+					]
+				)
+				db_connection.alter_table(
+					"address", [
+						"ALTER source_label_id DROP NOT NULL",
+						"ALTER address DROP NOT NULL",
+						"DROP CONSTRAINT IF EXISTS address_address_id_pkey",
+						"DROP CONSTRAINT IF EXISTS address_currency_id_fkey",
+						"DROP CONSTRAINT IF EXISTS address_source_label_id_fkey",
+						"DROP CONSTRAINT IF EXISTS address_address_key",
+						"DROP CONSTRAINT IF EXISTS address_currency_id_check",
+						"DROP CONSTRAINT IF EXISTS address_source_label_id_check"
+					]
+				)
+				Console().print_success("Primary, foreign & unique keys dropped successfully.")
+				
+				Console().print_info("Adding BTC addresses...")
 				with Database().get_copy(db_connection.get_connection(), "COPY address (currency_id, source_label_id, address) FROM STDIN") as copy:
 					db_copy = DatabaseCopy(copy)
 
@@ -456,7 +456,29 @@ class Crawler:
 						id += 1
 					
 					print(str(datetime.datetime.now()) + " - " + f"{id:,}")
-					Console().print_info("Committing the transaction of writing all BTC addresses to the database...")
+				Console().print_success("BTC addresses added successfully.")
+
+				Console().print_info("Adding primary, foreign & unique keys...")
+				db_connection.alter_table(
+					"address", [
+						"ALTER source_label_id SET NOT NULL",
+						"ALTER address SET NOT NULL",
+						"ADD CONSTRAINT address_address_id_pkey PRIMARY KEY (address_id)",
+						"ADD CONSTRAINT address_currency_id_fkey FOREIGN KEY (currency_id) REFERENCES currency (currency_id)",
+						"ADD CONSTRAINT address_source_label_id_fkey FOREIGN KEY (source_label_id) REFERENCES source_label (source_label_id)",
+						"ADD CONSTRAINT address_address_key UNIQUE (address)",
+						"ADD CONSTRAINT address_currency_id_check CHECK (currency_id > 0)",
+						"ADD CONSTRAINT address_source_label_id_check CHECK (source_label_id > 0)"
+					]
+				)
+				db_connection.alter_table(
+					"address_data", [
+						"ADD CONSTRAINT address_data_address_id_fkey FOREIGN KEY (address_id) REFERENCES address (address_id)"
+					]
+				)
+				Console().print_success("Primary, foreign & unique keys added successfully.")
+
+				Console().print_info("Committing the transaction of writing all BTC addresses to the database...")
 				db_connection.commit()
 				Console().print_success("Transaction committed.")
 			else:
@@ -640,8 +662,6 @@ class Crawler:
 				address_id,
 				data_id
 			])
-		else:
-			Console().print_warn("Address \"" + address_text + "\" from source URL (" + source_label_url_id + ") was not found in the database and will be ignored!")
 		
 		return address_datas
 	
