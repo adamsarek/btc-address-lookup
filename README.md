@@ -151,11 +151,3 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
 1. Open a command prompt
 2. Change the current working directory to `client`
 3. Run the program using the command `node main.js`
-
-## :ice_cube: Crawler (Node.js) [[deprecated](deprecated "Crawler (Node.js)")]
-*Crawler (Node.js) is now deprecated and has been replaced by the newer [Database Builder](#hammer_and_wrench-database-builder-db_builder "Database Builder")!*
-### Features:
-- :heavy_check_mark: CRUD operations with the MySQL database
-- :heavy_check_mark: Multi-threaded downloading and processing
-- :heavy_check_mark: Crawling tree limitation *- max level (depth), max serial number (count), max delay (crawling frequency)*
-- :heavy_check_mark: Parsing the data collected by the Crawler
