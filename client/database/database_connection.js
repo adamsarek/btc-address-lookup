@@ -146,9 +146,17 @@ class DatabaseConnection {
 						)
 					)}
 					ORDER BY CAST(address_data.data_id AS INT)
-				) AS data_ids
+				) AS data_ids,
+				(
+					SELECT crawled_at
+					FROM address_data
+					JOIN data ON data.data_id = address_data.data_id
+					WHERE address_data.address_id = address.address_id
+					ORDER BY crawled_at DESC
+					LIMIT 1
+				)
 			${sql[5]}
-			ORDER BY CAST(address_id AS INT)`;
+			ORDER BY crawled_at DESC`;
 		}
 		else {
 			return `SELECT COUNT(*) ${sql[5]}`;
@@ -175,11 +183,13 @@ class DatabaseConnection {
 					FROM currency
 					WHERE currency.currency_id = address.currency_id
 				), ARRAY['Pending', '_pending', '/src/img/_pending.svg']) AS currency,
-				ARRAY_REMOVE(ARRAY_AGG(CAST(data_id AS INT) ORDER BY CAST(data_id AS INT)), NULL) AS data_ids
+				ARRAY_REMOVE(ARRAY_AGG(CAST(address_data.data_id AS INT) ORDER BY CAST(address_data.data_id AS INT)), NULL) AS data_ids,
+				crawled_at
 			FROM address
 			LEFT JOIN address_data ON address_data.address_id = address.address_id AND '${roleId}' = ANY(roles)
+			LEFT JOIN data ON data.data_id = address_data.data_id
 			WHERE address = '${address}'
-			GROUP BY address.address_id, currency_id, address
+			GROUP BY address.address_id, currency_id, address, data.crawled_at
 		`);
 	}
 

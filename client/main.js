@@ -69,8 +69,7 @@ function usePage(req, res, next) {
 
 		// Page does not have a numeric value or is too low
 		if(isNaN(req.data.pageId) || req.data.pageId <= 0) {
-			res.status(404);
-			return render(req, res);
+			return render(req, res.status(404));
 		}
 	}
 
@@ -95,8 +94,7 @@ async function useCurrency(req, res, next) {
 			req.data.currencyCode = currency[0].currency_code;
 		}
 		else {
-			res.status(404);
-			return render(req, res);
+			return render(req, res.status(404));
 		}
 	}
 
@@ -157,8 +155,7 @@ function useSource(req, res, next) {
 
 		// Source does not have a numeric value or is too low or is too high
 		if(isNaN(source) || source < 0 || source >= req.data.sources.length) {
-			res.status(404);
-			return render(req, res);
+			return render(req, res.status(404));
 		}
 		else {
 			req.data.source = req.query.source;
@@ -429,6 +426,21 @@ async function editAccountRole(req, res, next) {
 	}
 }
 
+function getMonthNumberString(monthWordString) {
+	if(monthWordString      == 'jan') { return '1'; }
+	else if(monthWordString == 'feb') { return '2'; }
+	else if(monthWordString == 'mar') { return '3'; }
+	else if(monthWordString == 'apr') { return '4'; }
+	else if(monthWordString == 'may') { return '5'; }
+	else if(monthWordString == 'jun') { return '6'; }
+	else if(monthWordString == 'jul') { return '7'; }
+	else if(monthWordString == 'aug') { return '8'; }
+	else if(monthWordString == 'sep') { return '9'; }
+	else if(monthWordString == 'oct') { return '10'; }
+	else if(monthWordString == 'nov') { return '11'; }
+	else if(monthWordString == 'dec') { return '12'; }
+}
+
 function parseDateTime(dateTimeString) {
 	let dateTimeParts = [];
 
@@ -436,19 +448,7 @@ function parseDateTime(dateTimeString) {
 		const dateTimeStringParts = dateTimeString.split(' - ');
 		const dateStringParts = dateTimeStringParts[0].split(' ');
 		const monthWordString = dateStringParts[0].slice(0,3).toLowerCase();
-		let monthNumberString;
-		if(monthWordString      == 'jan') { monthNumberString = '1'; }
-		else if(monthWordString == 'feb') { monthNumberString = '2'; }
-		else if(monthWordString == 'mar') { monthNumberString = '3'; }
-		else if(monthWordString == 'apr') { monthNumberString = '4'; }
-		else if(monthWordString == 'may') { monthNumberString = '5'; }
-		else if(monthWordString == 'jun') { monthNumberString = '6'; }
-		else if(monthWordString == 'jul') { monthNumberString = '7'; }
-		else if(monthWordString == 'aug') { monthNumberString = '8'; }
-		else if(monthWordString == 'sep') { monthNumberString = '9'; }
-		else if(monthWordString == 'oct') { monthNumberString = '10'; }
-		else if(monthWordString == 'nov') { monthNumberString = '11'; }
-		else if(monthWordString == 'dec') { monthNumberString = '12'; }
+		let monthNumberString = getMonthNumberString(monthWordString);
 		dateTimeParts.push(dateStringParts[2]);
 		dateTimeParts.push(monthNumberString);
 		dateTimeParts.push(dateStringParts[1].split(',')[0]);
@@ -463,19 +463,7 @@ function parseDateTime(dateTimeString) {
 		const dateTimeStringParts = dateTimeString.split(' UTC')[0].split('. ');
 		const dateStringParts = dateTimeStringParts[0].split(' ');
 		const monthWordString = dateStringParts[1].slice(0,3).toLowerCase();
-		let monthNumberString;
-		if(monthWordString      == 'jan') { monthNumberString = '1'; }
-		else if(monthWordString == 'feb') { monthNumberString = '2'; }
-		else if(monthWordString == 'mar') { monthNumberString = '3'; }
-		else if(monthWordString == 'apr') { monthNumberString = '4'; }
-		else if(monthWordString == 'may') { monthNumberString = '5'; }
-		else if(monthWordString == 'jun') { monthNumberString = '6'; }
-		else if(monthWordString == 'jul') { monthNumberString = '7'; }
-		else if(monthWordString == 'aug') { monthNumberString = '8'; }
-		else if(monthWordString == 'sep') { monthNumberString = '9'; }
-		else if(monthWordString == 'oct') { monthNumberString = '10'; }
-		else if(monthWordString == 'nov') { monthNumberString = '11'; }
-		else if(monthWordString == 'dec') { monthNumberString = '12'; }
+		let monthNumberString = getMonthNumberString(monthWordString);
 		dateTimeParts.push(dateStringParts[2]);
 		dateTimeParts.push(monthNumberString);
 		dateTimeParts.push(dateStringParts[0]);
@@ -497,19 +485,7 @@ function parseDateTime(dateTimeString) {
 	else if(dateTimeString.indexOf(',') > -1) {
 		const dateTimeStringParts = dateTimeString.split(' ');
 		const monthWordString = dateTimeStringParts[0].slice(0,3).toLowerCase();
-		let monthNumberString;
-		if(monthWordString      == 'jan') { monthNumberString = '1'; }
-		else if(monthWordString == 'feb') { monthNumberString = '2'; }
-		else if(monthWordString == 'mar') { monthNumberString = '3'; }
-		else if(monthWordString == 'apr') { monthNumberString = '4'; }
-		else if(monthWordString == 'may') { monthNumberString = '5'; }
-		else if(monthWordString == 'jun') { monthNumberString = '6'; }
-		else if(monthWordString == 'jul') { monthNumberString = '7'; }
-		else if(monthWordString == 'aug') { monthNumberString = '8'; }
-		else if(monthWordString == 'sep') { monthNumberString = '9'; }
-		else if(monthWordString == 'oct') { monthNumberString = '10'; }
-		else if(monthWordString == 'nov') { monthNumberString = '11'; }
-		else if(monthWordString == 'dec') { monthNumberString = '12'; }
+		let monthNumberString = getMonthNumberString(monthWordString);
 		dateTimeParts.push((dateTimeStringParts[2].length == 2 ? '20' : '') + dateTimeStringParts[2]);
 		dateTimeParts.push(monthNumberString);
 		dateTimeParts.push(dateTimeStringParts[1].split(',')[0].split('st')[0].split('nd')[0].split('rd')[0].split('th')[0]);
@@ -523,6 +499,189 @@ function parseDateTime(dateTimeString) {
 	}
 
 	return new Date(0);
+}
+
+function addReportCols(cols, row) {
+	if(typeof row.error !== undefined)       { cols[0].error.count++; }
+	if(typeof row.date !== undefined)        { cols[0].date.count++; }
+	if(typeof row.type !== undefined)        { cols[0].type.count++; }
+	if(typeof row.platform !== undefined)    { cols[0].platform.count++; }
+	if(typeof row.country !== undefined)     { cols[0].country.count++; }
+	if(typeof row.url !== undefined)         { cols[0].url.count++; }
+	if(typeof row.abuser !== undefined)      { cols[1].abuser.count++; }
+	if(typeof row.description !== undefined) { cols[2].description.count++; }
+
+	return cols;
+}
+
+function addReport(rows, cols, row) {
+	rows.push(row);
+	cols = addReportCols(cols, row);
+	
+	return [rows, cols];
+}
+
+async function getReports(address, roleId) {
+	for(let i = 0; i < address.data_ids.length; i++) {
+		const data = (await databaseConnection.getData(roleId, address.data_ids[i])).rows[0];
+
+		// Bitcoin Generator Scam
+		if(data.source_id == 5) {
+			[address.reports.rows, address.reports.cols] = addReport(address.reports.rows, address.reports.cols, {
+				type: 'Bitcoin Generator Scam',
+				url: data.url
+			});
+		}
+		else {
+			const path = PATH.join(config.crawler.data_path, data.path);
+			if(FS.existsSync(path)) {
+				if(PATH.extname(path) == '.html') {
+					const content = FS.readFileSync(path, { encoding: 'utf-8' });
+					const root = NODE_HTML_PARSER.parse(content);
+					
+					// BitcoinAbuse
+					if(data.source_id == 2) {
+						for(const row of root.querySelectorAll('.table-responsive-lg tbody tr')) {
+							const cols = row.querySelectorAll('td');
+
+							[address.reports.rows, address.reports.cols] = addReport(address.reports.rows, address.reports.cols, {
+								date: parseDateTime(cols[0].innerText.trim()),
+								type: cols[1].innerText.trim(),
+								url: data.url,
+								description: cols[2].innerText.trim()
+							});
+						}
+					}
+					// CheckBitcoinAddress
+					else if(data.source_id == 3) {
+						for(const row of root.querySelectorAll('.card-body')) {
+							const countryDateStringParts = row.querySelector('span.text-muted').innerText.trim().split(', ');
+							const dateTimeString = countryDateStringParts.pop();
+							const countryString = countryDateStringParts.join(', ');
+							
+							[address.reports.rows, address.reports.cols] = addReport(address.reports.rows, address.reports.cols, {
+								date: parseDateTime(dateTimeString.trim()),
+								type: row.querySelector('.card-title').innerText.trim(),
+								country: countryString.trim(),
+								url: data.url,
+								abuser: row.querySelector('.card-subtitle').innerText.trim().split('Abuser: ').slice(1),
+								description: row.querySelector('.card-text').innerText.trim()
+							});
+						}
+					}
+					// CryptoBlacklist
+					else if(data.source_id == 4) {
+						for(const row of root.querySelectorAll('table tbody tr')) {
+							const cols = row.querySelectorAll('td');
+							
+							[address.reports.rows, address.reports.cols] = addReport(address.reports.rows, address.reports.cols, {
+								date: parseDateTime(cols[0].innerText.trim()),
+								type: cols[1].innerText.trim(),
+								platform: cols[3].innerText.trim(),
+								url: data.url,
+								abuser: cols[2].innerText.trim(),
+								description: cols[4].innerText.trim()
+							});
+						}
+					}
+					// BitcoinAIS
+					else if(data.source_id == 6) {
+						for(const row of root.querySelectorAll('.commentwithdate')) {
+							const dateAbuserStringParts = row.querySelector('.review span').innerText.trim().split(' - Abuser: ');
+							const dateTimeString = dateAbuserStringParts[0];
+							const abuserString = dateAbuserStringParts[1];
+
+							[address.reports.rows, address.reports.cols] = addReport(address.reports.rows, address.reports.cols, {
+								date: parseDateTime(dateTimeString.trim()),
+								platform: row.querySelectorAll('span')[0].innerText.trim(),
+								url: data.url,
+								abuser: abuserString.trim(),
+								description: row.querySelector('.review div').innerText.trim()
+							});
+						}
+					}
+					// Cryptscam
+					else if(data.source_id == 8) {
+						for(const row of root.querySelectorAll('.card-body')) {
+							const cols = row.querySelectorAll('.row');
+							
+							[address.reports.rows, address.reports.cols] = addReport(address.reports.rows, address.reports.cols, {
+								date: parseDateTime(cols[0].querySelector('h5').innerText.trim()),
+								type: cols[1].querySelector('h5').innerText.trim(),
+								country: cols[3].querySelector('h5').innerText.trim(),
+								url: data.url,
+								abuser: cols[2].querySelector('h5').innerText.trim(),
+								description: cols[4].querySelector('h5').innerText.trim()
+							});
+						}
+					}
+					// SeeKoin
+					else if(data.source_id == 9) {
+						const cols = root.querySelector('p').innerHTML.trim().split('<br><strong>');
+						const dateString = cols[3].split('</strong>')[1];
+						const typeString = cols[4].split('">')[1].split('</a>')[0];
+						const descriptionString = cols[6].split('</strong>')[1].split('<br>')[0];
+
+						[address.reports.rows, address.reports.cols] = addReport(address.reports.rows, address.reports.cols, {
+							date: parseDateTime(dateString.trim()),
+							type: typeString.trim(),
+							url: data.url,
+							description: descriptionString.trim()
+						});
+					}
+					// BitcoinWhosWho
+					else if(data.source_id == 10) {
+						const rows = root.querySelectorAll('#scam_records_table .row:not(.bootstrap_grid_header)');
+						for(let j = 0; j < rows.length; j+=2) {
+							const dateString = rows[j].querySelectorAll('div')[rows[j].querySelectorAll('div').length - 1].innerText.trim();
+							const descriptionString = rows[j+1].querySelectorAll('div')[rows[j+1].querySelectorAll('div').length - 1].innerText.trim();
+							
+							[address.reports.rows, address.reports.cols] = addReport(address.reports.rows, address.reports.cols, {
+								date: parseDateTime(dateString),
+								url: data.url,
+								description: descriptionString
+							});
+						}
+					}
+				}
+				else if(PATH.extname(path) == '.json') {
+					const content = require(path);
+					
+					// CryptoScamDB
+					if(data.source_id == 7) {
+						for(const row of content.result[address.address]) {
+							let typeString = '';
+							if(row.category != null && row.subcategory != null) {
+								typeString = row.category.trim() + ' / ' + row.subcategory.trim();
+							}
+							else if(row.category != null) {
+								typeString = row.category.trim();
+							}
+							else if(row.subcategory != null) {
+								typeString = row.subcategory.trim();
+							}
+
+							[address.reports.rows, address.reports.cols] = addReport(address.reports.rows, address.reports.cols, {
+								date: new Date(row.updated),
+								type: typeString,
+								url: data.url,
+								abuser: (row.name != null ? row.name.trim() : ''),
+								description: (row.description != null ? row.description.trim() : '')
+							});
+						}
+					}
+				}
+			}
+			else {
+				[address.reports.rows, address.reports.cols] = addReport(address.reports.rows, address.reports.cols, {
+					error: 'Data file is missing!',
+					url: data.url
+				});
+			}
+		}
+	}
+
+	return address.reports;
 }
 
 function postProcess(req, res, next) {
@@ -793,8 +952,7 @@ app.get('/accounts', preProcess, (req, res, next) => {
 
 		// Role does not have a numeric value or is too low
 		if(isNaN(req.data.role) || req.data.role <= 0) {
-			res.status(404);
-			return render(req, res);
+			return render(req, res.status(404));
 		}
 	}
 
@@ -804,8 +962,7 @@ app.get('/accounts', preProcess, (req, res, next) => {
 
 	// Page is too high
 	if(req.data.pageId > req.data.pageCount) {
-		res.status(404);
-		return render(req, res);
+		return render(req, res.status(404));
 	}
 
 	req.data.accounts = (await databaseConnection.getAccounts(req.data.limit, req.data.offset, req.data.email, req.data.role)).rows;
@@ -855,8 +1012,7 @@ app.get('/addresses', preProcess, usePage, loadSource, useSource, useCurrency, a
 
 	// Page is too high
 	if(req.data.pageId > req.data.pageCount) {
-		res.status(404);
-		return render(req, res);
+		return render(req, res.status(404));
 	}
 
 	req.data.addresses = (await databaseConnection.getAddresses(roleId, req.data.limit, req.data.offset, req.data.withData, req.data.sourceId, req.data.sourceLabelId, req.data.currencyId)).rows;
@@ -868,8 +1024,7 @@ app.get('/addresses', preProcess, usePage, loadSource, useSource, useCurrency, a
 app.get('/address/:address([a-zA-Z0-9]{0,})', preProcess, usePage, loadSource, async (req, res, next) => {
 	// Address is not set
 	if(!req.params.hasOwnProperty('address') || req.params.address.length == 0) {
-		res.status(404);
-		return render(req, res);
+		return render(req, res.status(404));
 	}
 	else {
 		const address = req.params.address;
@@ -896,218 +1051,9 @@ app.get('/address/:address([a-zA-Z0-9]{0,})', preProcess, usePage, loadSource, a
 				],
 				rows: []
 			};
+
+			req.data.address.reports = (await getReports(req.data.address, roleId));
 			
-			for(let i = 0; i < req.data.address.data_ids.length; i++) {
-				const data = (await databaseConnection.getData(roleId, req.data.address.data_ids[i])).rows[0];
-
-				// Bitcoin Generator Scam
-				if(data.source_id == 5) {
-					req.data.address.reports.cols[0].type.count++;
-					req.data.address.reports.cols[0].url.count++;
-					
-					req.data.address.reports.rows.push({
-						type: 'Bitcoin Generator Scam',
-						url: data.url
-					});
-				}
-				else {
-					const path = PATH.join(config.crawler.data_path, data.path);
-					if(FS.existsSync(path)) {
-						if(PATH.extname(path) == '.html') {
-							const content = FS.readFileSync(path, { encoding: 'utf-8' });
-							const root = NODE_HTML_PARSER.parse(content);
-							
-							// BitcoinAbuse
-							if(data.source_id == 2) {
-								for(const row of root.querySelectorAll('.table-responsive-lg tbody tr')) {
-									const cols = row.querySelectorAll('td');
-
-									req.data.address.reports.cols[0].date.count++;
-									req.data.address.reports.cols[0].type.count++;
-									req.data.address.reports.cols[0].url.count++;
-									req.data.address.reports.cols[2].description.count++;
-
-									req.data.address.reports.rows.push({
-										date: parseDateTime(cols[0].innerText.trim()),
-										type: cols[1].innerText.trim(),
-										url: data.url,
-										description: cols[2].innerText.trim()
-									});
-								}
-							}
-							// CheckBitcoinAddress
-							else if(data.source_id == 3) {
-								for(const row of root.querySelectorAll('.card-body')) {
-									const countryDateStringParts = row.querySelector('span.text-muted').innerText.trim().split(', ');
-									const dateTimeString = countryDateStringParts.pop();
-									const countryString = countryDateStringParts.join(', ');
-									
-									req.data.address.reports.cols[0].date.count++;
-									req.data.address.reports.cols[0].type.count++;
-									req.data.address.reports.cols[0].country.count++;
-									req.data.address.reports.cols[0].url.count++;
-									req.data.address.reports.cols[1].abuser.count++;
-									req.data.address.reports.cols[2].description.count++;
-
-									req.data.address.reports.rows.push({
-										date: parseDateTime(dateTimeString.trim()),
-										type: row.querySelector('.card-title').innerText.trim(),
-										country: countryString.trim(),
-										url: data.url,
-										abuser: row.querySelector('.card-subtitle').innerText.trim().split('Abuser: ').slice(1),
-										description: row.querySelector('.card-text').innerText.trim()
-									});
-								}
-							}
-							// CryptoBlacklist
-							else if(data.source_id == 4) {
-								for(const row of root.querySelectorAll('table tbody tr')) {
-									const cols = row.querySelectorAll('td');
-									
-									req.data.address.reports.cols[0].date.count++;
-									req.data.address.reports.cols[0].type.count++;
-									req.data.address.reports.cols[0].platform.count++;
-									req.data.address.reports.cols[0].url.count++;
-									req.data.address.reports.cols[1].abuser.count++;
-									req.data.address.reports.cols[2].description.count++;
-									
-									req.data.address.reports.rows.push({
-										date: parseDateTime(cols[0].innerText.trim()),
-										type: cols[1].innerText.trim(),
-										platform: cols[3].innerText.trim(),
-										url: data.url,
-										abuser: cols[2].innerText.trim(),
-										description: cols[4].innerText.trim()
-									});
-								}
-							}
-							// BitcoinAIS
-							else if(data.source_id == 6) {
-								for(const row of root.querySelectorAll('.commentwithdate')) {
-									const dateAbuserStringParts = row.querySelector('.review span').innerText.trim().split(' - Abuser: ');
-									const dateTimeString = dateAbuserStringParts[0];
-									const abuserString = dateAbuserStringParts[1];
-
-									req.data.address.reports.cols[0].date.count++;
-									req.data.address.reports.cols[0].platform.count++;
-									req.data.address.reports.cols[0].url.count++;
-									req.data.address.reports.cols[1].abuser.count++;
-									req.data.address.reports.cols[2].description.count++;
-
-									req.data.address.reports.rows.push({
-										date: parseDateTime(dateTimeString.trim()),
-										platform: row.querySelectorAll('span')[0].innerText.trim(),
-										url: data.url,
-										abuser: abuserString.trim(),
-										description: row.querySelector('.review div').innerText.trim()
-									});
-								}
-							}
-							// Cryptscam
-							else if(data.source_id == 8) {
-								for(const row of root.querySelectorAll('.card-body')) {
-									const cols = row.querySelectorAll('.row');
-									
-									req.data.address.reports.cols[0].date.count++;
-									req.data.address.reports.cols[0].type.count++;
-									req.data.address.reports.cols[0].country.count++;
-									req.data.address.reports.cols[0].url.count++;
-									req.data.address.reports.cols[1].abuser.count++;
-									req.data.address.reports.cols[2].description.count++;
-
-									req.data.address.reports.rows.push({
-										date: parseDateTime(cols[0].querySelector('h5').innerText.trim()),
-										type: cols[1].querySelector('h5').innerText.trim(),
-										country: cols[3].querySelector('h5').innerText.trim(),
-										url: data.url,
-										abuser: cols[2].querySelector('h5').innerText.trim(),
-										description: cols[4].querySelector('h5').innerText.trim()
-									});
-								}
-							}
-							// SeeKoin
-							else if(data.source_id == 9) {
-								const cols = root.querySelector('p').innerHTML.trim().split('<br><strong>');
-								const dateString = cols[3].split('</strong>')[1];
-								const typeString = cols[4].split('">')[1].split('</a>')[0];
-								const descriptionString = cols[6].split('</strong>')[1].split('<br>')[0];
-
-								req.data.address.reports.cols[0].date.count++;
-								req.data.address.reports.cols[0].type.count++;
-								req.data.address.reports.cols[0].url.count++;
-								req.data.address.reports.cols[2].description.count++;
-
-								req.data.address.reports.rows.push({
-									date: parseDateTime(dateString.trim()),
-									type: typeString.trim(),
-									url: data.url,
-									description: descriptionString.trim()
-								});
-							}
-							// BitcoinWhosWho
-							else if(data.source_id == 10) {
-								const rows = root.querySelectorAll('#scam_records_table .row:not(.bootstrap_grid_header)');
-								for(let j = 0; j < rows.length; j+=2) {
-									const dateString = rows[j].querySelectorAll('div')[rows[j].querySelectorAll('div').length - 1].innerText.trim();
-									const descriptionString = rows[j+1].querySelectorAll('div')[rows[j+1].querySelectorAll('div').length - 1].innerText.trim();
-									
-									req.data.address.reports.cols[0].date.count++;
-									req.data.address.reports.cols[0].url.count++;
-									req.data.address.reports.cols[2].description.count++;
-
-									req.data.address.reports.rows.push({
-										date: parseDateTime(dateString),
-										url: data.url,
-										description: descriptionString
-									});
-								}
-							}
-						}
-						else if(PATH.extname(path) == '.json') {
-							const content = require(path);
-							
-							// CryptoScamDB
-							if(data.source_id == 7) {
-								for(const row of content.result[req.data.address.address]) {
-									let typeString = '';
-									if(row.category != null && row.subcategory != null) {
-										typeString = row.category.trim() + ' / ' + row.subcategory.trim();
-									}
-									else if(row.category != null) {
-										typeString = row.category.trim();
-									}
-									else if(row.subcategory != null) {
-										typeString = row.subcategory.trim();
-									}
-
-									req.data.address.reports.cols[0].date.count++;
-									req.data.address.reports.cols[0].type.count++;
-									req.data.address.reports.cols[0].url.count++;
-									req.data.address.reports.cols[1].abuser.count++;
-									req.data.address.reports.cols[2].description.count++;
-
-									req.data.address.reports.rows.push({
-										date: new Date(row.updated),
-										type: typeString,
-										url: data.url,
-										abuser: (row.name != null ? row.name.trim() : ''),
-										description: (row.description != null ? row.description.trim() : '')
-									});
-								}
-							}
-						}
-					}
-					else {
-						req.data.address.reports.cols[0].error.count++;
-						req.data.address.reports.cols[0].url.count++;
-						req.data.address.reports.rows.push({
-							error: 'Data file is missing!',
-							url: data.url
-						});
-					}
-				}
-			}
-
 			req.data.address.reports.count = req.data.address.reports.rows.length;
 			req.data.address.reports.rows = req.data.address.reports.rows.slice(req.data.offset, (req.data.offset + req.data.limit < req.data.address.reports.rows.length ? req.data.offset + req.data.limit : req.data.address.reports.rows.length));
 
@@ -1116,16 +1062,14 @@ app.get('/address/:address([a-zA-Z0-9]{0,})', preProcess, usePage, loadSource, a
 
 			// Page is too high
 			if(req.data.pageId > req.data.pageCount) {
-				res.status(404);
-				return render(req, res);
+				return render(req, res.status(404));
 			}
 			else {
 				next();
 			}
 		}
 		else {
-			res.status(404);
-			return render(req, res);
+			return render(req, res.status(404));
 		}
 	}
 }, render);
@@ -1187,8 +1131,7 @@ app.get('/api', preProcess, loadSource, async (req, res, next) => {
 app.get('/faq', preProcess, render);
 
 app.get('*', preProcess, (req, res) => {
-	res.status(404);
-	return render(req, res);
+	return render(req, res.status(404));
 });
 
 

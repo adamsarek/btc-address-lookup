@@ -137,6 +137,14 @@ const generateBlockchairLink = (currencyCode) => {
 				<%- generateExplorerLink(address.currency[1]).length > 0 || generateBlockchairLink(address.currency[1]).length > 0 ? '<tr><th align="left"><label>Blockchain explorers</label></th></tr>' : '' %>
 				<%- generateExplorerLink(address.currency[1]).length > 0 ? '<tr><td align="left"><div class="content">' + generateExplorerLink(address.currency[1]) + '</div></td></tr>' : '' %>
 				<%- generateBlockchairLink(address.currency[1]).length > 0 ? '<tr><td align="left"><div class="content">' + generateBlockchairLink(address.currency[1]) + '</div></td></tr>' : '' %>
+				<% if(address.crawled_at) { %>
+					<tr>
+						<th align="left"><label>Last update</label></th>
+					</tr>
+					<tr>
+						<td align="left"><div class="content"><%- address.crawled_at.toLocaleString() %></div></td>
+					</tr>
+				<% } %>
 			</table>
 		</div>
 		<div><hr></div>
@@ -204,7 +212,9 @@ const generateBlockchairLink = (currencyCode) => {
 											<% if(Object.keys(address.reports.cols[j])[k] == 'date') { %>
 												<%- '<td align="left" valign="top"' + (j > 0 ? ' colspan="' + colspan + '"' : ' colspan="' + subspan + '"') + '><div class="content">' + address.reports.rows[i][Object.keys(address.reports.cols[j])[k]].toLocaleString() + '</div></td>' %>
 											<% } else if(Object.keys(address.reports.cols[j])[k] == 'url') { %>
-												<%- '<td align="left" valign="top"' + (j > 0 ? ' colspan="' + colspan + '"' : ' colspan="' + subspan + '"') + '><div class="content"><a href="' + address.reports.rows[i][Object.keys(address.reports.cols[j])[k]] + '" target="_blank">View on ' + address.reports.rows[i][Object.keys(address.reports.cols[j])[k]].split('/')[2] + '</a></div></td>' %>
+												<% let url = address.reports.rows[i][Object.keys(address.reports.cols[j])[k]].split('/')[2]; %>
+												<% if(url.indexOf('www.') > -1) { url = url.split('www.')[1]; } %>
+												<%- '<td align="left" valign="top"' + (j > 0 ? ' colspan="' + colspan + '"' : ' colspan="' + subspan + '"') + '><div class="content"><a href="' + address.reports.rows[i][Object.keys(address.reports.cols[j])[k]] + '" target="_blank">View on ' + url + '</a></div></td>' %>
 											<% } else { %>
 												<%- '<td align="left" valign="top"' + (j > 0 ? ' colspan="' + colspan + '"' : ' colspan="' + subspan + '"') + '><div class="content">' + address.reports.rows[i][Object.keys(address.reports.cols[j])[k]] + '</div></td>' %>
 											<% } %>
