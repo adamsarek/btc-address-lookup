@@ -2,9 +2,9 @@
 The goal of the thesis is creation of a tool for pinpointing owners of the Bitcoin addresses found on the internet. The data are collected in a PostgreSQL database by continuously crawling provided URLs and obtained directly from the source code. The scripts are built in Python and running on a remote server.
 
 ## :printer: Documentation [[documentation](documentation "Documentation")]
-<!--
 ### Documents:
 - :memo: [Thesis](documentation/thesis.pdf "Thesis")
+<!--
 - :memo: [Presentation](documentation/presentation.pdf "Presentation")
 -->
 
