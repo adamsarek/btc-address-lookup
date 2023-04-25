@@ -1,7 +1,14 @@
 // External imports
 const PG = require('pg');
 
+/**
+ * Database class
+ */
 class Database {
+	/**
+	 * Constructor
+	 * @returns {Object} Database instance
+	 */
 	constructor() {
 		if(!Database._instance) {
 			Database._instance = this;
@@ -11,6 +18,11 @@ class Database {
 		return Database._instance;
 	}
 
+	/**
+	 * Gets connection string
+	 * @param {Object} connectionDetails Connection details object
+	 * @returns {String} Connection string
+	 */
 	#getConnectionString(connectionDetails) {
 		return 'postgresql://' + connectionDetails.user
 						 + ':' + connectionDetails.password
@@ -19,6 +31,12 @@ class Database {
 						 + '/' + connectionDetails.dbname;
 	}
 
+	/**
+	 * Gets connection object
+	 * @param {Object} connectionDetails Connection details object
+	 * @param {Boolean} connectionPool Use connection pool
+	 * @returns {Object} Connection object
+	 */
 	getConnection(connectionDetails, connectionPool=true) {
 		if(connectionPool) {
 			const connectionString = this.#getConnectionString(connectionDetails);

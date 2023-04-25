@@ -16,6 +16,9 @@ const Database = require('./database/database.js');
 const DatabaseConnection = require('./database/database_connection.js');
 
 // Functions
+/**
+ * Generates new session secret if there is none or the current one is timed out
+ */
 function rotateSecret() {
 	if(!FS.existsSync('./secret.json')) {
 		SECRET = {
@@ -29,17 +32,25 @@ function rotateSecret() {
 		SECRET = require('./secret.json');
 		SECRET['session'] = {[CRYPTO.randomBytes(64).toString('hex')]: Date.now(), ...SECRET['session']};
 		for(const secretSession of Object.keys(SECRET['session'])) {
+			// Keeps last 2 secrets, older ones are deleted
 			if(SECRET['session'][secretSession] + config.session.secret_timeout * 2 < Date.now()) {
 				delete SECRET['session'][secretSession];
 			}
 		}
 	}
 
+	// Generate new secret after at least one times out
 	setTimeout(() => {
 		rotateSecret();
 	}, Object.values(SECRET['session'])[0] + config.session.secret_timeout - Date.now());
 }
 
+/**
+ * Adds some valuable data to the API request i.e. client IP & account
+ * @param {Object} req Request object
+ * @param {Object} res Response object
+ * @param {Object} next Next function
+ */
 function preProcessAPI(req, res, next) {
 	req.data = {};
 
@@ -59,9 +70,16 @@ function preProcessAPI(req, res, next) {
 	next();
 }
 
+/**
+ * Adds page query support
+ * @param {Object} req Request object
+ * @param {Object} res Response object
+ * @param {Object} next Next function
+ * @returns {Object} Renders 404 error page
+ */
 function usePage(req, res, next) {
 	// Page is not set
-	if(!req.query.hasOwnProperty('page') || req.query.page.length == 0) {
+	if(!Object.prototype.hasOwnProperty.call(req.query, 'page') || req.query.page.length == 0) {
 		req.data.pageId = 1;
 	}
 	else {
@@ -79,9 +97,16 @@ function usePage(req, res, next) {
 	next();
 }
 
+/**
+ * Adds currency query support
+ * @param {Object} req Request object
+ * @param {Object} res Response object
+ * @param {Object} next Next function
+ * @returns {Object} Renders 404 error page
+ */
 async function useCurrency(req, res, next) {
 	// Currency code is not set
-	if(!req.query.hasOwnProperty('currency') || req.query.currency.length == 0) {
+	if(!Object.prototype.hasOwnProperty.call(req.query, 'currency') || req.query.currency.length == 0) {
 		req.data.currencyId = null;
 		req.data.currencyCode = null;
 	}
@@ -101,6 +126,12 @@ async function useCurrency(req, res, next) {
 	next();
 }
 
+/**
+ * Adds sources to the request object
+ * @param {Object} req Request object
+ * @param {Object} res Response object
+ * @param {Object} next Next function
+ */
 async function loadSource(req, res, next) {
 	req.data.sources = [
 		{ name: 'All', sourceId: null, sourceLabelId: null }
@@ -142,9 +173,16 @@ async function loadSource(req, res, next) {
 	});
 }
 
+/**
+ * Adds source query support
+ * @param {Object} req Request object
+ * @param {Object} res Response object
+ * @param {Object} next Next function
+ * @returns {Object} Renders 404 error page
+ */
 function useSource(req, res, next) {
 	// Source is not set
-	if(!req.query.hasOwnProperty('source') || req.query.source.length == 0) {
+	if(!Object.prototype.hasOwnProperty.call(req.query, 'source') || req.query.source.length == 0) {
 		req.data.source = 0;
 		req.data.withData = true;
 		req.data.sourceId = req.data.sources[0].sourceId;
@@ -168,9 +206,16 @@ function useSource(req, res, next) {
 	next();
 }
 
+/**
+ * Adds token query support
+ * @param {Object} req Request object
+ * @param {Object} res Response object
+ * @param {Object} next Next function
+ * @returns {Object} Renders 400 error page
+ */
 function loadToken(req, res, next) {
 	// Token is not set
-	if(!req.query.hasOwnProperty('token') || req.query.token.length == 0) {
+	if(!Object.prototype.hasOwnProperty.call(req.query, 'token') || req.query.token.length == 0) {
 		return res.status(400).json({ error: 'Token has to be set!' });
 	}
 	else {
@@ -179,6 +224,13 @@ function loadToken(req, res, next) {
 	}
 }
 
+/**
+ * Logs token use
+ * @param {Object} req Request object
+ * @param {Object} res Response object
+ * @param {Object} next Next function
+ * @returns {Object} Renders 400 error page
+ */
 async function useToken(req, res, next) {
 	req.data.token = await databaseConnection.getToken(req.data.token);
 
@@ -220,6 +272,12 @@ async function useToken(req, res, next) {
 	}
 }
 
+/**
+ * Adds some valuable data to the web request i.e. client IP & account
+ * @param {Object} req Request object
+ * @param {Object} res Response object
+ * @param {Object} next Next function
+ */
 function preProcess(req, res, next) {
 	req.data = {};
 
@@ -254,6 +312,12 @@ function preProcess(req, res, next) {
 	next();
 }
 
+/**
+ * Validate form inputs
+ * @param {Object} req Request object
+ * @param {Object} inputs Submitted input name
+ * @returns {Object} Form error & success validation results
+ */
 function getForm(req, inputs) {
 	const form = {
 		_error: '',
@@ -346,6 +410,12 @@ function getForm(req, inputs) {
 	return form;
 }
 
+/**
+ * Sign in if user exists
+ * @param {Object} req Request object
+ * @param {Object} res Response object
+ * @param {Object} next Next function
+ */
 async function signIn(req, res, next) {
 	req.data.form._success.overall = false;
 	
@@ -362,7 +432,9 @@ async function signIn(req, res, next) {
 						await databaseConnection.addToken(account.rows[0].account_id, token, req.data.ip);
 						break;
 					}
-					catch(error) {}
+					catch(error) {
+						// Token already exists, continue generating...
+					}
 				}
 			}
 
@@ -387,6 +459,13 @@ async function signIn(req, res, next) {
 	}
 }
 
+/**
+ * Edits account role
+ * @param {Object} req Request object
+ * @param {Object} res Response object
+ * @param {Object} next Next function
+ * @returns {Object} Redirects to the account(s) page
+ */
 async function editAccountRole(req, res, next) {
 	req.data.form._success.overall = false;
 	
@@ -426,6 +505,11 @@ async function editAccountRole(req, res, next) {
 	}
 }
 
+/**
+ * Converts month 3-character to number string
+ * @param {String} monthWordString Month 3-character string
+ * @returns {String} Month number string
+ */
 function getMonthNumberString(monthWordString) {
 	if(monthWordString      == 'jan') { return '1'; }
 	else if(monthWordString == 'feb') { return '2'; }
@@ -441,6 +525,11 @@ function getMonthNumberString(monthWordString) {
 	else if(monthWordString == 'dec') { return '12'; }
 }
 
+/**
+ * Converts DateTime string to Date object
+ * @param {String} dateTimeString DateTime string
+ * @returns {Object} Date object
+ */
 function parseDateTime(dateTimeString) {
 	let dateTimeParts = [];
 
@@ -501,6 +590,12 @@ function parseDateTime(dateTimeString) {
 	return new Date(0);
 }
 
+/**
+ * Occupies columns with row data
+ * @param {Object} cols Columns array
+ * @param {Object} row Row data object
+ * @returns {Object} Columns array
+ */
 function addReportCols(cols, row) {
 	if(typeof row.error !== undefined)       { cols[0].error.count++; }
 	if(typeof row.date !== undefined)        { cols[0].date.count++; }
@@ -514,6 +609,13 @@ function addReportCols(cols, row) {
 	return cols;
 }
 
+/**
+ * Adds report
+ * @param {Object} rows Rows data array
+ * @param {Object} cols Columns array
+ * @param {Object} row Row data object
+ * @returns {Object} Report object
+ */
 function addReport(rows, cols, row) {
 	rows.push(row);
 	cols = addReportCols(cols, row);
@@ -521,6 +623,12 @@ function addReport(rows, cols, row) {
 	return [rows, cols];
 }
 
+/**
+ * Get address reports
+ * @param {Object} address Address object
+ * @param {Number} roleId Role ID
+ * @returns {Object} Reports array
+ */
 async function getReports(address, roleId) {
 	for(let i = 0; i < address.data_ids.length; i++) {
 		const data = (await databaseConnection.getData(roleId, address.data_ids[i])).rows[0];
@@ -684,6 +792,12 @@ async function getReports(address, roleId) {
 	return address.reports;
 }
 
+/**
+ * Removes some sensitive data from the request
+ * @param {Object} req Request object
+ * @param {Object} res Response object
+ * @param {Object} next Next function
+ */
 function postProcess(req, res, next) {
 	if(typeof req.data.form !== 'undefined') {
 		if(typeof req.data.form.password !== 'undefined') { req.data.form.password.data = ''; }
@@ -694,6 +808,11 @@ function postProcess(req, res, next) {
 	next();
 }
 
+/**
+ * Renders page
+ * @param {Object} req Request object
+ * @param {Object} res Response object
+ */
 function render(req, res) {
 	if(res.statusCode == 404) {
 		req.data.page = config.router.page['*'];
@@ -731,7 +850,7 @@ app.set('view engine', 'ejs');
 // REST API
 app.get('/api/tokens/:token([a-zA-Z0-9]{0,})', preProcessAPI, (req, res, next) => {
 	// Token is not set
-	if(!req.params.hasOwnProperty('token') || req.params.token.length == 0) {
+	if(!Object.prototype.hasOwnProperty.call(req.params, 'token') || req.params.token.length == 0) {
 		return res.status(400).json({ error: 'Token has to be set!' });
 	}
 	else {
@@ -782,7 +901,7 @@ app.get('/api/addresses', preProcessAPI, usePage, loadSource, useSource, useCurr
 
 app.get('/api/addresses/:address([a-zA-Z0-9]{0,})', preProcessAPI, (req, res, next) => {
 	// Address is not set
-	if(!req.params.hasOwnProperty('address') || req.params.address.length == 0) {
+	if(!Object.prototype.hasOwnProperty.call(req.params, 'address') || req.params.address.length == 0) {
 		return res.status(400).json({ error: 'Address has to be set!' });
 	}
 	else {
@@ -805,7 +924,7 @@ app.get('/api/addresses/:address([a-zA-Z0-9]{0,})', preProcessAPI, (req, res, ne
 
 app.get('/api/data/:data([0-9]{0,})', preProcessAPI, (req, res, next) => {
 	// Data is not set
-	if(!req.params.hasOwnProperty('data') || req.params.data.length == 0) {
+	if(!Object.prototype.hasOwnProperty.call(req.params, 'data') || req.params.data.length == 0) {
 		return res.status(400).json({ error: 'Data has to be set!' });
 	}
 	else {
@@ -855,7 +974,7 @@ app.get('/', preProcess, render);
 
 app.get('/search', (req, res) => {
 	// Q is not set
-	if(!req.query.hasOwnProperty('q') || req.query.q.trim().length == 0) {
+	if(!Object.prototype.hasOwnProperty.call(req.query, 'q') || req.query.q.trim().length == 0) {
 		return res.redirect('/');
 	}
 	else {
@@ -936,7 +1055,7 @@ app.get('/accounts', preProcess, (req, res, next) => {
 	}
 }, usePage, async (req, res, next) => {
 	// Email is not set
-	if(!req.query.hasOwnProperty('email') || req.query.email.length == 0) {
+	if(!Object.prototype.hasOwnProperty.call(req.query, 'email') || req.query.email.length == 0) {
 		req.data.email = '';
 	}
 	else {
@@ -944,7 +1063,7 @@ app.get('/accounts', preProcess, (req, res, next) => {
 	}
 	
 	// Role is not set
-	if(!req.query.hasOwnProperty('role') || req.query.role.length == 0) {
+	if(!Object.prototype.hasOwnProperty.call(req.query, 'role') || req.query.role.length == 0) {
 		req.data.role = null;
 	}
 	else {
@@ -1023,7 +1142,7 @@ app.get('/addresses', preProcess, usePage, loadSource, useSource, useCurrency, a
 
 app.get('/address/:address([a-zA-Z0-9]{0,})', preProcess, usePage, loadSource, async (req, res, next) => {
 	// Address is not set
-	if(!req.params.hasOwnProperty('address') || req.params.address.length == 0) {
+	if(!Object.prototype.hasOwnProperty.call(req.params, 'address') || req.params.address.length == 0) {
 		return render(req, res.status(404));
 	}
 	else {

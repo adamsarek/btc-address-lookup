@@ -1,6 +1,9 @@
 // External imports
 const BCRYPT = require('bcrypt');
 
+/**
+ * Database connection class
+ */
 class DatabaseConnection {
 	constructor(connection, config) {
 		this._connection = connection;
@@ -8,10 +11,21 @@ class DatabaseConnection {
 		this._sql = {};
 	}
 
+	/**
+	 * Gets connection object
+	 * @returns {Object} Connection object
+	 */
 	getConnection() {
 		return this._connection;
 	}
 
+	/**
+	 * Executes SQL query
+	 * @param {String} query SQL query
+	 * @param {Boolean} cache Use cache
+	 * @param {Object} args Arguments array
+	 * @returns {Object} Cursor object
+	 */
 	#execute(query, cache=false, args=[]) {
 		let cursor = [];
 
@@ -37,6 +51,13 @@ class DatabaseConnection {
 		return cursor;
 	}
 
+	/**
+	 * Adds token to the database
+	 * @param {Number} accountId Account ID
+	 * @param {String} token API token
+	 * @param {String} ip Client IP address
+	 * @returns {Object} Cursor object
+	 */
 	addToken(accountId, token, ip) {
 		return this.#execute(`
 			INSERT INTO token (account_id, token, created_by_ip)
@@ -48,6 +69,11 @@ class DatabaseConnection {
 		`);
 	}
 
+	/**
+	 * Gets token from the database
+	 * @param {String} token API token
+	 * @returns {Object} Cursor object
+	 */
 	getToken(token) {
 		return this.#execute(`
 			SELECT
@@ -68,6 +94,12 @@ class DatabaseConnection {
 		`);
 	}
 
+	/**
+	 * Sets token to the database
+	 * @param {String} token API token
+	 * @param {String} ip Client IP address
+	 * @returns {Object} Cursor object
+	 */
 	setToken(token, ip) {
 		return this.#execute(`
 			UPDATE token
@@ -80,6 +112,16 @@ class DatabaseConnection {
 		`);
 	}
 
+	/**
+	 * Prepares SQL query
+	 * @param {Number} sqlOption SQL preparation option
+	 * @param {Number} roleId Role ID
+	 * @param {Boolean} withData Get address with data
+	 * @param {Number} sourceId Source ID
+	 * @param {Number} sourceLabelId Source label ID
+	 * @param {Number} currencyId Currency ID
+	 * @returns {String} Prepared SQL query
+	 */
 	#prepareSQL(sqlOption, roleId, withData=false, sourceId=null, sourceLabelId=null, currencyId=null) {
 		const sql = [];
 		sql[0] = `WHERE ${currencyId != null ? 'currency_id ' + (currencyId > 0 ? '= ' + currencyId : 'IS NULL') + ' AND ' : ''}`;
@@ -163,6 +205,17 @@ class DatabaseConnection {
 		}
 	}
 
+	/**
+	 * Gets addresses from the database
+	 * @param {Number} roleId Role ID
+	 * @param {Number} limit Limit
+	 * @param {Number} offset Offset
+	 * @param {Boolean} withData Get address with data
+	 * @param {Number} sourceId Source ID
+	 * @param {Number} sourceLabelId Source label ID
+	 * @param {Number} currencyId Currency ID
+	 * @returns {Object} Cursor object
+	 */
 	getAddresses(roleId, limit, offset, withData=false, sourceId=null, sourceLabelId=null, currencyId=null) {
 		return this.#execute(`
 			${this.#prepareSQL(0, roleId, withData, sourceId, sourceLabelId, currencyId)}
@@ -170,10 +223,25 @@ class DatabaseConnection {
 		`, true);
 	}
 
+	/**
+	 * Gets addresses count from the database
+	 * @param {Number} roleId Role ID
+	 * @param {Boolean} withData Get address with data
+	 * @param {Number} sourceId Source ID
+	 * @param {Number} sourceLabelId Source label ID
+	 * @param {Number} currencyId Currency ID
+	 * @returns {Object} Cursor object
+	 */
 	getAddressesCount(roleId, withData=false, sourceId=null, sourceLabelId=null, currencyId=null) {
 		return this.#execute(this.#prepareSQL(1, roleId, withData, sourceId, sourceLabelId, currencyId), true);
 	}
 
+	/**
+	 * Gets address from the database
+	 * @param {Number} roleId Role ID
+	 * @param {String} address Address
+	 * @returns {Object} Cursor object
+	 */
 	getAddress(roleId, address) {
 		return this.#execute(`
 			SELECT
@@ -193,6 +261,12 @@ class DatabaseConnection {
 		`);
 	}
 
+	/**
+	 * Gets data from the database
+	 * @param {Number} roleId Role ID
+	 * @param {Number} dataId Data ID
+	 * @returns {Object} Cursor object
+	 */
 	getData(roleId, dataId) {
 		return this.#execute(`
 			SELECT
@@ -240,6 +314,10 @@ class DatabaseConnection {
 		`);
 	}
 
+	/**
+	 * Gets sources from the database
+	 * @returns {Object} Cursor object
+	 */
 	getSources() {
 		return this.#execute(`
 			SELECT
@@ -253,6 +331,11 @@ class DatabaseConnection {
 		`);
 	}
 
+	/**
+	 * Gets source from the database
+	 * @param {Number} sourceId Source ID
+	 * @returns {Object} Cursor object
+	 */
 	getSource(sourceId) {
 		return this.#execute(`
 			SELECT
@@ -266,6 +349,10 @@ class DatabaseConnection {
 		`);
 	}
 
+	/**
+	 * Gets source labels from the database
+	 * @returns {Object} Cursor object
+	 */
 	getSourceLabels() {
 		return this.#execute(`
 			SELECT
@@ -279,6 +366,11 @@ class DatabaseConnection {
 		`);
 	}
 
+	/**
+	 * Gets source label from the database
+	 * @param {Number} sourceLabelId Source label ID
+	 * @returns {Object} Cursor object
+	 */
 	getSourceLabel(sourceLabelId) {
 		return this.#execute(`
 			SELECT
@@ -292,6 +384,10 @@ class DatabaseConnection {
 		`);
 	}
 
+	/**
+	 * Gets currencies from the database
+	 * @returns {Object} Cursor object
+	 */
 	getCurrencies() {
 		return this.#execute(`
 			SELECT
@@ -310,6 +406,11 @@ class DatabaseConnection {
 		`);
 	}
 
+	/**
+	 * Gets currency from the database
+	 * @param {String} currencyCode Currency code
+	 * @returns {Object} Cursor object
+	 */
 	getCurrency(currencyCode) {
 		if(currencyCode == '_pending') {
 			return this.#execute(`
@@ -333,6 +434,11 @@ class DatabaseConnection {
 		}
 	}
 
+	/**
+	 * Checks if account with given email exists in the database
+	 * @param {String} email Email address
+	 * @returns {Object} Cursor object
+	 */
 	hasEmail(email) {
 		return this.#execute(`
 			SELECT 1
@@ -341,6 +447,13 @@ class DatabaseConnection {
 		`);
 	}
 
+	/**
+	 * Adds account to the database
+	 * @param {String} email Email address
+	 * @param {String} password Raw password
+	 * @param {String} ip IP address
+	 * @returns {Object} Cursor object
+	 */
 	addAccount(email, password, ip) {
 		const passwordHash = BCRYPT.hashSync(password, 12);
 
@@ -355,6 +468,14 @@ class DatabaseConnection {
 		`);
 	}
 
+	/**
+	 * Gets accounts from the database
+	 * @param {Number} limit Limit
+	 * @param {Number} offset Offset
+	 * @param {String} email Email address
+	 * @param {Number} roleId Role ID
+	 * @returns {Object} Cursor object
+	 */
 	getAccounts(limit, offset, email='', roleId=null) {
 		return this.#execute(`
 			SELECT
@@ -385,6 +506,12 @@ class DatabaseConnection {
 		`);
 	}
 
+	/**
+	 * Gets accounts count from the database
+	 * @param {String} email Email address
+	 * @param {Number} roleId Role ID
+	 * @returns {Object} Cursor object
+	 */
 	getAccountsCount(email='', roleId=null) {
 		return this.#execute(`
 			SELECT COUNT(*)
@@ -403,6 +530,11 @@ class DatabaseConnection {
 		`);
 	}
 
+	/**
+	 * Gets account from the database
+	 * @param {String} email Email address
+	 * @returns {Object} Cursor object
+	 */
 	getAccount(email) {
 		return this.#execute(`
 			SELECT
@@ -424,6 +556,12 @@ class DatabaseConnection {
 		`);
 	}
 
+	/**
+	 * Signs in account in the database
+	 * @param {String} email Email address
+	 * @param {String} ip IP address
+	 * @returns {Object} Cursor object
+	 */
 	signInAccount(email, ip) {
 		return this.#execute(`
 			UPDATE account
@@ -434,6 +572,12 @@ class DatabaseConnection {
 		`);
 	}
 
+	/**
+	 * Edits account role in the database
+	 * @param {String} email Email address
+	 * @param {Number} roleId Role ID
+	 * @returns {Object} Cursor object
+	 */
 	editAccountRole(email, roleId) {
 		return this.#execute(`
 			UPDATE account
@@ -442,6 +586,11 @@ class DatabaseConnection {
 		`);
 	}
 
+	/**
+	 * Checks if role with given role ID exists in the database
+	 * @param {Number} roleId Role ID
+	 * @returns {Object} Cursor object
+	 */
 	hasRole(roleId) {
 		return this.#execute(`
 			SELECT 1
@@ -450,6 +599,10 @@ class DatabaseConnection {
 		`);
 	}
 
+	/**
+	 * Gets roles from the database
+	 * @returns {Object} Cursor object
+	 */
 	getRoles() {
 		return this.#execute(`
 			SELECT
