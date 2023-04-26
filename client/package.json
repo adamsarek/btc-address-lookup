@@ -1,9 +1,9 @@
 {
-	"name": "btc-address-lookup-client",
+	"name": "btc-abuse-search",
 	"version": "1.0.0",
-	"description": "BTC Address Lookup - Client",
+	"description": "BTCAbuseSearch",
 	"engines": {
-		"node": "^18.13.0"
+		"node": "^18.15.0"
 	},
 	"scripts": {
 		"start": "node main.js"

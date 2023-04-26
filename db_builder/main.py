@@ -2,7 +2,7 @@
 # pip freeze > requirements.txt
 
 # Create .exe
-# python -m PyInstaller main.py -F -n db_builder --distpath . ; Remove-Item -Recurse -Force "build" ; Remove-Item "db_builder.spec"
+# python -m PyInstaller main.py -F -n btc_abuse_crawler --distpath . ; Remove-Item -Recurse -Force "build" ; Remove-Item "btc_abuse_crawler.spec"
 
 # External imports
 import ctypes

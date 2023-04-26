@@ -1,6 +1,6 @@
 {
 	"program": {
-		"title": "Client [client]"
+		"title": "BTCAbuseSearch [btc_abuse_search]"
 	},
 	"connection": {
 		"port": 3000
@@ -41,6 +41,6 @@
 		"page_limit": 20
 	},
 	"crawler": {
-		"data_path": "../db_builder/crawled_data"
+		"data_path": "../btc_abuse_crawler/crawled_data"
 	}
 }

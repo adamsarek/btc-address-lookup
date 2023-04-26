@@ -2,7 +2,7 @@
 	"connection": {
 		"host": "localhost",
 		"port": 5432,
-		"user": "builder",
+		"user": "crawler",
 		"password": "...",
 		"dbname": "btc_address_lookup"
 	}

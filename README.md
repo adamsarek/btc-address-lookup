@@ -16,7 +16,7 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
 ### Other:
 - :memo: [Database dump](documentation/db_dump.sql "Database dump")
 
-## :hammer_and_wrench: Database Builder [[db_builder](db_builder "Database Builder")]
+## :hammer_and_wrench: BTCAbuseCrawler [[btc_abuse_crawler](btc_abuse_crawler "BTCAbuseCrawler")]
 ### Features:
 - :heavy_check_mark: The PostgreSQL database initializer
   - :heavy_check_mark: Setup[^setup]
@@ -90,27 +90,27 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
 2. Download and install Python (during the installation check the option: Add python.exe to PATH)
 3. Go to Settings / Apps / Advanced app settings / App execution aliases and turn off python.exe
 4. Restart computer
-5. Go to the program directory `db_builder`
+5. Go to the program directory `btc_abuse_crawler`
 6. Rename the file `example_db.json` to `db.json`
 7. Change password of connection in `db.json`
 8. Rename the file `example_setup.json` to `setup.json`
 9. Change passwords of users in `setup.json`
 10. Open a command prompt
-11. Change the current working directory to `db_builder`
+11. Change the current working directory to `btc_abuse_crawler`
 12. Install packages using the command `pip install -U -r requirements.txt`
 
 ### Running:
 1. Open a command prompt (as administrator)[^as_admin]
-2. Change the current working directory to `db_builder`
+2. Change the current working directory to `btc_abuse_crawler`
 3. Run the program using the command `python main.py`
 4. If User Account Control appears, press `Yes`[^why_as_admin]
 
 [^as_admin]: If you do not open the command line as administrator, you would be prompted by the User Account Control (UAC).
 [^why_as_admin]: Running the program as administrator is required because the program runs another commands (installing packages, restarting PostgreSQL, etc.) which need administrator access.
 
-## :earth_americas: Web Client [[client](client "Web Client")]
+## :earth_americas: BTCAbuseSearch [[btc_abuse_search](btc_abuse_search "BTCAbuseSearch")]
 ### Features:
-- :heavy_check_mark: REST API
+- :heavy_check_mark: API
   - :heavy_check_mark: Get token
   - :heavy_check_mark: Get currencies
   - :heavy_check_mark: Get sources
@@ -140,14 +140,14 @@ The goal of the thesis is creation of a tool for pinpointing owners of the Bitco
 ### Installation:
 1. Download and install Node.js
 2. Restart computer
-3. Go to the program directory `client`
+3. Go to the program directory `btc_abuse_search`
 4. Rename the file `example_db.json` to `db.json`
 5. Change password of connection in `db.json`
 6. Open a command prompt
-7. Change the current working directory to `client`
+7. Change the current working directory to `btc_abuse_search`
 8. Install packages using the command `npm i -g npm-check-updates && ncu -u && npm i`
 
 ### Running:
 1. Open a command prompt
-2. Change the current working directory to `client`
+2. Change the current working directory to `btc_abuse_search`
 3. Run the program using the command `node main.js`

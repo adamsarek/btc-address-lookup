@@ -9,12 +9,12 @@
 	},
 	"users": [
 		{
-			"user": "builder",
+			"user": "crawler",
 			"password": "...",
 			"superuser": true
 		},
 		{
-			"user": "client",
+			"user": "search",
 			"password": "...",
 			"superuser": false
 		}
@@ -22,7 +22,7 @@
 	"databases": [
 		{
 			"database": "btc_address_lookup",
-			"owner": "builder",
+			"owner": "crawler",
 			"tables": [
 				{
 					"table_name": "source",
@@ -48,7 +48,7 @@
 						]
 					],
 					"grant": [
-						{"user": "client", "privilege": "SELECT"}
+						{"user": "search", "privilege": "SELECT"}
 					]
 				},
 				{
@@ -89,7 +89,7 @@
 						]
 					],
 					"grant": [
-						{"user": "client", "privilege": "SELECT"}
+						{"user": "search", "privilege": "SELECT"}
 					]
 				},
 				{
@@ -126,7 +126,7 @@
 						]
 					],
 					"grant": [
-						{"user": "client", "privilege": "SELECT"}
+						{"user": "search", "privilege": "SELECT"}
 					]
 				},
 				{
@@ -144,7 +144,7 @@
 						"CONSTRAINT address_source_label_id_check CHECK (source_label_id > 0)"
 					],
 					"grant": [
-						{"user": "client", "privilege": "SELECT"}
+						{"user": "search", "privilege": "SELECT"}
 					]
 				},
 				{
@@ -176,7 +176,7 @@
 						]
 					],
 					"grant": [
-						{"user": "client", "privilege": "SELECT"}
+						{"user": "search", "privilege": "SELECT"}
 					]
 				},
 				{
@@ -214,7 +214,7 @@
 						]
 					],
 					"grant": [
-						{"user": "client", "privilege": "SELECT"}
+						{"user": "search", "privilege": "SELECT"}
 					]
 				},
 				{
@@ -235,7 +235,7 @@
 						"CONSTRAINT data_content_length_check CHECK (content_length > 0)"
 					],
 					"grant": [
-						{"user": "client", "privilege": "SELECT"}
+						{"user": "search", "privilege": "SELECT"}
 					]
 				},
 				{
@@ -256,7 +256,7 @@
 						]
 					],
 					"grant": [
-						{"user": "client", "privilege": "SELECT"}
+						{"user": "search", "privilege": "SELECT"}
 					]
 				},
 				{
@@ -277,7 +277,7 @@
 						"CONSTRAINT account_signed_up_at_account_last_signed_in_at_check CHECK (signed_up_at <= last_signed_in_at)"
 					],
 					"grant": [
-						{"user": "client", "privilege": "SELECT, INSERT, UPDATE"}
+						{"user": "search", "privilege": "SELECT, INSERT, UPDATE"}
 					]
 				},
 				{
@@ -302,7 +302,7 @@
 						"CONSTRAINT token_last_used_at_token_reset_use_count_at_check CHECK (last_used_at < reset_use_count_at)"
 					],
 					"grant": [
-						{"user": "client", "privilege": "SELECT, INSERT, UPDATE"}
+						{"user": "search", "privilege": "SELECT, INSERT, UPDATE"}
 					]
 				},
 				{
@@ -320,7 +320,7 @@
 						"CONSTRAINT address_data_data_id_check CHECK (data_id > 0)"
 					],
 					"grant": [
-						{"user": "client", "privilege": "SELECT"}
+						{"user": "search", "privilege": "SELECT"}
 					]
 				},
 				{
@@ -332,7 +332,7 @@
 						"CONSTRAINT session_sid_pkey PRIMARY KEY (sid)"
 					],
 					"grant": [
-						{"user": "client", "privilege": "ALL PRIVILEGES"}
+						{"user": "search", "privilege": "ALL PRIVILEGES"}
 					]
 				}
 			]

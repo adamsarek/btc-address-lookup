@@ -1,6 +1,6 @@
 {
 	"program": {
-		"title": "Database Builder [db-builder]"
+		"title": "BTCAbuseCrawler [btc_abuse_crawler]"
 	},
 	"run_timeout": {
 		"crawler": 300,
@@ -18,7 +18,7 @@
 			"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36"
 		},
 		"robots": {
-			"user_agent": "BTCAddressLookupBot"
+			"user_agent": "BTCAbuseCrawlerBot"
 		}
 	},
 	"crawler": {

@@ -1256,5 +1256,5 @@ app.get('*', preProcess, (req, res) => {
 
 
 app.listen(config.connection.port, () => {
-	console.log(`Client server started listening on port ${config.connection.port}!`);
+	console.log(`BTCAbuseSearch server started listening on port ${config.connection.port}!`);
 });
