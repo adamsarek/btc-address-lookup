@@ -12,6 +12,7 @@ from file.file import File
 from file.json_file import JsonFile
 
 class Setup:
+	# Constructor
 	def __init__(self, config_data, reset, restart_db, delete_setup_config):
 		self.__SETUP_CONFIG_FILE_PATH = "setup.json"
 
@@ -40,6 +41,7 @@ class Setup:
 			# Restart PostgreSQL database service
 			self.__restart_db(restart_db)
 	
+	# Restarts PostgreSQL database service
 	def __restart_db(self, restart_db):
 		for service in list(psutil.win_service_iter()):
 			if service.name().startswith("postgresql"):
@@ -49,6 +51,7 @@ class Setup:
 					subprocess.run(["net", "start", service.name()])
 				break
 
+	# Creates / drops users and databases
 	def __setup_users_and_databases(self, db_connection):
 		# Alter & create users
 		for setup_config_user in self.__setup_config_data["users"]:
@@ -90,6 +93,7 @@ class Setup:
 				if setup_config_user_found == False:
 					db_connection.drop_user(pg_user["usename"])
 	
+	# Resets database
 	def __reset(self):
 		Console().print_info("\nResetting...")
 
@@ -131,6 +135,7 @@ class Setup:
 			# Create / alter / drop users & databases
 			self.__setup_users_and_databases(db_connection)
 	
+	# Sets up database
 	def __setup(self):
 		Console().print_info("\nSetting up...")
 

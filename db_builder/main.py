@@ -17,12 +17,14 @@ from crawler import Crawler
 from setup import Setup
 from file.json_file import JsonFile
 
+# Checks if application is running as admin
 def is_admin():
 	try:
 		return ctypes.windll.shell32.IsUserAnAdmin()
 	except:
 		return False
 
+# Reruns application as admin
 def rerun_as_admin():
 	return ctypes.windll.shell32.ShellExecuteW(
 		None,
@@ -33,6 +35,7 @@ def rerun_as_admin():
 		1
 	)
 
+# Waits given amount of seconds
 def wait(seconds):
 	# Wait before starting the next run
 	date_now = datetime.datetime.now()
@@ -40,6 +43,7 @@ def wait(seconds):
 	Console().print_info("Crawler will now wait till {0} for the next run.".format(date_future.isoformat(" ", "seconds")))
 	time.sleep(seconds)
 
+# Main function
 def main():
 	os.system("")
 

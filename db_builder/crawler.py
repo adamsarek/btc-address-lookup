@@ -19,6 +19,7 @@ from response.response import Response
 from response.html_response import HtmlResponse
 
 class Crawler:
+	# Constructor
 	def __init__(self, config_data):
 		self.__config_data = config_data
 		self.__db_config_data = JsonFile("db.json").load()
