@@ -6,9 +6,7 @@ A solution for collecting abuse reports of Bitcoin addresses. BTCAbuseCrawler (P
   <summary><h3>Documents</h3></summary>
 
 - :memo: [Thesis](documentation/thesis.pdf "Thesis")
-<!--
 - :memo: [Presentation](documentation/presentation.pdf "Presentation")
--->
 </details>
 
 <details open>
